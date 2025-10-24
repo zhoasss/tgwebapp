@@ -5,11 +5,11 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Загружаем переменные из .env
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "p.env"))
 
 # Получаем настройки
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEB_APP_URL = os.getenv("WEB_APP_URL")
+BOT_TOKEN = "8218346555:AAEPcKe5WVZEW977WmrlEQ7XsowdNx2-bJ0"
+WEB_APP_URL ="https://zhoasss.github.io/index.html"
 
 if not BOT_TOKEN or not WEB_APP_URL:
     raise ValueError("❌ Отсутствуют обязательные переменные: BOT_TOKEN или WEB_APP_URL в .env")

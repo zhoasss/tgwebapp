@@ -32,6 +32,18 @@
         <span>Настройки</span>
       </button>
     </div>
+    <script>
+    // Ждём, пока WebApp инициализируется
+    if (window.Telegram && Telegram.WebApp) {
+      // Включаем полноэкранный режим
+      Telegram.WebApp.expand();
+      
+      // Опционально: фиксируем ориентацию или убираем отступы
+      Telegram.WebApp.disableVerticalSwipes();
+      Telegram.WebApp.setHeaderColor("#000000");
+      Telegram.WebApp.setBackgroundColor("#ffffff");
+    }
+  </script>
   </footer>
 
 </body>
