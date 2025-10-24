@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Записи</title>
@@ -32,20 +33,16 @@
         <span>Настройки</span>
       </button>
     </div>
-    <script>
-    // Ждём, пока WebApp инициализируется
-    if (window.Telegram && Telegram.WebApp) {
-      // Включаем полноэкранный режим
-      Telegram.WebApp.expand();
-      
-      // Опционально: фиксируем ориентацию или убираем отступы
-      Telegram.WebApp.disableVerticalSwipes();
-      Telegram.WebApp.setHeaderColor("#000000");
-      Telegram.WebApp.setBackgroundColor("#ffffff");
-    }
-  </script>
   </footer>
-
+<!-- В самом конце body, перед закрывающим </body> -->
+<script>
+  if (window.Telegram?.WebApp) {
+    Telegram.WebApp.expand();
+    Telegram.WebApp.disableVerticalSwipes();
+    Telegram.WebApp.setHeaderColor("#000000");
+    Telegram.WebApp.setBackgroundColor("#ffffff");
+  }
+</script>
 </body>
 </html>
 

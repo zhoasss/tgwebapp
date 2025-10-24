@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -74,5 +75,21 @@
       })
       .catch(err => console.error('Не удалось загрузить футер из index.html:', err));
   </script>
+  <script>
+  // После загрузки футера — но expand() можно вызывать сразу!
+  if (window.Telegram?.WebApp) {
+    Telegram.WebApp.expand();
+    Telegram.WebApp.disableVerticalSwipes();
+    Telegram.WebApp.setHeaderColor("#000000");
+    Telegram.WebApp.setBackgroundColor("#ffffff");
+  }
+
+  // Ваш существующий код загрузки футера — оставьте как есть
+  fetch('../index.html')
+    .then(response => response.text())
+    .then(html => {
+      // ... ваш код ...
+    });
+</script>
 </body>
 </html>
