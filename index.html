@@ -36,7 +36,23 @@
 <!-- В самом конце body, перед закрывающим </body> -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    // Инициализация Telegram WebApp
+    const applyTheme = () => {
+      let isDark = false;
+
+      // 1. Если запущено в Telegram Mini App — берём тему оттуда
+      if (window.Telegram?.WebApp) {
+        isDark = Telegram.WebApp.colorScheme === 'dark';
+      } 
+      // 2. Если вне Telegram — используем системную тему
+      else {
+        isDark = window.matchMedia && 
+                 window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+
+      document.documentElement.className = isDark ? 'theme-dark' : '';
+    };
+
+    // Инициализация Telegram WebApp (если есть)
     if (window.Telegram?.WebApp) {
       const tg = Telegram.WebApp;
       tg.ready();
@@ -45,17 +61,20 @@
       tg.setHeaderColor("#000000");
       tg.setBackgroundColor("#ffffff");
 
-      // Применяем тему из Telegram
-      const applyTheme = () => {
-        document.documentElement.className = tg.colorScheme === 'dark' ? 'theme-dark' : '';
-      };
-      applyTheme();
-
-      // Слушаем изменение темы (если пользователь переключит её в Telegram)
+      // Слушаем смену темы в Telegram
       tg.onEvent('themeChanged', applyTheme);
     }
 
-    // Блокировка прокрутки и масштабирования
+    // Применяем тему при старте
+    applyTheme();
+
+    // В браузере слушаем смену системной темы (опционально)
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', applyTheme);
+    }
+
+    // Блокировка прокрутки (оставляем как есть)
     const preventDefault = (e) => e.preventDefault();
     document.addEventListener('touchmove', preventDefault, { passive: false });
     document.addEventListener('wheel', preventDefault, { passive: false });
