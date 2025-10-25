@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <!-- УБРАНЫ ЛИШНИЕ ПРОБЕЛЫ В URL! -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -10,23 +11,19 @@
 <body>
   <main>
     <div class="view-content">
-
       <div class="settings-menu">
         <div class="settings-item">
           <h3>Профиль</h3>
           <p>Редактировать личную информацию</p>
         </div>
-        
         <div class="settings-item">
           <h3>График работы</h3>
           <p>Настроить расписание</p>
         </div>
-        
         <div class="settings-item">
           <h3>Услуги</h3>
           <p>Управление списком услуг</p>
         </div>
-        
         <div class="settings-item">
           <h3>Управление</h3>
           <p>Управление клиентами и записями</p>
@@ -39,87 +36,78 @@
   <div id="footer-container"></div>
 
   <script>
-    // Загружаем index.html и извлекаем из него футер
+    // Загружаем футер из index.html
     fetch('../index.html')
       .then(response => response.text())
       .then(html => {
-        // Создаём временный элемент для парсинга HTML
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
-        
-        // Извлекаем футер из index.html
         const footer = doc.querySelector('footer');
         
         if (footer) {
           document.getElementById('footer-container').innerHTML = footer.outerHTML;
           
-          // Устанавливаем активную кнопку "Настройки" на странице настроек
           const recordsBtn = document.querySelector('[data-tab="records"]');
           const settingsBtn = document.querySelector('[data-tab="settings"]');
           
           if (recordsBtn) {
             recordsBtn.classList.remove('active');
-            // Меняем обработчик для кнопки "Записи"
-            recordsBtn.onclick = function() {
-              document.location = '../index.html';
-            };
+            recordsBtn.onclick = () => document.location = '../index.html';
           }
           
           if (settingsBtn) {
             settingsBtn.classList.add('active');
-            // Убираем обработчик для кнопки "Настройки"
             settingsBtn.onclick = null;
           }
         }
       })
-      .catch(err => console.error('Не удалось загрузить футер из index.html:', err));
+      .catch(err => console.error('Не удалось загрузить футер:', err));
   </script>
-  <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const applyTheme = () => {
-      let isDark = false;
 
-      // 1. Если запущено в Telegram Mini App — берём тему оттуда
-      if (window.Telegram?.WebApp) {
-        isDark = Telegram.WebApp.colorScheme === 'dark';
-      } 
-      // 2. Если вне Telegram — используем системную тему
-      else {
-        isDark = window.matchMedia && 
-                 window.matchMedia('(prefers-color-scheme: dark)').matches;
+  <!-- Исправленный и надёжный скрипт темы и Telegram WebApp -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      function applyTheme() {
+        let isDark = false;
+
+        if (window.Telegram?.WebApp) {
+          isDark = Telegram.WebApp.colorScheme === 'dark';
+          // Обновляем цвет хедера в соответствии с темой
+          Telegram.WebApp.setHeaderColor(isDark ? "#121212" : "#ffffff");
+          Telegram.WebApp.setTitleTextColor(isDark ? "#ffffff" : "#000000");
+        } else if (window.matchMedia) {
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        document.documentElement.className = isDark ? 'theme-dark' : '';
       }
 
-      document.documentElement.className = isDark ? 'theme-dark' : '';
-    };
+      // Инициализация Telegram WebApp
+      if (window.Telegram?.WebApp) {
+        const tg = Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.disableVerticalSwipes();
+        tg.setBackgroundColor("#ffffff");
 
-    // Инициализация Telegram WebApp (если есть)
-    if (window.Telegram?.WebApp) {
-      const tg = Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-      tg.disableVerticalSwipes();
-      tg.setHeaderColor(isDark ? "#121212" : "#ffffff");
-      tg.setBackgroundColor("#ffffff");
+        applyTheme(); // Применяем тему сразу
+        tg.onEvent('themeChanged', applyTheme); // Слушаем смену темы
+      } else {
+        applyTheme();
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)')
+            .addEventListener('change', applyTheme);
+        }
+      }
 
-      // Слушаем смену темы в Telegram
-      tg.onEvent('themeChanged', applyTheme);
-    }
-
-    // Применяем тему при старте
-    applyTheme();
-
-    // В браузере слушаем смену системной темы (опционально)
-    if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', applyTheme);
-    }
-
-    // Блокировка прокрутки (оставляем как есть)
-    const preventDefault = (e) => e.preventDefault();
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    document.addEventListener('wheel', preventDefault, { passive: false });
-    document.addEventListener('gesturestart', preventDefault);
-  });
-</script>
+      // Блокировка прокрутки — только в Mini App
+      if (window.Telegram?.WebApp) {
+        const preventDefault = (e) => e.preventDefault();
+        document.addEventListener('touchmove', preventDefault, { passive: false });
+        document.addEventListener('wheel', preventDefault, { passive: false });
+        document.addEventListener('gesturestart', preventDefault);
+      }
+    });
+  </script>
 </body>
 </html>

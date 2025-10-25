@@ -1,29 +1,22 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Записи</title>
-  <style>
-  </style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="main.css">
 </head>
 <body>
-
-  <main>
-  </main>
+  <main></main>
   <footer class="footer">
     <div class="footer-grid">
-      <!-- Кнопка "Записи" -->
       <button class="footer-btn active" data-tab="records">
         <svg viewBox="0 0 24 24">
           <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         <span>Записи</span>
       </button>
-
-      <!-- Кнопка "Настройки" -->
       <button onclick="document.location='components/settings.html'" class="footer-btn" data-tab="settings">
         <svg viewBox="0 0 24 24">
           <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -33,54 +26,58 @@
       </button>
     </div>
   </footer>
-<!-- В самом конце body, перед закрывающим </body> -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const applyTheme = () => {
-      let isDark = false;
 
-      // 1. Если запущено в Telegram Mini App — берём тему оттуда
-      if (window.Telegram?.WebApp) {
-        isDark = Telegram.WebApp.colorScheme === 'dark';
-      } 
-      // 2. Если вне Telegram — используем системную тему
-      else {
-        isDark = window.matchMedia && 
-                 window.matchMedia('(prefers-color-scheme: dark)').matches;
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Применяем тему: и в Telegram, и в браузере
+      function applyTheme() {
+        let isDark = false;
+
+        if (window.Telegram?.WebApp) {
+          // Тема из Telegram
+          isDark = Telegram.WebApp.colorScheme === 'dark';
+          // Опционально: кастомный цвет хедера (закомментируйте, если хотите нативный)
+          Telegram.WebApp.setHeaderColor(isDark ? "#121212" : "#ffffff");
+          Telegram.WebApp.setTitleTextColor(isDark ? "#ffffff" : "#000000");
+        } else if (window.matchMedia) {
+          // Тема из системы (браузер)
+          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        // Применяем CSS-класс
+        document.documentElement.className = isDark ? 'theme-dark' : '';
       }
 
-      document.documentElement.className = isDark ? 'theme-dark' : '';
-    };
+      // Инициализация Telegram WebApp
+      if (window.Telegram?.WebApp) {
+        const tg = Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.disableVerticalSwipes();
+        tg.setBackgroundColor("#ffffff");
 
-    // Инициализация Telegram WebApp (если есть)
-    if (window.Telegram?.WebApp) {
-      const tg = Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-      tg.disableVerticalSwipes();
-      tg.setHeaderColor(isDark ? "#121212" : "#ffffff");
-      tg.setBackgroundColor("#ffffff");
+        // Применяем тему сразу
+        applyTheme();
 
-      // Слушаем смену темы в Telegram
-      tg.onEvent('themeChanged', applyTheme);
-    }
+        // Слушаем смену темы в Telegram
+        tg.onEvent('themeChanged', applyTheme);
+      } else {
+        // Только для браузера
+        applyTheme();
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)')
+            .addEventListener('change', applyTheme);
+        }
+      }
 
-    // Применяем тему при старте
-    applyTheme();
-
-    // В браузере слушаем смену системной темы (опционально)
-    if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', applyTheme);
-    }
-
-    // Блокировка прокрутки (оставляем как есть)
-    const preventDefault = (e) => e.preventDefault();
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    document.addEventListener('wheel', preventDefault, { passive: false });
-    document.addEventListener('gesturestart', preventDefault);
-  });
-</script>
+      // Блокировка прокрутки — ТОЛЬКО в Mini App
+      if (window.Telegram?.WebApp) {
+        const preventDefault = (e) => e.preventDefault();
+        document.addEventListener('touchmove', preventDefault, { passive: false });
+        document.addEventListener('wheel', preventDefault, { passive: false });
+        document.addEventListener('gesturestart', preventDefault);
+      }
+    });
+  </script>
 </body>
 </html>
-
