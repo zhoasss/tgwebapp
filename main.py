@@ -1,7 +1,7 @@
 import logging
 import os
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Загружаем переменные из .env
@@ -23,27 +23,41 @@ logging.basicConfig(
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     logging.info(f"Получена команда /start от пользователя {user.id} (@{user.username})")
-    
-    # Создаём кнопку с ссылкой
+
+    # Формируем красивое приветственное сообщение
+    welcome_text = (
+        f"Привет, {user.first_name}! 👋\n\n"
+        "✨ **Добро пожаловать в ваш личный кабинет!** ✨\n\n"
+        "Здесь всё под рукой для комфортного управления вашей деятельностью 💼:\n\n"
+        "📅 **Посмотреть записи**\n"
+        "👥 **Управлять клиентами и записями**\n"
+        "✂️ **Управление списком услуг**\n"
+        "⏰ **Настроить график работы**\n"
+        "👤 **Редактировать профиль**\n\n"
+        "Чтобы воспользоваться всеми возможностями — нажмите на кнопку ниже! 👇"
+    )
+
+    # Кнопка с коротким текстом и ссылкой из .env
     keyboard = [
-        [InlineKeyboardButton("Перейти на сайт", url="https://example.com")]
+        [InlineKeyboardButton("Открыть кабинет 🚀", url=WEB_APP_URL.strip())]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     await update.message.reply_text(
-        f"Привет, {user.first_name}! 👋",
-        reply_markup=reply_markup
+        welcome_text,
+        reply_markup=reply_markup,
+        parse_mode="Markdown"
     )
-    logging.info(f"Отправлено сообщение пользователю {user.id}")
+    logging.info(f"Отправлено приветственное сообщение пользователю {user.id}")
 
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
-    
-    # Запускаем polling с очисткой старых обновлений
+
+    # Запускаем polling
     application.run_polling(
-        drop_pending_updates=True,  # Игнорируем старые сообщения
-        allowed_updates=["message"]  # Обрабатываем только сообщения
+        drop_pending_updates=True,
+        allowed_updates=["message"]
     )
 
 if __name__ == "__main__":
