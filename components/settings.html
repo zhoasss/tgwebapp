@@ -75,30 +75,50 @@
       .catch(err => console.error('Не удалось загрузить футер из index.html:', err));
   </script>
   <script>
-  // После загрузки футера — но expand() можно вызывать сразу!
-  if (window.Telegram?.WebApp) {
-    Telegram.WebApp.expand();
-    Telegram.WebApp.disableVerticalSwipes();
-    Telegram.WebApp.setHeaderColor("#000000");
-    Telegram.WebApp.setBackgroundColor("#ffffff");
-  }
+  document.addEventListener('DOMContentLoaded', function () {
+    const applyTheme = () => {
+      let isDark = false;
 
-  // Предотвращаем прокрутку страницы на мобильных устройствах
-  document.addEventListener('DOMContentLoaded', function() {
-    // Блокируем touchmove на всех элементах
-    document.addEventListener('touchmove', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+      // 1. Если запущено в Telegram Mini App — берём тему оттуда
+      if (window.Telegram?.WebApp) {
+        isDark = Telegram.WebApp.colorScheme === 'dark';
+      } 
+      // 2. Если вне Telegram — используем системную тему
+      else {
+        isDark = window.matchMedia && 
+                 window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
 
-    // Блокируем wheel события
-    document.addEventListener('wheel', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+      document.documentElement.className = isDark ? 'theme-dark' : '';
+    };
 
-    // Блокируем gesturestart для iOS
-    document.addEventListener('gesturestart', function(e) {
-      e.preventDefault();
-    });
+    // Инициализация Telegram WebApp (если есть)
+    if (window.Telegram?.WebApp) {
+      const tg = Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      tg.disableVerticalSwipes();
+      tg.setHeaderColor("#000000");
+      tg.setBackgroundColor("#ffffff");
+
+      // Слушаем смену темы в Telegram
+      tg.onEvent('themeChanged', applyTheme);
+    }
+
+    // Применяем тему при старте
+    applyTheme();
+
+    // В браузере слушаем смену системной темы (опционально)
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', applyTheme);
+    }
+
+    // Блокировка прокрутки (оставляем как есть)
+    const preventDefault = (e) => e.preventDefault();
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('wheel', preventDefault, { passive: false });
+    document.addEventListener('gesturestart', preventDefault);
   });
 </script>
 </body>
