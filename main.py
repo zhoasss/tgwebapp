@@ -1,7 +1,7 @@
 import logging
 import os
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Загружаем переменные из .env
@@ -24,7 +24,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     logging.info(f"Получена команда /start от пользователя {user.id} (@{user.username})")
 
-    # Формируем красивое приветственное сообщение
+    # Красивое приветственное сообщение
     welcome_text = (
         f"Привет, {user.first_name}! 👋\n\n"
         "✨ **Добро пожаловать в ваш личный кабинет!** ✨\n\n"
@@ -34,12 +34,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "✂️ **Управление списком услуг**\n"
         "⏰ **Настроить график работы**\n"
         "👤 **Редактировать профиль**\n\n"
-        "Чтобы воспользоваться всеми возможностями — нажмите на кнопку ниже! 👇"
+        "Нажмите на кнопку ниже, чтобы открыть кабинет прямо в Telegram! 🚀"
     )
 
-    # Кнопка с коротким текстом и ссылкой из .env
+    # Кнопка для открытия Mini App
     keyboard = [
-        [InlineKeyboardButton("Открыть кабинет 🚀", url=WEB_APP_URL.strip())]
+        [InlineKeyboardButton(
+            "Открыть кабинет 🚀",
+            web_app=WebAppInfo(url=WEB_APP_URL.strip())
+        )]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -48,16 +51,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )
-    logging.info(f"Отправлено приветственное сообщение пользователю {user.id}")
+    logging.info(f"Отправлено сообщение с Mini App пользователю {user.id}")
 
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
 
-    # Запускаем polling
     application.run_polling(
         drop_pending_updates=True,
-        allowed_updates=["message"]
+        allowed_updates=["message", "callback_query"]  # рекомендуется добавить callback_query для WebApp
     )
 
 if __name__ == "__main__":
