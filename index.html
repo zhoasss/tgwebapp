@@ -28,50 +28,57 @@
   </footer>
 
   <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    function applyTheme() {
-      let isDark = false;
-
-      if (window.Telegram?.WebApp) {
-        isDark = Telegram.WebApp.colorScheme === 'dark';
-        // 🔥 УДАЛИЛИ setHeaderColor и setTitleTextColor!
-        // Пусть Telegram сам управляет хедером — он сделает это идеально.
-      } else if (window.matchMedia) {
-        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      }
-
-      // Обновляем ТОЛЬКО CSS-класс
-      document.documentElement.className = isDark ? 'theme-dark' : '';
-    }
-
-    // Инициализация Telegram WebApp
+  // Применяем тему немедленно — даже до DOMContentLoaded
+  function applyTheme() {
+    let isDark = false;
     if (window.Telegram?.WebApp) {
-      const tg = Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-      tg.disableVerticalSwipes();
-      // Не устанавливаем setBackgroundColor — не обязательно
-    }
-
-    // Применяем тему СРАЗУ
-    applyTheme();
-
-    // Слушаем смену темы — ОБЯЗАТЕЛЬНО
-    if (window.Telegram?.WebApp) {
-      Telegram.WebApp.onEvent('themeChanged', applyTheme);
+      isDark = Telegram.WebApp.colorScheme === 'dark';
     } else if (window.matchMedia) {
+      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    document.documentElement.className = isDark ? 'theme-dark' : '';
+  }
+
+  // Применяем тему СРАЗУ (на случай, если DOM уже загружен)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyTheme);
+  } else {
+    applyTheme();
+  }
+
+  // Инициализация Telegram
+  if (window.Telegram?.WebApp) {
+    const tg = Telegram.WebApp;
+
+    // Гарантируем, что ready() вызван один раз
+    if (!tg.isReady) {
+      tg.ready();
+      tg.isReady = true;
+    }
+
+    tg.expand();
+    tg.disableVerticalSwipes();
+
+    // Подписываемся на смену темы
+    tg.onEvent('themeChanged', applyTheme);
+
+    // Дополнительно: принудительно обновляем тему через 100 мс (на случай гонки)
+    setTimeout(applyTheme, 100);
+  } else {
+    // Для браузера
+    if (window.matchMedia) {
       window.matchMedia('(prefers-color-scheme: dark)')
         .addEventListener('change', applyTheme);
     }
+  }
 
-    // Блокировка прокрутки — только в Mini App
-    if (window.Telegram?.WebApp) {
-      const preventDefault = (e) => e.preventDefault();
-      document.addEventListener('touchmove', preventDefault, { passive: false });
-      document.addEventListener('wheel', preventDefault, { passive: false });
-      document.addEventListener('gesturestart', preventDefault);
-    }
-  });
+  // Блокировка прокрутки
+  if (window.Telegram?.WebApp) {
+    const preventDefault = (e) => e.preventDefault();
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('wheel', preventDefault, { passive: false });
+    document.addEventListener('gesturestart', preventDefault);
+  }
 </script>
 </body>
 </html>
