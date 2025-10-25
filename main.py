@@ -24,13 +24,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     logging.info(f"Получена команда /start от пользователя {user.id} (@{user.username})")
     
-    keyboard = [
-        [InlineKeyboardButton("Открыть Mini App", web_app=WebAppInfo(url=WEB_APP_URL))]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text(
-        f"Привет, {user.first_name}! 👋\nНажми кнопку ниже, чтобы открыть Mini App:",
-        reply_markup=reply_markup
+        f"Привет  {user.first_name}! 👋"
     )
     logging.info(f"Отправлено сообщение пользователю {user.id}")
 
