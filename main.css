@@ -11,6 +11,7 @@
     flex-direction: column;
     font-family: system-ui, sans-serif;
     background-color: white;
+    overflow: disabled;
   }
 
   main {
