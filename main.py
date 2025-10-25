@@ -24,8 +24,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     logging.info(f"Получена команда /start от пользователя {user.id} (@{user.username})")
     
+    # Создаём кнопку с ссылкой
+    keyboard = [
+        [InlineKeyboardButton("Перейти на сайт", url="https://example.com")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
     await update.message.reply_text(
-        f"Привет  {user.first_name}! 👋"
+        f"Привет, {user.first_name}! 👋",
+        reply_markup=reply_markup
     )
     logging.info(f"Отправлено сообщение пользователю {user.id}")
 
