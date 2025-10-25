@@ -66,48 +66,50 @@
 
   <!-- Исправленный и надёжный скрипт темы и Telegram WebApp -->
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      function applyTheme() {
-        let isDark = false;
+  document.addEventListener('DOMContentLoaded', function () {
+    function applyTheme() {
+      let isDark = false;
 
-        if (window.Telegram?.WebApp) {
-          isDark = Telegram.WebApp.colorScheme === 'dark';
-          // Обновляем цвет хедера в соответствии с темой
-          Telegram.WebApp.setHeaderColor(isDark ? "#121212" : "#ffffff");
-          Telegram.WebApp.setTitleTextColor(isDark ? "#ffffff" : "#000000");
-        } else if (window.matchMedia) {
-          isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        }
-
-        document.documentElement.className = isDark ? 'theme-dark' : '';
-      }
-
-      // Инициализация Telegram WebApp
       if (window.Telegram?.WebApp) {
-        const tg = Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        tg.disableVerticalSwipes();
-        tg.setBackgroundColor("#ffffff");
-
-        applyTheme(); // Применяем тему сразу
-        tg.onEvent('themeChanged', applyTheme); // Слушаем смену темы
-      } else {
-        applyTheme();
-        if (window.matchMedia) {
-          window.matchMedia('(prefers-color-scheme: dark)')
-            .addEventListener('change', applyTheme);
-        }
+        isDark = Telegram.WebApp.colorScheme === 'dark';
+        // 🔥 УДАЛИЛИ setHeaderColor и setTitleTextColor!
+        // Пусть Telegram сам управляет хедером — он сделает это идеально.
+      } else if (window.matchMedia) {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       }
 
-      // Блокировка прокрутки — только в Mini App
-      if (window.Telegram?.WebApp) {
-        const preventDefault = (e) => e.preventDefault();
-        document.addEventListener('touchmove', preventDefault, { passive: false });
-        document.addEventListener('wheel', preventDefault, { passive: false });
-        document.addEventListener('gesturestart', preventDefault);
-      }
-    });
-  </script>
+      // Обновляем ТОЛЬКО CSS-класс
+      document.documentElement.className = isDark ? 'theme-dark' : '';
+    }
+
+    // Инициализация Telegram WebApp
+    if (window.Telegram?.WebApp) {
+      const tg = Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      tg.disableVerticalSwipes();
+      // Не устанавливаем setBackgroundColor — не обязательно
+    }
+
+    // Применяем тему СРАЗУ
+    applyTheme();
+
+    // Слушаем смену темы — ОБЯЗАТЕЛЬНО
+    if (window.Telegram?.WebApp) {
+      Telegram.WebApp.onEvent('themeChanged', applyTheme);
+    } else if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', applyTheme);
+    }
+
+    // Блокировка прокрутки — только в Mini App
+    if (window.Telegram?.WebApp) {
+      const preventDefault = (e) => e.preventDefault();
+      document.addEventListener('touchmove', preventDefault, { passive: false });
+      document.addEventListener('wheel', preventDefault, { passive: false });
+      document.addEventListener('gesturestart', preventDefault);
+    }
+  });
+</script>
 </body>
 </html>
