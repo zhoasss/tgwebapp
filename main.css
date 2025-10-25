@@ -23,7 +23,7 @@
   --settings-hover-text-secondary: #0051a8;
 }
 
-/* Тёмная тема — применяется, когда есть класс .theme-dark */
+/* Тёмная тема — через класс (для Telegram и JS-управления) */
 .theme-dark {
   --bg-body: #121212;
   --bg-card: #1e1e1e;
@@ -42,6 +42,28 @@
   --settings-hover-text-secondary: #99ccff;
 }
 
+/* Дополнительно: поддержка системной темы в браузере (если JS не загрузился) */
+@media (prefers-color-scheme: dark) {
+  :not(.theme-light) {
+    --bg-body: #121212;
+    --bg-card: #1e1e1e;
+    --border-color: #333333;
+    --text-primary: #ffffff;
+    --text-secondary: #bbbbbb;
+    --footer-bg: #1e1e1e;
+    --button-hover-bg: #2a2a2a;
+    --button-active-bg: #2a2a2a;
+    --button-active-color: #4da6ff;
+    --button-hover-shadow: rgba(255, 255, 255, 0.05);
+    --settings-hover-bg: #2a2a2a;
+    --settings-hover-border: #4da6ff;
+    --settings-hover-shadow: rgba(77, 166, 255, 0.2);
+    --settings-hover-text-primary: #4da6ff;
+    --settings-hover-text-secondary: #99ccff;
+  }
+}
+
+/* Остальной CSS без изменений */
 html, body {
   height: 100vh;
   overflow: hidden;
@@ -147,7 +169,7 @@ main {
 
 .record-item {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  border: 1px solid(var(--border-color));
   border-radius: 12px;
   padding: 16px;
   transition: box-shadow 0.2s;
@@ -178,7 +200,7 @@ main {
 
 .settings-item {
   background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  border: 1px solid(var(--border-color));
   border-radius: 12px;
   padding: 15px;
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
