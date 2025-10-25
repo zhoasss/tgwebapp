@@ -2,22 +2,30 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100vh;
+    overflow: hidden;
     position: fixed;
+    width: 100%;
+    touch-action: none;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
     font-family: system-ui, sans-serif;
     background-color: white;
-    overflow: hidden;
   }
 
   main {
     flex: 1;
     padding: 20px;
     padding-top: 5px;
+    overflow: hidden;
   }
 
   /* Нижняя панель с кнопками */

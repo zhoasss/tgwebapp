@@ -41,6 +41,24 @@
     Telegram.WebApp.setHeaderColor("#000000");
     Telegram.WebApp.setBackgroundColor("#ffffff");
   }
+
+  // Предотвращаем прокрутку страницы на мобильных устройствах
+  document.addEventListener('DOMContentLoaded', function() {
+    // Блокируем touchmove на всех элементах
+    document.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    // Блокируем wheel события
+    document.addEventListener('wheel', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    // Блокируем gesturestart для iOS
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    });
+  });
 </script>
 </body>
 </html>
