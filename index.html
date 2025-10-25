@@ -36,6 +36,8 @@
 <!-- В самом конце body, перед закрывающим </body> -->
 <script>
   if (window.Telegram?.WebApp) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
     Telegram.WebApp.disableVerticalSwipes();
     Telegram.WebApp.setHeaderColor("#000000");
     Telegram.WebApp.setBackgroundColor("#ffffff");
