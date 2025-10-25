@@ -28,7 +28,7 @@
   </footer>
 
   <script>
-  // Применяем тему немедленно — даже до DOMContentLoaded
+  // Применяем тему немедленно — даже до DOMContentLoade
   function applyTheme() {
     let isDark = false;
     if (window.Telegram?.WebApp) {
@@ -38,6 +38,7 @@
     }
     document.documentElement.className = isDark ? 'theme-dark' : '';
   }
+
 
   // Применяем тему СРАЗУ (на случай, если DOM уже загружен)
   if (document.readyState === 'loading') {
