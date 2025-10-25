@@ -4,7 +4,7 @@
   box-sizing: border-box;
 }
 
-/* Цветовые переменные по умолчанию — светлая тема */
+/* Светлая тема — по умолчанию */
 :root {
   --bg-body: #ffffff;
   --bg-card: #f8f9fa;
@@ -23,25 +23,23 @@
   --settings-hover-text-secondary: #0051a8;
 }
 
-/* Тёмная тема — переопределяем переменные */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-body: #121212;
-    --bg-card: #1e1e1e;
-    --border-color: #333333;
-    --text-primary: #ffffff;
-    --text-secondary: #bbbbbb;
-    --footer-bg: #1e1e1e;
-    --button-hover-bg: #2a2a2a;
-    --button-active-bg: #2a2a2a;
-    --button-active-color: #4da6ff;
-    --button-hover-shadow: rgba(255, 255, 255, 0.05);
-    --settings-hover-bg: #2a2a2a;
-    --settings-hover-border: #4da6ff;
-    --settings-hover-shadow: rgba(77, 166, 255, 0.2);
-    --settings-hover-text-primary: #4da6ff;
-    --settings-hover-text-secondary: #99ccff;
-  }
+/* Тёмная тема — применяется, когда есть класс .theme-dark */
+.theme-dark {
+  --bg-body: #121212;
+  --bg-card: #1e1e1e;
+  --border-color: #333333;
+  --text-primary: #ffffff;
+  --text-secondary: #bbbbbb;
+  --footer-bg: #1e1e1e;
+  --button-hover-bg: #2a2a2a;
+  --button-active-bg: #2a2a2a;
+  --button-active-color: #4da6ff;
+  --button-hover-shadow: rgba(255, 255, 255, 0.05);
+  --settings-hover-bg: #2a2a2a;
+  --settings-hover-border: #4da6ff;
+  --settings-hover-shadow: rgba(77, 166, 255, 0.2);
+  --settings-hover-text-primary: #4da6ff;
+  --settings-hover-text-secondary: #99ccff;
 }
 
 html, body {

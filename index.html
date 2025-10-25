@@ -35,30 +35,31 @@
   </footer>
 <!-- В самом конце body, перед закрывающим </body> -->
 <script>
-  if (window.Telegram?.WebApp) {
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
-    Telegram.WebApp.disableVerticalSwipes();
-    Telegram.WebApp.setHeaderColor("#000000");
-    Telegram.WebApp.setBackgroundColor("#ffffff");
-  }
+  document.addEventListener('DOMContentLoaded', function () {
+    // Инициализация Telegram WebApp
+    if (window.Telegram?.WebApp) {
+      const tg = Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      tg.disableVerticalSwipes();
+      tg.setHeaderColor("#000000");
+      tg.setBackgroundColor("#ffffff");
 
-  // Предотвращаем прокрутку страницы на мобильных устройствах
-  document.addEventListener('DOMContentLoaded', function() {
-    // Блокируем touchmove на всех элементах
-    document.addEventListener('touchmove', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+      // Применяем тему из Telegram
+      const applyTheme = () => {
+        document.documentElement.className = tg.colorScheme === 'dark' ? 'theme-dark' : '';
+      };
+      applyTheme();
 
-    // Блокируем wheel события
-    document.addEventListener('wheel', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+      // Слушаем изменение темы (если пользователь переключит её в Telegram)
+      tg.onEvent('themeChanged', applyTheme);
+    }
 
-    // Блокируем gesturestart для iOS
-    document.addEventListener('gesturestart', function(e) {
-      e.preventDefault();
-    });
+    // Блокировка прокрутки и масштабирования
+    const preventDefault = (e) => e.preventDefault();
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('wheel', preventDefault, { passive: false });
+    document.addEventListener('gesturestart', preventDefault);
   });
 </script>
 </body>
