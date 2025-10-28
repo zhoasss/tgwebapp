@@ -28,7 +28,7 @@
   </footer>
 
   <script>
-  // Применяем тему немедленно — даже до DOMContentLoaded
+  // Применяем тему немедленно — даже до DOMContentLoade
   function applyTheme() {
     let isDark = false;
     if (window.Telegram?.WebApp) {
@@ -38,6 +38,7 @@
     }
     document.documentElement.className = isDark ? 'theme-dark' : '';
   }
+
 
   // Применяем тему СРАЗУ (на случай, если DOM уже загружен)
   if (document.readyState === 'loading') {
@@ -79,6 +80,33 @@
     document.addEventListener('wheel', preventDefault, { passive: false });
     document.addEventListener('gesturestart', preventDefault);
   }
+</script>
+<script>
+// Функция авторизации
+async function authenticate() {
+  if (!window.Telegram?.WebApp) return;
+
+  const tg = Telegram.WebApp;
+  const response = await fetch('http://localhost:8000/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ initData: tg.initData })
+  });
+
+  const result = await response.json();
+  if (result.success) {
+    console.log("✅ Авторизован:", result.user);
+    localStorage.setItem('tg_user', JSON.stringify(result.user));
+    // Здесь можно загрузить записи: loadRecords(result.user.id);
+  } else {
+    alert("Ошибка авторизации");
+  }
+}
+
+// Запускаем после инициализации Telegram
+if (window.Telegram?.WebApp) {
+  setTimeout(authenticate, 300); // небольшая задержка для надёжности
+}
 </script>
 </body>
 </html>
