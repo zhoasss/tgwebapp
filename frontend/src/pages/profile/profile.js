@@ -109,40 +109,9 @@ function loadStatistics() {
   document.getElementById('stat-services').textContent = stats.services;
 }
 
-function handleEditProfile() {
-  const phone = prompt('Введите телефон:', localStorage.getItem('profile_phone') || '');
-  const business = prompt('Введите название бизнеса:', localStorage.getItem('profile_business') || '');
-  const address = prompt('Введите адрес:', localStorage.getItem('profile_address') || '');
-  
-  if (phone !== null) {
-    localStorage.setItem('profile_phone', phone);
-    document.getElementById('detail-phone').textContent = phone || 'Не указан';
-  }
-  
-  if (business !== null) {
-    localStorage.setItem('profile_business', business);
-    document.getElementById('detail-business').textContent = business || 'Не указано';
-  }
-  
-  if (address !== null) {
-    localStorage.setItem('profile_address', address);
-    document.getElementById('detail-address').textContent = address || 'Не указан';
-  }
-  
-  if (window.Telegram?.WebApp) {
-    window.Telegram.WebApp.showAlert('Профиль обновлен!');
-  }
-}
-
 function initProfilePage() {
   // Загружаем данные профиля
   loadProfileData();
-  
-  // Обработчик кнопки редактирования
-  const editBtn = document.getElementById('edit-profile-btn');
-  if (editBtn) {
-    editBtn.addEventListener('click', handleEditProfile);
-  }
   
   console.log('✅ Страница профиля инициализирована');
 }
