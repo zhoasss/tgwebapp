@@ -15,13 +15,7 @@
 
     // Настройка отображения
     tg.expand();
-    tg.disableVerticalSwipes();
-
-    // Блокировка прокрутки (для WebApp в Telegram)
-    const preventDefault = (e) => e.preventDefault();
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    document.addEventListener('wheel', preventDefault, { passive: false });
-    document.addEventListener('gesturestart', preventDefault);
+    tg.enableClosingConfirmation();
 
     console.log('✅ Telegram WebApp инициализирован');
   } else {
