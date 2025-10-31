@@ -1,0 +1,18 @@
+/* Стили главной страницы */
+
+.view-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.view-content h1 {
+  font-size: 24px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.view-content p {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
