@@ -6,16 +6,23 @@
 function initSettingsPage() {
   const settingsItems = document.querySelectorAll('.settings-item');
   
-  settingsItems.forEach(item => {
+  settingsItems.forEach((item, index) => {
     item.addEventListener('click', () => {
       const title = item.querySelector('h3').textContent;
       console.log(`Клик на настройку: ${title}`);
       
-      // Здесь добавить навигацию к конкретным настройкам
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.showAlert(`Настройка: ${title}`);
+      // Навигация к конкретным настройкам
+      if (title.includes('Профиль')) {
+        // Переход на страницу профиля
+        window.location.href = '../profile/index.html';
       } else {
-        alert(`Настройка: ${title}`);
+        // Для остальных пунктов показываем уведомление
+        const message = `Настройка: ${title}\n\nСкоро здесь будет полная функциональность!`;
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.showAlert(message);
+        } else {
+          alert(message);
+        }
       }
     });
   });
