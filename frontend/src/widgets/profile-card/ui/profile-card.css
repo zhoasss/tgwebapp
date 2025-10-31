@@ -136,6 +136,45 @@
   letter-spacing: 0.5px;
 }
 
+/* Edit Profile Button */
+.edit-profile-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  margin-top: 20px;
+  background: var(--button-active-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+}
+
+.edit-profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
+  opacity: 0.9;
+}
+
+.edit-profile-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+}
+
+.edit-profile-btn svg {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
 /* Info Section */
 .info-section {
   margin-top: 20px;

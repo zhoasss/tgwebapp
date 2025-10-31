@@ -24,8 +24,9 @@ function loadProfileData() {
       // Обновляем детали
       document.getElementById('detail-firstname').textContent = firstName;
       document.getElementById('detail-lastname').textContent = lastName || 'Не указана';
-      document.getElementById('detail-id').textContent = userId;
-      document.getElementById('detail-lang').textContent = languageCode;
+      
+      // Загружаем дополнительные данные из localStorage или показываем заглушки
+      loadAdditionalData();
       
       // Получаем инициалы для аватара
       const initials = getInitials(firstName, lastName);
@@ -57,9 +58,19 @@ function loadMockData() {
   document.getElementById('profile-username').textContent = '@demo_user';
   document.getElementById('detail-firstname').textContent = 'Демо';
   document.getElementById('detail-lastname').textContent = 'Пользователь';
-  document.getElementById('detail-id').textContent = '123456789';
-  document.getElementById('detail-lang').textContent = 'RU';
   document.getElementById('avatar-initials').textContent = 'ДП';
+  loadAdditionalData();
+}
+
+function loadAdditionalData() {
+  // Загружаем данные из localStorage
+  const phone = localStorage.getItem('profile_phone') || 'Не указан';
+  const business = localStorage.getItem('profile_business') || 'Не указано';
+  const address = localStorage.getItem('profile_address') || 'Не указан';
+  
+  document.getElementById('detail-phone').textContent = phone;
+  document.getElementById('detail-business').textContent = business;
+  document.getElementById('detail-address').textContent = address;
 }
 
 function getInitials(firstName, lastName) {
@@ -98,9 +109,40 @@ function loadStatistics() {
   document.getElementById('stat-services').textContent = stats.services;
 }
 
+function handleEditProfile() {
+  const phone = prompt('Введите телефон:', localStorage.getItem('profile_phone') || '');
+  const business = prompt('Введите название бизнеса:', localStorage.getItem('profile_business') || '');
+  const address = prompt('Введите адрес:', localStorage.getItem('profile_address') || '');
+  
+  if (phone !== null) {
+    localStorage.setItem('profile_phone', phone);
+    document.getElementById('detail-phone').textContent = phone || 'Не указан';
+  }
+  
+  if (business !== null) {
+    localStorage.setItem('profile_business', business);
+    document.getElementById('detail-business').textContent = business || 'Не указано';
+  }
+  
+  if (address !== null) {
+    localStorage.setItem('profile_address', address);
+    document.getElementById('detail-address').textContent = address || 'Не указан';
+  }
+  
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.showAlert('Профиль обновлен!');
+  }
+}
+
 function initProfilePage() {
   // Загружаем данные профиля
   loadProfileData();
+  
+  // Обработчик кнопки редактирования
+  const editBtn = document.getElementById('edit-profile-btn');
+  if (editBtn) {
+    editBtn.addEventListener('click', handleEditProfile);
+  }
   
   console.log('✅ Страница профиля инициализирована');
 }
