@@ -1,0 +1,50 @@
+/**
+ * Стили виджета меню настроек
+ * Слой Widgets - составные блоки UI
+ */
+
+.settings-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 15px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, 
+              transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.settings-item:hover {
+  background: var(--settings-hover-bg);
+  border-color: var(--settings-hover-border);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--settings-hover-shadow);
+}
+
+.settings-item h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.settings-item:hover h3 {
+  color: var(--settings-hover-text-primary);
+}
+
+.settings-item p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.settings-item:hover p {
+  color: var(--settings-hover-text-secondary);
+}
+
