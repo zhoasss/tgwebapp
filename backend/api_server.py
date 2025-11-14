@@ -11,8 +11,8 @@ from src.shared.database.connection import init_database
 from src.shared.logger.setup import setup_logging
 from src.features.api.profile import router as profile_router
 
-# Настройка логирования
-setup_logging()
+# Настройка логирования с ротацией
+setup_logging(log_file='api.log')
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,12 +40,16 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://zhoasss.github.io",
-        "http://localhost:*",
-        "http://127.0.0.1:*"
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Init-Data", "Authorization"],
 )
 
 # Подключение роутеров

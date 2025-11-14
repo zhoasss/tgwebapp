@@ -4,9 +4,7 @@
  */
 
 import { getInitData } from './telegram.js';
-
-// URL API сервера
-const API_BASE_URL = 'http://localhost:8000';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
 
 /**
  * Выполняет запрос к API
@@ -48,7 +46,7 @@ async function apiRequest(endpoint, options = {}) {
  */
 export async function getProfile() {
   try {
-    return await apiRequest('/api/profile/');
+    return await apiRequest(API_ENDPOINTS.PROFILE);
   } catch (error) {
     console.error('❌ Ошибка получения профиля:', error);
     throw error;
@@ -60,13 +58,26 @@ export async function getProfile() {
  */
 export async function updateProfile(data) {
   try {
-    return await apiRequest('/api/profile/', {
+    return await apiRequest(API_ENDPOINTS.PROFILE, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   } catch (error) {
     console.error('❌ Ошибка обновления профиля:', error);
     throw error;
+  }
+}
+
+/**
+ * Проверка здоровья API
+ */
+export async function checkHealth() {
+  try {
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.HEALTH}`);
+    return response.ok;
+  } catch (error) {
+    console.error('❌ API недоступен:', error);
+    return false;
   }
 }
 

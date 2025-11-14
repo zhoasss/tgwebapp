@@ -6,8 +6,9 @@ API endpoints для профиля пользователя
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 import logging
+import re
 
 from ...shared.database.models import User
 from ...shared.database.connection import get_session
@@ -16,10 +17,44 @@ from ...shared.auth.telegram_auth import get_telegram_user
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
 class ProfileUpdate(BaseModel):
-    """Схема для обновления профиля"""
-    phone: str | None = None
-    business_name: str | None = None
-    address: str | None = None
+    """Схема для обновления профиля с валидацией"""
+    phone: str | None = Field(None, max_length=50, description="Номер телефона")
+    business_name: str | None = Field(None, max_length=255, description="Название бизнеса")
+    address: str | None = Field(None, max_length=500, description="Адрес")
+    
+    @validator('phone')
+    def validate_phone(cls, v):
+        """Валидация номера телефона"""
+        if v is None or v == '':
+            return v
+        
+        # Удаляем пробелы
+        v = v.strip()
+        
+        # Проверяем на пустую строку после trim
+        if not v:
+            return None
+        
+        # Базовая проверка формата (цифры, +, пробелы, дефисы, скобки)
+        if not re.match(r'^\+?[\d\s\-()]{10,20}$', v):
+            raise ValueError('Неверный формат номера телефона. Используйте формат: +7 999 123-45-67')
+        
+        return v
+    
+    @validator('business_name', 'address')
+    def validate_string_fields(cls, v):
+        """Валидация текстовых полей"""
+        if v is None or v == '':
+            return v
+        
+        # Удаляем лишние пробелы
+        v = v.strip()
+        
+        # Проверяем на пустую строку после trim
+        if not v:
+            return None
+        
+        return v
 
 @router.get("/")
 async def get_profile(

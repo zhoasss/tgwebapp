@@ -8,8 +8,8 @@ from src.features.start_command.handler import register_start_handler
 
 async def run_bot():
     """Запускает бота"""
-    # Настройка логирования
-    setup_logging()
+    # Настройка логирования с ротацией
+    setup_logging(log_file='bot.log')
     
     # Загрузка конфигурации
     config = load_config()
@@ -20,8 +20,8 @@ async def run_bot():
     try:
         await init_database()
     except Exception as e:
-        logging.error(f"❌ Не удалось инициализировать БД: {e}")
-        logging.warning("⚠️ Бот продолжит работу без БД")
+        logging.critical(f"❌ Критическая ошибка инициализации БД: {e}")
+        raise SystemExit(1)  # Останавливаем приложение при ошибке БД
     
     # Создание приложения
     application = Application.builder().token(config['bot_token']).build()
@@ -40,7 +40,7 @@ async def run_bot():
     
     # Запуск polling
     await application.updater.start_polling(
-        drop_pending_updates=True,
+        drop_pending_updates=False,  # Изменено: теперь бот обрабатывает все сообщения
         allowed_updates=["message", "callback_query"]
     )
     
