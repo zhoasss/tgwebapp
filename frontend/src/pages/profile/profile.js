@@ -13,8 +13,12 @@ let profileData = {};
  */
 function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
+  console.log('🔍 Проверка Telegram WebApp:', window.Telegram?.WebApp);
+  console.log('🔍 initData:', window.Telegram?.WebApp?.initData);
+  console.log('🔍 initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
 
   const user = getTelegramUser();
+  console.log('👤 Полученные данные пользователя:', user);
   
   if (user) {
     profileData = {
@@ -27,10 +31,15 @@ function loadProfileData() {
       address: localStorage.getItem('profile_address') || ''
     };
     
+    console.log('✅ Данные профиля загружены:', profileData);
     updateProfileUI();
-    console.log('✅ Данные профиля загружены');
   } else {
-    console.warn('⚠️ Не удалось получить данные пользователя из Telegram');
+    console.error('❌ Не удалось получить данные пользователя из Telegram');
+    console.log('ℹ️ Возможные причины:');
+    console.log('1. WebApp не открыт через Telegram бота');
+    console.log('2. initData пустой или не передан');
+    console.log('3. Проблема с Telegram SDK');
+    
     profileData = {
       firstName: 'Пользователь',
       lastName: '',
