@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 def load_config():
     """Загружает конфигурацию из .env файла"""
-    load_dotenv("p.env")
+    load_dotenv(".env")
     
     bot_token = os.getenv("BOT_TOKEN")
     web_app_url = os.getenv("WEB_APP_URL")
