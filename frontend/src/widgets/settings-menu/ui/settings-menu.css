@@ -17,6 +17,7 @@
   transition: background-color 0.3s ease, border-color 0.3s ease, 
               transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
+  user-select: none;
 }
 
 .settings-item:hover {
@@ -24,6 +25,21 @@
   border-color: var(--settings-hover-border);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px var(--settings-hover-shadow);
+}
+
+.settings-item:active {
+  transform: translateY(0);
+}
+
+.settings-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-item-text {
+  flex: 1;
 }
 
 .settings-item h3 {
@@ -46,5 +62,18 @@
 
 .settings-item:hover p {
   color: var(--settings-hover-text-secondary);
+}
+
+.settings-item-arrow {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: color 0.3s ease, transform 0.3s ease;
+  opacity: 0.6;
+}
+
+.settings-item:hover .settings-item-arrow {
+  color: var(--settings-hover-text-primary);
+  transform: translateX(4px);
+  opacity: 1;
 }
 
