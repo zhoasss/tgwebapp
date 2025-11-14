@@ -11,70 +11,28 @@ let profileData = {};
 let isLoading = false;
 
 /**
- * Загружает данные профиля из БД через API
- * Работает ТОЛЬКО с БД по telegram_id
+ * Загружает данные профиля из памяти (уже загружены из БД при старте)
+ * Данные загружены Auth Guard'ом из БД при нажатии "Открыть кабинет"
  */
-async function loadProfileData() {
-  console.log('📡 Загрузка данных профиля из БД...');
+function loadProfileData() {
+  console.log('📋 Загрузка данных профиля из памяти...');
   
-  const user = getTelegramUser();
-  console.log('👤 Telegram User ID:', user?.id);
-  
-  if (!user) {
-    console.error('❌ Не удалось получить данные пользователя из Telegram');
-    showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите бот.');
+  // Проверяем, есть ли данные в памяти (загружены из БД при старте)
+  if (!window.userData) {
+    console.error('❌ Данные не загружены из БД');
+    showError('Данные не загружены. Пожалуйста, перезапустите приложение.');
     return;
   }
 
-  // Показываем индикатор загрузки
-  showLoading(true);
-
-  try {
-    console.log('🌐 API запрос: GET /api/profile/ для user ID:', user.id);
-    const apiProfile = await getProfile();
-    
-    console.log('✅ Данные получены из БД:', apiProfile);
-    
-    // Проверяем, новый ли это пользователь
-    const isNewUser = !apiProfile.phone && !apiProfile.business_name && !apiProfile.address;
-    
-    if (isNewUser) {
-      console.log('✨ Новый пользователь! Создана запись в БД для ID:', apiProfile.telegram_id);
-      showNotification('Добро пожаловать! Заполните свой профиль.');
-    } else {
-      console.log('✅ Существующий пользователь. Данные загружены из БД для ID:', apiProfile.telegram_id);
-    }
-    
-    // Сохраняем данные локально (только для этой страницы)
-    profileData = {
-      id: apiProfile.telegram_id,
-      firstName: apiProfile.first_name || 'Пользователь',
-      lastName: apiProfile.last_name || '',
-      username: apiProfile.username || '',
-      phone: apiProfile.phone || '',
-      businessName: apiProfile.business_name || '',
-      address: apiProfile.address || ''
-    };
-    
-    updateProfileUI();
-    
-    console.log('🎉 Профиль загружен из БД и отображён!');
-    
-  } catch (error) {
-    console.error('❌ Ошибка загрузки профиля из БД:', error);
-    
-    let errorMessage = 'Не удалось загрузить данные профиля из БД.';
-    
-    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-      errorMessage = 'Ошибка авторизации. Пожалуйста, перезапустите бота.';
-    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      errorMessage = 'Нет связи с сервером. Проверьте подключение к интернету.';
-    }
-    
-    showError(errorMessage);
-  } finally {
-    showLoading(false);
-  }
+  console.log('✅ Данные из БД есть в памяти:', window.userData);
+  
+  // Используем данные из памяти (они были загружены из БД при старте)
+  profileData = { ...window.userData };
+  
+  // Обновляем UI
+  updateProfileUI();
+  
+  console.log('🎉 Профиль отображён (данные из БД, загружены при старте)');
 }
 
 /**
@@ -278,8 +236,14 @@ async function savePhoneToAPI(phone) {
     // Обновляем локальные данные из ответа БД
     profileData.phone = updatedProfile.phone || '';
     
+    // Обновляем глобальные данные (загружены из БД)
+    if (window.userData) {
+      window.userData.phone = updatedProfile.phone || '';
+      console.log('💾 Обновлены данные в памяти (источник - БД)');
+    }
+    
     updateProfileUI();
-    showNotification('Номер телефона сохранен!');
+    showNotification('Номер телефона сохранен в БД!');
   } catch (error) {
     console.error('❌ Ошибка сохранения номера в БД:', error);
     showNotification('Не удалось сохранить номер телефона');
@@ -309,7 +273,7 @@ async function saveProfile() {
 
   try {
     console.log('🌐 API запрос: PUT /api/profile/ - сохранение в БД');
-    console.log('📝 Данные для сохранения:', updateData);
+    console.log('📝 Данные для сохранения в БД:', updateData);
     
     const updatedProfile = await updateProfile(updateData);
     
@@ -320,6 +284,14 @@ async function saveProfile() {
     profileData.phone = updatedProfile.phone || '';
     profileData.businessName = updatedProfile.business_name || '';
     profileData.address = updatedProfile.address || '';
+    
+    // Обновляем глобальные данные (источник - БД)
+    if (window.userData) {
+      window.userData.phone = updatedProfile.phone || '';
+      window.userData.businessName = updatedProfile.business_name || '';
+      window.userData.address = updatedProfile.address || '';
+      console.log('💾 Обновлены данные в памяти (источник - БД)');
+    }
     
     // Обновляем UI и выходим из режима редактирования
     updateProfileUI();
@@ -339,11 +311,11 @@ async function saveProfile() {
 /**
  * Инициализация страницы профиля
  */
-async function initProfilePage() {
+function initProfilePage() {
   console.log('🚀 Инициализация страницы профиля...');
   
-  // Загружаем данные профиля из БД через API
-  await loadProfileData();
+  // Загружаем данные из памяти (уже загружены из БД при открытии кабинета)
+  loadProfileData();
   
   // Настраиваем обработчики событий
   const editButton = document.getElementById('edit-profile-btn');

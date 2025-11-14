@@ -55,14 +55,82 @@ export async function initAuthGuard() {
   
   console.log('✅ Auth Guard: Авторизация успешна');
   
+  updateLoadingMessage('Загрузка данных из БД...');
+  await sleep(100);
+  
   // Готовим приложение к работе
   tg.ready();
   tg.expand();
+  
+  // Загружаем данные из БД при открытии кабинета
+  const dataLoaded = await loadUserDataFromDB();
+  
+  if (!dataLoaded) {
+    console.error('❌ Не удалось загрузить данные из БД');
+    hideLoadingOverlay();
+    showUnauthorizedError('Не удалось загрузить данные из БД. Проверьте соединение.');
+    return false;
+  }
+  
+  console.log('✅ Данные загружены из БД при открытии кабинета');
   
   // Скрываем индикатор загрузки
   hideLoadingOverlay();
   
   return true;
+}
+
+/**
+ * Загружает данные пользователя из БД
+ * Сохраняет в window.userData для использования на страницах
+ * @returns {boolean} true если загрузка успешна
+ */
+async function loadUserDataFromDB() {
+  try {
+    console.log('📡 API запрос: GET /api/profile/ - загрузка из БД');
+    const apiProfile = await getProfile();
+    
+    console.log('✅ Данные получены из БД:', apiProfile);
+    
+    // Проверяем, новый ли это пользователь
+    const isNewUser = !apiProfile.phone && !apiProfile.business_name && !apiProfile.address;
+    
+    if (isNewUser) {
+      console.log('✨ Новый пользователь! Создана запись в БД для ID:', apiProfile.telegram_id);
+      showNotification('Добро пожаловать! Заполните свой профиль.');
+    } else {
+      console.log('✅ Существующий пользователь. Данные из БД для ID:', apiProfile.telegram_id);
+    }
+    
+    // Сохраняем в глобальную переменную (живёт пока открыто приложение)
+    window.userData = {
+      id: apiProfile.telegram_id,
+      firstName: apiProfile.first_name || 'Пользователь',
+      lastName: apiProfile.last_name || '',
+      username: apiProfile.username || '',
+      phone: apiProfile.phone || '',
+      businessName: apiProfile.business_name || '',
+      address: apiProfile.address || ''
+    };
+    
+    console.log('💾 Данные из БД сохранены в память:', window.userData);
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Ошибка загрузки из БД:', error);
+    
+    let errorMessage = 'Не удалось загрузить данные из БД.';
+    
+    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      errorMessage = 'Ошибка авторизации. Пожалуйста, перезапустите бота.';
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      errorMessage = 'Нет связи с сервером БД. Проверьте подключение к интернету.';
+    }
+    
+    showNotification(errorMessage);
+    return false;
+  }
 }
 
 /**
