@@ -15,9 +15,6 @@ let isLoading = false;
  */
 async function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
-  console.log('🔍 Проверка Telegram WebApp:', window.Telegram?.WebApp);
-  console.log('🔍 initData:', window.Telegram?.WebApp?.initData);
-  console.log('🔍 initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
   
   const user = getTelegramUser();
   console.log('👤 Данные пользователя из Telegram:', user);
@@ -34,7 +31,16 @@ async function loadProfileData() {
   try {
     console.log('🌐 Загрузка профиля из API...');
     const apiProfile = await getProfile();
-    console.log('✅ Профиль получен из API:', apiProfile);
+    
+    // Проверяем, новый ли это пользователь
+    const isNewUser = !apiProfile.phone && !apiProfile.business_name && !apiProfile.address;
+    
+    if (isNewUser) {
+      console.log('✨ Новый пользователь! Создан профиль:', apiProfile);
+      showNotification('Добро пожаловать! Заполните свой профиль.');
+    } else {
+      console.log('✅ Профиль загружен из БД:', apiProfile);
+    }
     
     profileData = {
       id: apiProfile.telegram_id,
@@ -47,9 +53,23 @@ async function loadProfileData() {
     };
     
     updateProfileUI();
+    
+    // Показываем успешное подключение
+    console.log('🎉 Профиль успешно загружен. Пользователь может работать!');
+    
   } catch (error) {
     console.error('❌ Ошибка загрузки профиля:', error);
-    showError('Не удалось загрузить данные профиля. Проверьте соединение.');
+    
+    // Показываем понятную ошибку
+    let errorMessage = 'Не удалось загрузить данные профиля.';
+    
+    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+      errorMessage = 'Ошибка авторизации. Пожалуйста, перезапустите бота.';
+    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      errorMessage = 'Нет связи с сервером. Проверьте подключение к интернету.';
+    }
+    
+    showError(errorMessage);
   } finally {
     showLoading(false);
   }
