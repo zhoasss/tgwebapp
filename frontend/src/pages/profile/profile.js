@@ -8,82 +8,82 @@ import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
 
 let isEditMode = false;
 let profileData = {};
-let useAPI = true; // Использовать API или localStorage
+let isLoading = false;
 
 /**
- * Загружает данные профиля
+ * Загружает данные профиля из API
  */
 async function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
   console.log('🔍 Проверка Telegram WebApp:', window.Telegram?.WebApp);
   console.log('🔍 initData:', window.Telegram?.WebApp?.initData);
   console.log('🔍 initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
-
+  
   const user = getTelegramUser();
-  console.log('👤 Полученные данные пользователя:', user);
+  console.log('👤 Данные пользователя из Telegram:', user);
   
   if (!user) {
     console.error('❌ Не удалось получить данные пользователя из Telegram');
-    console.log('ℹ️ Возможные причины:');
-    console.log('1. WebApp не открыт через Telegram бота');
-    console.log('2. initData пустой или не передан');
-    console.log('3. Проблема с Telegram SDK');
-    
-    profileData = {
-      firstName: 'Пользователь',
-      lastName: '',
-      username: '',
-      phone: '',
-      businessName: '',
-      address: ''
-    };
-    updateProfileUI();
+    showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите бот.');
     return;
   }
 
-  // Пытаемся загрузить данные из API
-  if (useAPI) {
-    try {
-      console.log('🌐 Загрузка профиля из API...');
-      const apiProfile = await getProfile();
-      console.log('✅ Профиль получен из API:', apiProfile);
-      
-      profileData = {
-        id: apiProfile.telegram_id,
-        firstName: apiProfile.first_name || 'Пользователь',
-        lastName: apiProfile.last_name || '',
-        username: apiProfile.username || '',
-        phone: apiProfile.phone || '',
-        businessName: apiProfile.business_name || '',
-        address: apiProfile.address || ''
-      };
-      
-      updateProfileUI();
-      return;
-    } catch (error) {
-      console.warn('⚠️ Не удалось загрузить профиль из API, используем fallback:', error);
-      // Fallback на localStorage
-      useAPI = false;
-    }
+  // Показываем индикатор загрузки
+  showLoading(true);
+
+  try {
+    console.log('🌐 Загрузка профиля из API...');
+    const apiProfile = await getProfile();
+    console.log('✅ Профиль получен из API:', apiProfile);
+    
+    profileData = {
+      id: apiProfile.telegram_id,
+      firstName: apiProfile.first_name || 'Пользователь',
+      lastName: apiProfile.last_name || '',
+      username: apiProfile.username || '',
+      phone: apiProfile.phone || '',
+      businessName: apiProfile.business_name || '',
+      address: apiProfile.address || ''
+    };
+    
+    updateProfileUI();
+  } catch (error) {
+    console.error('❌ Ошибка загрузки профиля:', error);
+    showError('Не удалось загрузить данные профиля. Проверьте соединение.');
+  } finally {
+    showLoading(false);
+  }
+}
+
+/**
+ * Показывает/скрывает индикатор загрузки
+ */
+function showLoading(show) {
+  isLoading = show;
+  const loadingElement = document.getElementById('loading-indicator');
+  if (loadingElement) {
+    loadingElement.style.display = show ? 'flex' : 'none';
   }
   
-  // Fallback: загружаем из localStorage
-  console.log('💾 Загрузка данных из localStorage (fallback)...');
-  const telegramPhone = user.phone_number || '';
-  console.log('📞 Номер телефона из Telegram:', telegramPhone);
+  // Блокируем кнопку редактирования во время загрузки
+  const editButton = document.getElementById('edit-profile-btn');
+  if (editButton) {
+    editButton.disabled = show;
+  }
+}
+
+/**
+ * Показывает сообщение об ошибке
+ */
+function showError(message) {
+  showNotification(message);
   
-  profileData = {
-    id: user.id,
-    firstName: user.first_name || 'Пользователь',
-    lastName: user.last_name || '',
-    username: user.username || '',
-    phone: telegramPhone || localStorage.getItem('profile_phone') || '',
-    businessName: localStorage.getItem('profile_business') || '',
-    address: localStorage.getItem('profile_address') || ''
-  };
-  
-  console.log('✅ Данные профиля загружены из localStorage:', profileData);
-  updateProfileUI();
+  // Показываем сообщение об ошибке в UI
+  const errorElement = document.getElementById('error-message');
+  if (errorElement) {
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
+  }
 }
 
 /**
@@ -180,6 +180,11 @@ function generateGradient(userId) {
  * Переключает режим редактирования
  */
 function toggleEditMode() {
+  if (isLoading) {
+    showNotification('Дождитесь завершения загрузки');
+    return;
+  }
+
   isEditMode = !isEditMode;
   const viewMode = document.getElementById('view-mode');
   const editMode = document.getElementById('edit-mode');
@@ -223,24 +228,34 @@ function requestPhoneNumber() {
       if (status && data?.responseUnsafe?.contact?.phone_number) {
         const phone = data.responseUnsafe.contact.phone_number;
         
-        // Сохраняем номер телефона
+        // Автоматически сохраняем номер через API
         profileData.phone = phone;
-        localStorage.setItem('profile_phone', phone);
-        
-        // Обновляем UI
-        updateProfileUI();
-        
-        showNotification('Номер телефона сохранен!');
-        console.log('✅ Номер телефона получен:', phone);
+        savePhoneToAPI(phone);
       } else {
         console.log('ℹ️ Пользователь отменил запрос контакта');
       }
     });
   } else {
-    // Fallback для старых версий - просто показываем форму редактирования
+    // Fallback для старых версий - показываем форму редактирования
     console.warn('⚠️ Метод requestContact недоступен в этой версии Telegram');
-    showNotification('Пожалуйста, введите номер телефона вручную в режиме редактирования');
+    showNotification('Пожалуйста, введите номер телефона вручную');
     toggleEditMode();
+  }
+}
+
+/**
+ * Сохраняет только номер телефона через API
+ */
+async function savePhoneToAPI(phone) {
+  try {
+    const updatedProfile = await updateProfile({ phone });
+    profileData.phone = updatedProfile.phone || '';
+    updateProfileUI();
+    showNotification('Номер телефона сохранен!');
+    console.log('✅ Номер телефона сохранен:', phone);
+  } catch (error) {
+    console.error('❌ Ошибка сохранения номера:', error);
+    showNotification('Не удалось сохранить номер телефона');
   }
 }
 
@@ -248,6 +263,11 @@ function requestPhoneNumber() {
  * Сохраняет изменения профиля
  */
 async function saveProfile() {
+  if (isLoading) {
+    showNotification('Операция уже выполняется');
+    return;
+  }
+
   const phone = document.getElementById('edit-phone').value.trim();
   const businessName = document.getElementById('edit-business').value.trim();
   const address = document.getElementById('edit-address').value.trim();
@@ -258,57 +278,31 @@ async function saveProfile() {
     address: address || null
   };
   
-  // Пытаемся сохранить через API
-  if (useAPI) {
-    try {
-      console.log('🌐 Сохранение профиля через API...');
-      const updatedProfile = await updateProfile(updateData);
-      console.log('✅ Профиль обновлен через API:', updatedProfile);
-      
-      // Обновляем локальные данные
-      profileData.phone = updatedProfile.phone || '';
-      profileData.businessName = updatedProfile.business_name || '';
-      profileData.address = updatedProfile.address || '';
-      
-      // Обновляем UI и выходим из режима редактирования
-      updateProfileUI();
-      toggleEditMode();
-      
-      // Показываем уведомление
-      showNotification('Профиль успешно обновлен!');
-      
-      return;
-    } catch (error) {
-      console.error('❌ Ошибка сохранения через API:', error);
-      showNotification('Не удалось сохранить через API. Данные сохранены локально.');
-      // Fallback на localStorage
-      useAPI = false;
-    }
+  showLoading(true);
+
+  try {
+    console.log('🌐 Сохранение профиля через API...');
+    const updatedProfile = await updateProfile(updateData);
+    console.log('✅ Профиль обновлен через API:', updatedProfile);
+    
+    // Обновляем локальные данные из ответа сервера
+    profileData.phone = updatedProfile.phone || '';
+    profileData.businessName = updatedProfile.business_name || '';
+    profileData.address = updatedProfile.address || '';
+    
+    // Обновляем UI и выходим из режима редактирования
+    updateProfileUI();
+    toggleEditMode();
+    
+    // Показываем уведомление
+    showNotification('Профиль успешно обновлен!');
+    
+  } catch (error) {
+    console.error('❌ Ошибка сохранения профиля:', error);
+    showNotification('Не удалось сохранить профиль. Проверьте соединение.');
+  } finally {
+    showLoading(false);
   }
-  
-  // Fallback: сохраняем в localStorage
-  console.log('💾 Сохранение в localStorage (fallback)...');
-  if (phone) localStorage.setItem('profile_phone', phone);
-  if (businessName) localStorage.setItem('profile_business', businessName);
-  if (address) localStorage.setItem('profile_address', address);
-  
-  // Обновляем данные профиля
-  profileData.phone = phone;
-  profileData.businessName = businessName;
-  profileData.address = address;
-  
-  // Обновляем UI и выходим из режима редактирования
-  updateProfileUI();
-  toggleEditMode();
-  
-  // Показываем уведомление
-  showNotification('Профиль сохранен локально');
-  
-  console.log('✅ Профиль сохранен в localStorage:', {
-    phone,
-    businessName,
-    address
-  });
 }
 
 /**
