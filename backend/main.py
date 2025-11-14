@@ -1,4 +1,4 @@
-    import logging
+import logging
 from telegram.ext import Application
 from src.shared.config.env_loader import load_config
 from src.shared.logger.setup import setup_logging
