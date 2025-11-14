@@ -5,9 +5,9 @@
 
 /**
  * URL API сервера
- * Измените на URL вашего API сервера в production
+ * Railway deployment
  */
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://zhoasssgithubio-production.up.railway.app';
 
 /**
  * Определяет URL API сервера
