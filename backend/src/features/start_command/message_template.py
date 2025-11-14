@@ -1,4 +1,4 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, KeyboardButton, ReplyKeyboardMarkup
 
 def create_welcome_message(user) -> str:
     """Создает текст приветственного сообщения"""
@@ -23,4 +23,11 @@ def create_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
         )]
     ]
     return InlineKeyboardMarkup(keyboard)
+
+def create_contact_keyboard() -> ReplyKeyboardMarkup:
+    """Создает клавиатуру для запроса контакта"""
+    keyboard = [
+        [KeyboardButton("📱 Поделиться контактом", request_contact=True)]
+    ]
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
 

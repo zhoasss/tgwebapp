@@ -21,12 +21,17 @@ function loadProfileData() {
   console.log('👤 Полученные данные пользователя:', user);
   
   if (user) {
+    // Проверяем, есть ли номер телефона в данных Telegram
+    const telegramPhone = user.phone_number || '';
+    console.log('📞 Номер телефона из Telegram:', telegramPhone);
+    
     profileData = {
       id: user.id,
       firstName: user.first_name || 'Пользователь',
       lastName: user.last_name || '',
       username: user.username || '',
-      phone: localStorage.getItem('profile_phone') || '',
+      // Приоритет: сначала из Telegram, потом из localStorage
+      phone: telegramPhone || localStorage.getItem('profile_phone') || '',
       businessName: localStorage.getItem('profile_business') || '',
       address: localStorage.getItem('profile_address') || ''
     };
@@ -71,7 +76,35 @@ function updateProfileUI() {
   // Обновляем детали
   document.getElementById('detail-firstname').textContent = profileData.firstName;
   document.getElementById('detail-lastname').textContent = profileData.lastName || 'Не указана';
-  document.getElementById('detail-phone').textContent = profileData.phone || 'Не указан';
+  
+  // Для телефона добавляем кнопку запроса, если его нет
+  const phoneElement = document.getElementById('detail-phone');
+  if (profileData.phone) {
+    phoneElement.textContent = profileData.phone;
+  } else {
+    phoneElement.innerHTML = `
+      <span style="color: var(--text-secondary);">Не указан</span>
+      <button id="request-phone-btn" style="
+        margin-left: 8px;
+        padding: 4px 12px;
+        font-size: 12px;
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      ">Запросить</button>
+    `;
+    
+    // Добавляем обработчик для кнопки запроса телефона
+    setTimeout(() => {
+      const requestBtn = document.getElementById('request-phone-btn');
+      if (requestBtn) {
+        requestBtn.addEventListener('click', requestPhoneNumber);
+      }
+    }, 100);
+  }
+  
   document.getElementById('detail-business').textContent = profileData.businessName || 'Не указано';
   document.getElementById('detail-address').textContent = profileData.address || 'Не указан';
   
@@ -138,6 +171,48 @@ function toggleEditMode() {
   }
   
   console.log(`🔄 Режим редактирования: ${isEditMode ? 'включен' : 'выключен'}`);
+}
+
+/**
+ * Запрашивает номер телефона у пользователя через Telegram
+ */
+function requestPhoneNumber() {
+  console.log('📞 Запрос номера телефона...');
+  
+  const tg = window.Telegram?.WebApp;
+  
+  if (!tg) {
+    showNotification('Telegram WebApp недоступен');
+    return;
+  }
+  
+  // Проверяем, поддерживается ли метод requestContact (доступен с версии 6.9)
+  if (typeof tg.requestContact === 'function') {
+    tg.requestContact((status, data) => {
+      console.log('📞 Результат запроса контакта:', status, data);
+      
+      if (status && data?.responseUnsafe?.contact?.phone_number) {
+        const phone = data.responseUnsafe.contact.phone_number;
+        
+        // Сохраняем номер телефона
+        profileData.phone = phone;
+        localStorage.setItem('profile_phone', phone);
+        
+        // Обновляем UI
+        updateProfileUI();
+        
+        showNotification('Номер телефона сохранен!');
+        console.log('✅ Номер телефона получен:', phone);
+      } else {
+        console.log('ℹ️ Пользователь отменил запрос контакта');
+      }
+    });
+  } else {
+    // Fallback для старых версий - просто показываем форму редактирования
+    console.warn('⚠️ Метод requestContact недоступен в этой версии Telegram');
+    showNotification('Пожалуйста, введите номер телефона вручную в режиме редактирования');
+    toggleEditMode();
+  }
 }
 
 /**
