@@ -6,7 +6,6 @@
 import { requireAuth, isAuthenticated, validateInitData } from '../../../shared/lib/auth.js';
 import { getTelegramWebApp, showNotification } from '../../../shared/lib/telegram.js';
 import { getProfile } from '../../../shared/lib/profile-api.js';
-import { setUserData, setLoading, setLoadError } from '../../../shared/lib/user-store.js';
 
 /**
  * Инициализирует защиту авторизации для всего приложения
@@ -56,87 +55,14 @@ export async function initAuthGuard() {
   
   console.log('✅ Auth Guard: Авторизация успешна');
   
-  updateLoadingMessage('Загрузка данных...');
-  await sleep(100);
-  
   // Готовим приложение к работе
   tg.ready();
   tg.expand();
-  
-  // Загружаем данные пользователя СРАЗУ при открытии кабинета
-  const dataLoaded = await loadUserDataOnStartup();
-  
-  if (!dataLoaded) {
-    console.error('❌ Не удалось загрузить данные пользователя');
-    hideLoadingOverlay();
-    showUnauthorizedError('Не удалось загрузить данные профиля. Проверьте соединение.');
-    return false;
-  }
-  
-  console.log('✅ Auth Guard: Данные пользователя загружены при старте');
   
   // Скрываем индикатор загрузки
   hideLoadingOverlay();
   
   return true;
-}
-
-/**
- * Загружает данные пользователя при старте приложения
- * @returns {boolean} true если загрузка успешна
- */
-async function loadUserDataOnStartup() {
-  setLoading(true);
-  
-  try {
-    console.log('📡 Загрузка данных пользователя из API...');
-    const apiProfile = await getProfile();
-    
-    // Проверяем, новый ли это пользователь
-    const isNewUser = !apiProfile.phone && !apiProfile.business_name && !apiProfile.address;
-    
-    if (isNewUser) {
-      console.log('✨ Новый пользователь! Создан профиль в БД');
-      showNotification('Добро пожаловать! Заполните свой профиль.');
-    } else {
-      console.log('✅ Существующий пользователь. Данные загружены из БД');
-    }
-    
-    // Сохраняем данные в глобальное хранилище
-    setUserData({
-      id: apiProfile.telegram_id,
-      firstName: apiProfile.first_name || 'Пользователь',
-      lastName: apiProfile.last_name || '',
-      username: apiProfile.username || '',
-      phone: apiProfile.phone || '',
-      businessName: apiProfile.business_name || '',
-      address: apiProfile.address || ''
-    });
-    
-    setLoadError(null);
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Ошибка загрузки данных пользователя:', error);
-    
-    // Сохраняем ошибку
-    setLoadError(error);
-    
-    // Показываем понятную ошибку
-    let errorMessage = 'Не удалось загрузить данные профиля.';
-    
-    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-      errorMessage = 'Ошибка авторизации. Пожалуйста, перезапустите бота.';
-    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      errorMessage = 'Нет связи с сервером. Проверьте подключение к интернету.';
-    }
-    
-    showNotification(errorMessage);
-    return false;
-    
-  } finally {
-    setLoading(false);
-  }
 }
 
 /**
