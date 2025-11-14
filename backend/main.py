@@ -1,11 +1,12 @@
 import logging
+import asyncio
 from telegram.ext import Application
 from src.shared.config.env_loader import load_config
 from src.shared.logger.setup import setup_logging
 from src.features.start_command.handler import register_start_handler
 
-def main():
-    """Точка входа в приложение"""
+async def run_bot():
+    """Запускает бота"""
     # Настройка логирования
     setup_logging()
     
@@ -17,16 +18,33 @@ def main():
     # Создание приложения
     application = Application.builder().token(config['bot_token']).build()
     
+    # Сохраняем web_app_url в bot_data для использования в обработчиках
+    application.bot_data['web_app_url'] = config['web_app_url']
+    
     # Регистрация обработчиков
     register_start_handler(application)
     
-    # Запуск бота
-    application.run_polling(
+    # Инициализация приложения
+    await application.initialize()
+    await application.start()
+    
+    logging.info("✅ Бот успешно запущен")
+    
+    # Запуск polling
+    await application.updater.start_polling(
         drop_pending_updates=True,
         allowed_updates=["message", "callback_query"]
     )
     
-    logging.info("✅ Бот успешно запущен")
+    # Ожидание остановки
+    await asyncio.Event().wait()
+
+def main():
+    """Точка входа в приложение"""
+    try:
+        asyncio.run(run_bot())
+    except KeyboardInterrupt:
+        logging.info("⏹️ Бот остановлен")
 
 if __name__ == "__main__":
     main()
