@@ -3,6 +3,7 @@ import asyncio
 from telegram.ext import Application
 from src.shared.config.env_loader import load_config
 from src.shared.logger.setup import setup_logging
+from src.shared.database.connection import init_database
 from src.features.start_command.handler import register_start_handler
 
 async def run_bot():
@@ -13,7 +14,14 @@ async def run_bot():
     # Загрузка конфигурации
     config = load_config()
     
-    logging.info("🚀 Запуск бота...")
+    logging.info("🚀 Запуск Telegram бота...")
+    
+    # Инициализация базы данных
+    try:
+        await init_database()
+    except Exception as e:
+        logging.error(f"❌ Не удалось инициализировать БД: {e}")
+        logging.warning("⚠️ Бот продолжит работу без БД")
     
     # Создание приложения
     application = Application.builder().token(config['bot_token']).build()
