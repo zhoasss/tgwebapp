@@ -4,75 +4,38 @@
  */
 
 import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
-import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
+import { updateProfile } from '../../shared/lib/profile-api.js';
+import { getUserData, updateUserData as updateStoreData } from '../../shared/lib/user-store.js';
 
 let isEditMode = false;
 let profileData = {};
 let isLoading = false;
 
 /**
- * Загружает данные профиля из API
+ * Загружает данные профиля из глобального хранилища
+ * Данные уже загружены при открытии кабинета (Auth Guard)
  */
-async function loadProfileData() {
-  console.log('📡 Загрузка данных профиля...');
+function loadProfileData() {
+  console.log('📋 Загрузка данных профиля из store...');
   
-  const user = getTelegramUser();
-  console.log('👤 Данные пользователя из Telegram:', user);
+  // Получаем данные из глобального хранилища
+  const userData = getUserData();
   
-  if (!user) {
-    console.error('❌ Не удалось получить данные пользователя из Telegram');
-    showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите бот.');
+  if (!userData) {
+    console.error('❌ Данные пользователя не найдены в store');
+    showError('Данные не загружены. Пожалуйста, перезапустите приложение.');
     return;
   }
 
-  // Показываем индикатор загрузки
-  showLoading(true);
-
-  try {
-    console.log('🌐 Загрузка профиля из API...');
-    const apiProfile = await getProfile();
-    
-    // Проверяем, новый ли это пользователь
-    const isNewUser = !apiProfile.phone && !apiProfile.business_name && !apiProfile.address;
-    
-    if (isNewUser) {
-      console.log('✨ Новый пользователь! Создан профиль:', apiProfile);
-      showNotification('Добро пожаловать! Заполните свой профиль.');
-    } else {
-      console.log('✅ Профиль загружен из БД:', apiProfile);
-    }
-    
-    profileData = {
-      id: apiProfile.telegram_id,
-      firstName: apiProfile.first_name || 'Пользователь',
-      lastName: apiProfile.last_name || '',
-      username: apiProfile.username || '',
-      phone: apiProfile.phone || '',
-      businessName: apiProfile.business_name || '',
-      address: apiProfile.address || ''
-    };
-    
-    updateProfileUI();
-    
-    // Показываем успешное подключение
-    console.log('🎉 Профиль успешно загружен. Пользователь может работать!');
-    
-  } catch (error) {
-    console.error('❌ Ошибка загрузки профиля:', error);
-    
-    // Показываем понятную ошибку
-    let errorMessage = 'Не удалось загрузить данные профиля.';
-    
-    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-      errorMessage = 'Ошибка авторизации. Пожалуйста, перезапустите бота.';
-    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      errorMessage = 'Нет связи с сервером. Проверьте подключение к интернету.';
-    }
-    
-    showError(errorMessage);
-  } finally {
-    showLoading(false);
-  }
+  console.log('✅ Данные профиля получены из store:', userData);
+  
+  // Используем данные из хранилища
+  profileData = { ...userData };
+  
+  // Обновляем UI
+  updateProfileUI();
+  
+  console.log('🎉 Профиль отображён. Никаких API запросов!');
 }
 
 /**
@@ -270,6 +233,10 @@ async function savePhoneToAPI(phone) {
   try {
     const updatedProfile = await updateProfile({ phone });
     profileData.phone = updatedProfile.phone || '';
+    
+    // Обновляем глобальное хранилище
+    updateStoreData({ phone: updatedProfile.phone || '' });
+    
     updateProfileUI();
     showNotification('Номер телефона сохранен!');
     console.log('✅ Номер телефона сохранен:', phone);
@@ -310,6 +277,13 @@ async function saveProfile() {
     profileData.businessName = updatedProfile.business_name || '';
     profileData.address = updatedProfile.address || '';
     
+    // Обновляем глобальное хранилище
+    updateStoreData({
+      phone: updatedProfile.phone || '',
+      businessName: updatedProfile.business_name || '',
+      address: updatedProfile.address || ''
+    });
+    
     // Обновляем UI и выходим из режима редактирования
     updateProfileUI();
     toggleEditMode();
@@ -331,7 +305,7 @@ async function saveProfile() {
 function initProfilePage() {
   console.log('🚀 Инициализация страницы профиля...');
   
-  // Загружаем данные профиля
+  // Загружаем данные профиля из store (уже загружены при старте)
   loadProfileData();
   
   // Настраиваем обработчики событий
