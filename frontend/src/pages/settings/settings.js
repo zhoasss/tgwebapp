@@ -3,14 +3,12 @@
  * Слой Pages - страницы приложения
  */
 
-import { showNotification } from '../../shared/lib/telegram.js';
-
 // Маршруты для настроек
 const SETTINGS_ROUTES = {
-  'Профиль': null, // Будет добавлено позже
-  'График работы': null, // Будет добавлено позже
-  'Услуги': null, // Будет добавлено позже
-  'Управление': null, // Будет добавлено позже
+  'Профиль': '../profile/index.html',
+  'График работы': '../schedule/index.html',
+  'Услуги': '../services/index.html',
+  'Управление': '../management/index.html',
 };
 
 function initSettingsPage() {
@@ -27,14 +25,9 @@ function initSettingsPage() {
       // Проверяем, есть ли маршрут для этой настройки
       const route = SETTINGS_ROUTES[cleanTitle];
       
+      // Переход на страницу настройки
       if (route) {
-        // Переход на страницу настройки
         window.location.href = route;
-      } else {
-        // Показываем уведомление, что функция будет доступна позже
-        showNotification(
-          `Раздел "${cleanTitle}" будет доступен в следующих обновлениях!`
-        );
       }
     });
   });
