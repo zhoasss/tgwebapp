@@ -11,17 +11,28 @@ def create_welcome_message(user) -> str:
         "✂️ **Управление списком услуг**\n"
         "⏰ **Настроить график работы**\n"
         "👤 **Редактировать профиль**\n\n"
-        "Нажмите на кнопку ниже, чтобы открыть кабинет в браузере! 🌐"
+        "Нажмите на кнопку ниже, чтобы открыть кабинет! 🚀"
     )
 
 def create_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
-    """Создает клавиатуру с кнопкой открытия кабинета"""
-    keyboard = [
-        [InlineKeyboardButton(
-            "Открыть кабинет 🚀",
-            url=web_app_url
-        )]
-    ]
+    """Создает клавиатуру с кнопкой открытия Mini App"""
+    # Проверяем, является ли URL HTTPS
+    if web_app_url.startswith('https://'):
+        # Используем Web App кнопку для HTTPS
+        keyboard = [
+            [InlineKeyboardButton(
+                "Открыть кабинет 🚀",
+                web_app=WebAppInfo(url=web_app_url)
+            )]
+        ]
+    else:
+        # Используем обычную ссылку для HTTP
+        keyboard = [
+            [InlineKeyboardButton(
+                "Открыть кабинет 🌐",
+                url=web_app_url
+            )]
+        ]
     return InlineKeyboardMarkup(keyboard)
 
 def create_contact_keyboard() -> ReplyKeyboardMarkup:
