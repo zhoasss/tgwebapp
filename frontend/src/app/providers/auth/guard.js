@@ -29,26 +29,61 @@ function updateAppState(updates) {
 }
 
 /**
- * Ожидает инициализации приложения
+ * Ожидает инициализации приложения с fallback логикой
  */
 export function waitForAppInit(timeout = 10000) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    // Если уже инициализировано - возвращаем сразу
     if (window.appState.isInitialized) {
       resolve(window.appState);
       return;
     }
 
+    // Если есть ошибка инициализации - возвращаем ошибку
+    if (window.appState.error && !window.appState.isLoading) {
+      reject(new Error(window.appState.error));
+      return;
+    }
+
+    const startTime = Date.now();
     const timeoutId = setTimeout(() => {
-      reject(new Error('Таймаут ожидания инициализации приложения'));
+      reject(new Error(`Таймаут ожидания инициализации приложения (${timeout}ms)`));
     }, timeout);
 
-    const checkState = () => {
+    const checkState = async () => {
+      // Если инициализация завершилась успешно
       if (window.appState.isInitialized) {
         clearTimeout(timeoutId);
         resolve(window.appState);
-      } else {
-        setTimeout(checkState, 100);
+        return;
       }
+
+      // Если произошла ошибка и инициализация не в процессе
+      if (window.appState.error && !window.appState.isLoading) {
+        clearTimeout(timeoutId);
+        reject(new Error(window.appState.error));
+        return;
+      }
+
+      // Если прошло больше 2 секунд и инициализация не началась - запускаем вручную
+      if (Date.now() - startTime > 2000 && !window.appState.isAuthenticated && !window.appState.isLoading) {
+        console.warn('⚠️ Auth Guard не запустился автоматически, запускаем вручную...');
+        try {
+          const result = await initAuthGuard();
+          if (result) {
+            clearTimeout(timeoutId);
+            resolve(window.appState);
+            return;
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          reject(error);
+          return;
+        }
+      }
+
+      // Продолжаем проверку
+      setTimeout(checkState, 200);
     };
 
     checkState();

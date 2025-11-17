@@ -5,7 +5,7 @@
 
 import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
 import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
-import { waitForAppInit } from '../../app/providers/auth/guard.js';
+import { waitForAppInit, initAuthGuard } from '../../app/providers/auth/guard.js';
 
 let isEditMode = false;
 let profileData = {};
@@ -19,20 +19,28 @@ const MAX_LOAD_ATTEMPTS = 10;
  */
 async function loadProfileData() {
   console.log('📋 Загрузка данных профиля...');
+  console.log('📊 Текущее состояние appState:', window.appState);
 
   try {
+    console.log('⏳ Ждем инициализации Auth Guard...');
+
     // Ждем инициализации приложения (Auth Guard загрузит данные)
     const appState = await waitForAppInit();
+    console.log('✅ Auth Guard инициализирован, состояние:', appState);
 
     if (!appState.isAuthenticated) {
+      console.error('❌ Пользователь не авторизован');
       throw new Error('Пользователь не авторизован');
     }
 
     if (appState.error) {
+      console.error('❌ Ошибка в appState:', appState.error);
       throw new Error(appState.error);
     }
 
     if (!appState.userData) {
+      console.error('❌ Данные пользователя отсутствуют в appState');
+      console.log('📊 Полное состояние appState:', JSON.stringify(appState, null, 2));
       throw new Error('Данные пользователя не загружены');
     }
 
@@ -54,6 +62,7 @@ async function loadProfileData() {
 
   } catch (error) {
     console.error('❌ Ошибка загрузки профиля:', error);
+    console.error('📊 Состояние appState на момент ошибки:', window.appState);
 
     let errorMessage = 'Не удалось загрузить данные профиля.';
 
@@ -63,14 +72,14 @@ async function loadProfileData() {
       errorMessage = 'Требуется авторизация через Telegram.';
     } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
       errorMessage = 'Нет связи с сервером. Проверьте подключение.';
+    } else if (error.message.includes('не загружены')) {
+      errorMessage = 'Данные профиля не найдены. Попробуйте перезапустить приложение.';
     }
 
     showError(errorMessage);
 
-    // Если это ошибка сети или авторизации, показываем кнопку повторной попытки
-    if (error.message.includes('связи') || error.message.includes('авторизации')) {
-      showRetryButton();
-    }
+    // Показываем кнопку повторной попытки для всех ошибок
+    showRetryButton();
   }
 }
 
@@ -401,6 +410,15 @@ async function initProfilePage() {
   console.log('🚀 Инициализация страницы профиля...');
 
   try {
+    // Проверяем, инициализирован ли уже Auth Guard
+    if (!window.appState || (!window.appState.isInitialized && !window.appState.isLoading)) {
+      console.log('🔒 Auth Guard не инициализирован, запускаем...');
+      const authResult = await initAuthGuard();
+      if (!authResult) {
+        throw new Error('Не удалось инициализировать авторизацию');
+      }
+    }
+
     // Загружаем данные профиля (ждем Auth Guard)
     await loadProfileData();
 
