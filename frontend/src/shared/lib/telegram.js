@@ -87,19 +87,88 @@ export function callTelegramMethod(methodName, minVersion = null, ...args) {
 
 /**
  * Показывает уведомление пользователю
- * Автоматически выбирает между showAlert (Telegram) и alert (браузер)
+ * Автоматически выбирает между showPopup (Telegram) и console.log (браузер)
  * @param {string} message - Текст сообщения
  * @param {Function} callback - Callback после закрытия (опционально)
  */
 export function showNotification(message, callback = null) {
-  // Пытаемся использовать showAlert из Telegram (требует версию 6.1+)
-  const result = callTelegramMethod('showAlert', '6.1', message, callback);
-  
-  if (result === null) {
-    // Fallback на обычный alert
-    alert(message);
-    if (callback) callback();
+  const tg = getTelegramWebApp();
+
+  // Сначала пробуем showPopup (работает в большинстве версий)
+  const popupResult = callTelegramMethod('showPopup', null, {
+    title: 'Уведомление',
+    message: message,
+    buttons: [{ text: 'OK', type: 'ok' }]
+  }, callback);
+
+  if (popupResult !== null) {
+    return popupResult;
   }
+
+  // Если showPopup не работает, пробуем Snackbar (новый метод)
+  if (tg && typeof tg.HapticFeedback !== 'undefined' && tg.showPopup) {
+    try {
+      // Используем Snackbar для коротких уведомлений
+      const snackbarResult = callTelegramMethod('showPopup', null, {
+        message: message.length > 50 ? message.substring(0, 50) + '...' : message,
+        buttons: [{ text: 'OK', type: 'ok' }]
+      }, callback);
+
+      if (snackbarResult !== null) {
+        return snackbarResult;
+      }
+    } catch (e) {
+      console.warn('Snackbar не поддерживается');
+    }
+  }
+
+  // Fallback: просто логируем в консоль и показываем toast-style уведомление
+  console.log('📢 Уведомление:', message);
+
+  // Показываем toast-style уведомление в DOM
+  showToastNotification(message);
+
+  if (callback) setTimeout(callback, 2000); // Имитируем задержку
+}
+
+function showToastNotification(message) {
+  // Создаем toast уведомление
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-color, #3390ec);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000;
+    font-size: 14px;
+    max-width: 300px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  `;
+  toast.textContent = message;
+
+  document.body.appendChild(toast);
+
+  // Показываем
+  setTimeout(() => {
+    toast.style.opacity = '1';
+  }, 100);
+
+  // Скрываем через 3 секунды
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
 }
 
 /**
