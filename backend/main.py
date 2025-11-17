@@ -9,7 +9,10 @@ from src.features.start_command.handler import register_start_handler
 async def run_bot():
     """Запускает бота"""
     # Настройка логирования с ротацией
-    setup_logging(log_file='bot.log')
+    from pathlib import Path
+    data_dir = Path("/app/data")
+    data_dir.mkdir(exist_ok=True)
+    setup_logging(log_file=str(data_dir / 'bot.log'))
     
     # Загрузка конфигурации
     config = load_config()

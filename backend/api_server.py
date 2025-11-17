@@ -12,7 +12,10 @@ from src.shared.logger.setup import setup_logging
 from src.features.api.profile import router as profile_router
 
 # Настройка логирования с ротацией
-setup_logging(log_file='api.log')
+from pathlib import Path
+data_dir = Path("/app/data")
+data_dir.mkdir(exist_ok=True)
+setup_logging(log_file=str(data_dir / 'api.log'))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
