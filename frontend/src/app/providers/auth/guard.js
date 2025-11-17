@@ -7,130 +7,223 @@ import { requireAuth, isAuthenticated, validateInitData } from '../../../shared/
 import { getTelegramWebApp, showNotification } from '../../../shared/lib/telegram.js';
 import { getProfile } from '../../../shared/lib/profile-api.js';
 
+// Глобальное состояние приложения
+window.appState = {
+  isInitialized: false,
+  isAuthenticated: false,
+  userData: null,
+  isLoading: false,
+  error: null
+};
+
+// Event для уведомления об изменениях состояния
+const stateChangeEvent = new CustomEvent('appStateChanged');
+
+/**
+ * Обновляет состояние приложения и уведомляет подписчиков
+ */
+function updateAppState(updates) {
+  Object.assign(window.appState, updates);
+  window.dispatchEvent(stateChangeEvent);
+  console.log('📊 App State обновлено:', window.appState);
+}
+
+/**
+ * Ожидает инициализации приложения
+ */
+export function waitForAppInit(timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    if (window.appState.isInitialized) {
+      resolve(window.appState);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      reject(new Error('Таймаут ожидания инициализации приложения'));
+    }, timeout);
+
+    const checkState = () => {
+      if (window.appState.isInitialized) {
+        clearTimeout(timeoutId);
+        resolve(window.appState);
+      } else {
+        setTimeout(checkState, 100);
+      }
+    };
+
+    checkState();
+  });
+}
+
 /**
  * Инициализирует защиту авторизации для всего приложения
  * Вызывается автоматически при загрузке любой страницы
  */
 export async function initAuthGuard() {
   console.log('🔒 Инициализация Auth Guard...');
-  
+
+  // Устанавливаем начальное состояние
+  updateAppState({ isLoading: true, error: null });
+
   // Показываем индикатор загрузки
   showLoadingOverlay('Подключение к Telegram...');
-  
-  // Небольшая задержка для отображения UI
   await sleep(300);
-  
-  const tg = getTelegramWebApp();
-  
-  // Шаг 1: Проверка Telegram WebApp
-  if (!tg) {
-    console.error('❌ Telegram WebApp недоступен');
+
+  try {
+    const tg = getTelegramWebApp();
+
+    // Шаг 1: Проверка Telegram WebApp
+    if (!tg) {
+      throw new Error('Telegram WebApp недоступен');
+    }
+
+    updateLoadingMessage('Проверка авторизации...');
+    await sleep(200);
+
+    // Шаг 2: Проверка валидности initData
+    if (!validateInitData()) {
+      throw new Error('Невалидные данные авторизации');
+    }
+
+    // Шаг 3: Требуем авторизацию
+    const authenticated = requireAuth(() => {
+      updateAppState({ isAuthenticated: false, error: 'Требуется авторизация' });
+      hideLoadingOverlay();
+      blockAppAccess();
+    });
+
+    if (!authenticated) {
+      updateAppState({ isAuthenticated: false, error: 'Авторизация отклонена' });
+      hideLoadingOverlay();
+      blockAppAccess();
+      return false;
+    }
+
+    console.log('✅ Auth Guard: Авторизация успешна');
+    updateAppState({ isAuthenticated: true });
+
+    updateLoadingMessage('Загрузка данных из БД...');
+    await sleep(100);
+
+    // Готовим приложение к работе
+    tg.ready();
+    tg.expand();
+
+    // Загружаем данные из БД с retry логикой
+    const dataLoaded = await loadUserDataFromDBWithRetry();
+
+    if (!dataLoaded) {
+      throw new Error('Не удалось загрузить данные из БД после нескольких попыток');
+    }
+
+    console.log('✅ Данные загружены из БД при открытии кабинета');
+    updateAppState({
+      isInitialized: true,
+      isLoading: false,
+      error: null
+    });
+
+    // Скрываем индикатор загрузки
     hideLoadingOverlay();
-    showUnauthorizedError('Приложение должно быть открыто через Telegram бота');
+
+    return true;
+
+  } catch (error) {
+    console.error('❌ Ошибка инициализации Auth Guard:', error);
+
+    updateAppState({
+      isInitialized: true,
+      isLoading: false,
+      error: error.message
+    });
+
+    hideLoadingOverlay();
+
+    if (error.message.includes('Telegram WebApp')) {
+      showUnauthorizedError('Приложение должно быть открыто через Telegram бота');
+    } else if (error.message.includes('авторизации')) {
+      showUnauthorizedError('Невалидные данные авторизации. Пожалуйста, перезапустите бота.');
+    } else if (error.message.includes('БД')) {
+      showUnauthorizedError('Не удалось загрузить данные из БД. Проверьте соединение.');
+    } else {
+      showUnauthorizedError('Ошибка инициализации приложения: ' + error.message);
+    }
+
     return false;
   }
-  
-  updateLoadingMessage('Проверка авторизации...');
-  await sleep(200);
-  
-  // Шаг 2: Проверка валидности initData
-  if (!validateInitData()) {
-    console.error('❌ Невалидные данные авторизации');
-    hideLoadingOverlay();
-    showUnauthorizedError('Невалидные данные авторизации. Пожалуйста, перезапустите бота.');
-    return false;
-  }
-  
-  // Шаг 3: Требуем авторизацию
-  const authenticated = requireAuth(() => {
-    hideLoadingOverlay();
-    blockAppAccess();
-  });
-  
-  if (!authenticated) {
-    hideLoadingOverlay();
-    blockAppAccess();
-    return false;
-  }
-  
-  console.log('✅ Auth Guard: Авторизация успешна');
-  
-  updateLoadingMessage('Загрузка данных из БД...');
-  await sleep(100);
-  
-  // Готовим приложение к работе
-  tg.ready();
-  tg.expand();
-  
-  // Загружаем данные из БД при открытии кабинета
-  const dataLoaded = await loadUserDataFromDB();
-  
-  if (!dataLoaded) {
-    console.error('❌ Не удалось загрузить данные из БД');
-    hideLoadingOverlay();
-    showUnauthorizedError('Не удалось загрузить данные из БД. Проверьте соединение.');
-    return false;
-  }
-  
-  console.log('✅ Данные загружены из БД при открытии кабинета');
-  
-  // Скрываем индикатор загрузки
-  hideLoadingOverlay();
-  
-  return true;
 }
 
 /**
- * Загружает данные пользователя из БД
- * Сохраняет в window.userData для использования на страницах
+ * Загружает данные пользователя из БД с retry логикой
+ * @param {number} maxRetries - максимальное количество попыток
+ * @param {number} delay - задержка между попытками в ms
  * @returns {boolean} true если загрузка успешна
  */
-async function loadUserDataFromDB() {
-  try {
-    console.log('📡 API запрос: GET /api/profile/ - загрузка из БД');
-    const apiProfile = await getProfile();
-    
-    console.log('✅ Данные получены из БД:', apiProfile);
-    
-    // Проверяем, новый ли это пользователь
-    const isNewUser = !apiProfile.phone && !apiProfile.business_name && !apiProfile.address;
-    
-    if (isNewUser) {
-      console.log('✨ Новый пользователь! Создана запись в БД для ID:', apiProfile.telegram_id);
-      showNotification('Добро пожаловать! Заполните свой профиль.');
-    } else {
-      console.log('✅ Существующий пользователь. Данные из БД для ID:', apiProfile.telegram_id);
+async function loadUserDataFromDBWithRetry(maxRetries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`📡 API запрос: GET /api/profile/ - загрузка из БД (попытка ${attempt}/${maxRetries})`);
+
+      const apiProfile = await getProfile();
+
+      console.log('✅ Данные получены из БД:', apiProfile);
+
+      // Проверяем, новый ли это пользователь
+      const isNewUser = !apiProfile.phone && !apiProfile.business_name && !apiProfile.address;
+
+      if (isNewUser) {
+        console.log('✨ Новый пользователь! Создана запись в БД для ID:', apiProfile.telegram_id);
+        showNotification('Добро пожаловать! Заполните свой профиль.');
+      } else {
+        console.log('✅ Существующий пользователь. Данные из БД для ID:', apiProfile.telegram_id);
+      }
+
+      // Сохраняем данные в глобальном состоянии
+      const userData = {
+        id: apiProfile.telegram_id,
+        firstName: apiProfile.first_name || 'Пользователь',
+        lastName: apiProfile.last_name || '',
+        username: apiProfile.username || '',
+        phone: apiProfile.phone || '',
+        businessName: apiProfile.business_name || '',
+        address: apiProfile.address || ''
+      };
+
+      // Сохраняем в appState и window.userData для совместимости
+      updateAppState({ userData });
+      window.userData = userData;
+
+      console.log('💾 Данные из БД сохранены в память:', userData);
+
+      return true;
+
+    } catch (error) {
+      console.error(`❌ Ошибка загрузки из БД (попытка ${attempt}/${maxRetries}):`, error);
+
+      if (attempt === maxRetries) {
+        // Последняя попытка - показываем ошибку
+        let errorMessage = 'Не удалось загрузить данные из БД.';
+
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          errorMessage = 'Ошибка авторизации. Пожалуйста, перезапустите бота.';
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = 'Нет связи с сервером БД. Проверьте подключение к интернету.';
+        } else if (error.message.includes('валидации')) {
+          errorMessage = 'Ошибка валидации данных. Попробуйте перезапустить приложение.';
+        }
+
+        updateAppState({ error: errorMessage });
+        showNotification(errorMessage);
+        return false;
+      }
+
+      // Ждем перед следующей попыткой
+      console.log(`⏳ Ждем ${delay}ms перед следующей попыткой...`);
+      await sleep(delay);
     }
-    
-    // Сохраняем в глобальную переменную (живёт пока открыто приложение)
-    window.userData = {
-      id: apiProfile.telegram_id,
-      firstName: apiProfile.first_name || 'Пользователь',
-      lastName: apiProfile.last_name || '',
-      username: apiProfile.username || '',
-      phone: apiProfile.phone || '',
-      businessName: apiProfile.business_name || '',
-      address: apiProfile.address || ''
-    };
-    
-    console.log('💾 Данные из БД сохранены в память:', window.userData);
-    
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Ошибка загрузки из БД:', error);
-    
-    let errorMessage = 'Не удалось загрузить данные из БД.';
-    
-    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-      errorMessage = 'Ошибка авторизации. Пожалуйста, перезапустите бота.';
-    } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      errorMessage = 'Нет связи с сервером БД. Проверьте подключение к интернету.';
-    }
-    
-    showNotification(errorMessage);
-    return false;
   }
+
+  return false;
 }
 
 /**

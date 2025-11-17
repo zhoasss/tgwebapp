@@ -7,11 +7,11 @@ import { getInitData } from './telegram.js';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
 
 /**
- * Выполняет запрос к API
+ * Выполняет запрос к API с retry логикой
  */
-async function apiRequest(endpoint, options = {}) {
+async function apiRequest(endpoint, options = {}, maxRetries = 2) {
   const initData = getInitData();
-  
+
   if (!initData) {
     throw new Error('Telegram WebApp не инициализирован');
   }
@@ -23,21 +23,54 @@ async function apiRequest(endpoint, options = {}) {
     ...options.headers,
   };
 
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🌐 API ${options.method || 'GET'} ${endpoint} (попытка ${attempt}/${maxRetries})`);
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Ошибка сервера' }));
-      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Ошибка сервера' }));
+
+        // Для 401 ошибки не повторяем попытку
+        if (response.status === 401) {
+          throw new Error(errorData.detail || 'Ошибка авторизации');
+        }
+
+        // Для других ошибок повторяем, если не последняя попытка
+        if (attempt === maxRetries) {
+          throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+
+        console.warn(`⚠️ API ошибка ${response.status}, повторяем через 1с...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      const data = await response.json();
+      console.log(`✅ API ${endpoint} успешен`);
+      return data;
+
+    } catch (error) {
+      console.error(`❌ API Request Error (попытка ${attempt}/${maxRetries}):`, error);
+
+      // Не повторяем для авторизационных ошибок
+      if (error.message.includes('авторизации') || error.message.includes('валидации')) {
+        throw error;
+      }
+
+      // Если последняя попытка или сетевая ошибка
+      if (attempt === maxRetries || error.name === 'TypeError') {
+        throw error;
+      }
+
+      // Ждем перед следующей попыткой
+      console.log(`⏳ Повторяем API запрос через 1с...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('API Request Error:', error);
-    throw error;
   }
 }
 

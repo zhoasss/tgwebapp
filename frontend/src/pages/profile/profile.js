@@ -5,6 +5,7 @@
 
 import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
 import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
+import { waitForAppInit } from '../../app/providers/auth/guard.js';
 
 let isEditMode = false;
 let profileData = {};
@@ -13,50 +14,108 @@ let loadAttempts = 0;
 const MAX_LOAD_ATTEMPTS = 10;
 
 /**
- * Загружает данные профиля из памяти (уже загружены из БД при старте)
- * Данные загружены Auth Guard'ом из БД при нажатии "Открыть кабинет"
+ * Загружает данные профиля из глобального состояния приложения
+ * Ждет инициализации Auth Guard перед отображением данных
  */
-function loadProfileData() {
-  console.log('📋 Загрузка данных профиля из памяти...');
+async function loadProfileData() {
+  console.log('📋 Загрузка данных профиля...');
 
-  // Проверяем, есть ли данные в памяти (загружены из БД при старте)
-  if (!window.userData) {
-    loadAttempts++;
+  try {
+    // Ждем инициализации приложения (Auth Guard загрузит данные)
+    const appState = await waitForAppInit();
 
-    if (loadAttempts >= MAX_LOAD_ATTEMPTS) {
-      console.error('❌ Превышено максимальное количество попыток загрузки данных');
-      showError('Не удалось загрузить данные профиля. Пожалуйста, перезапустите приложение.');
-      return;
+    if (!appState.isAuthenticated) {
+      throw new Error('Пользователь не авторизован');
     }
 
-    console.warn(`⚠️ Данные еще не загружены из БД, ждем... (попытка ${loadAttempts}/${MAX_LOAD_ATTEMPTS})`);
-    showError('Загрузка данных профиля...', false);
+    if (appState.error) {
+      throw new Error(appState.error);
+    }
 
-    // Повторяем попытку через 500ms
-    setTimeout(() => {
-      loadProfileData();
-    }, 500);
-    return;
+    if (!appState.userData) {
+      throw new Error('Данные пользователя не загружены');
+    }
+
+    console.log('✅ Данные из глобального состояния:', appState.userData);
+
+    // Используем данные из глобального состояния
+    profileData = { ...appState.userData };
+
+    // Скрываем сообщение об ошибке если оно было
+    const errorElement = document.getElementById('error-message');
+    if (errorElement) {
+      errorElement.style.display = 'none';
+    }
+
+    // Обновляем UI
+    updateProfileUI();
+
+    console.log('🎉 Профиль отображён успешно');
+
+  } catch (error) {
+    console.error('❌ Ошибка загрузки профиля:', error);
+
+    let errorMessage = 'Не удалось загрузить данные профиля.';
+
+    if (error.message.includes('Таймаут')) {
+      errorMessage = 'Превышено время ожидания загрузки данных.';
+    } else if (error.message.includes('авторизован')) {
+      errorMessage = 'Требуется авторизация через Telegram.';
+    } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+      errorMessage = 'Нет связи с сервером. Проверьте подключение.';
+    }
+
+    showError(errorMessage);
+
+    // Если это ошибка сети или авторизации, показываем кнопку повторной попытки
+    if (error.message.includes('связи') || error.message.includes('авторизации')) {
+      showRetryButton();
+    }
+  }
+}
+
+/**
+ * Показывает кнопку повторной попытки загрузки
+ */
+function showRetryButton() {
+  const container = document.querySelector('.profile-container') || document.body;
+
+  // Удаляем старую кнопку, если есть
+  const existingButton = document.getElementById('retry-load-btn');
+  if (existingButton) {
+    existingButton.remove();
   }
 
-  console.log('✅ Данные из БД есть в памяти:', window.userData);
+  const retryButton = document.createElement('button');
+  retryButton.id = 'retry-load-btn';
+  retryButton.textContent = '🔄 Повторить загрузку';
+  retryButton.style.cssText = `
+    display: block;
+    margin: 20px auto;
+    padding: 12px 24px;
+    background: var(--accent-color, #3390ec);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  `;
 
-  // Сбрасываем счетчик попыток
-  loadAttempts = 0;
+  retryButton.addEventListener('click', () => {
+    retryButton.remove();
+    loadProfileData();
+  });
 
-  // Используем данные из памяти (они были загружены из БД при старте)
-  profileData = { ...window.userData };
+  retryButton.addEventListener('mouseover', () => {
+    retryButton.style.background = 'var(--accent-hover, #2980d6)';
+  });
 
-  // Скрываем сообщение об ошибке если оно было
-  const errorElement = document.getElementById('error-message');
-  if (errorElement) {
-    errorElement.style.display = 'none';
-  }
+  retryButton.addEventListener('mouseout', () => {
+    retryButton.style.background = 'var(--accent-color, #3390ec)';
+  });
 
-  // Обновляем UI
-  updateProfileUI();
-
-  console.log('🎉 Профиль отображён (данные из БД, загружены при старте)');
+  container.appendChild(retryButton);
 }
 
 /**
@@ -338,45 +397,60 @@ async function saveProfile() {
 /**
  * Инициализация страницы профиля
  */
-function initProfilePage() {
+async function initProfilePage() {
   console.log('🚀 Инициализация страницы профиля...');
-  
-  // Загружаем данные из памяти (уже загружены из БД при открытии кабинета)
-  loadProfileData();
-  
-  // Настраиваем обработчики событий
+
+  try {
+    // Загружаем данные профиля (ждем Auth Guard)
+    await loadProfileData();
+
+    // Настраиваем обработчики событий
+    setupEventListeners();
+
+    console.log('✅ Страница профиля инициализирована');
+
+  } catch (error) {
+    console.error('❌ Ошибка инициализации страницы профиля:', error);
+    showError('Ошибка инициализации страницы. Попробуйте перезагрузить приложение.');
+  }
+}
+
+/**
+ * Настраивает обработчики событий страницы
+ */
+function setupEventListeners() {
   const editButton = document.getElementById('edit-profile-btn');
   const saveButton = document.getElementById('save-profile-btn');
   const cancelButton = document.getElementById('cancel-edit-btn');
-  
+
   if (editButton) {
     editButton.addEventListener('click', (e) => {
       e.preventDefault();
       toggleEditMode();
     });
   }
-  
+
   if (saveButton) {
     saveButton.addEventListener('click', async (e) => {
       e.preventDefault();
       await saveProfile();
     });
   }
-  
+
   if (cancelButton) {
     cancelButton.addEventListener('click', (e) => {
       e.preventDefault();
       toggleEditMode();
     });
   }
-  
-  console.log('✅ Страница профиля инициализирована');
 }
 
 // Инициализация при загрузке страницы
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initProfilePage);
+  document.addEventListener('DOMContentLoaded', () => {
+    initProfilePage().catch(console.error);
+  });
 } else {
-  initProfilePage();
+  initProfilePage().catch(console.error);
 }
 
