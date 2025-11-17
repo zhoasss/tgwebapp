@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Backend API server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: telegram-mini-app-backend
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - WEB_APP_URL=${WEB_APP_URL}
+    volumes:
+      - ./backend/database.db:/app/database.db
+      - ./backend/bot.log:/app/bot.log
+      - ./backend/api.log:/app/api.log
+    networks:
+      - app-network
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend with nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: telegram-mini-app-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database (SQLite file-based, but could be replaced with PostgreSQL)
+  db:
+    image: alpine:latest
+    container_name: telegram-mini-app-db
+    restart: unless-stopped
+    volumes:
+      - ./backend/database.db:/app/database.db
+    networks:
+      - app-network
+    command: sh -c "touch /app/database.db && chmod 666 /app/database.db && tail -f /dev/null"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db-data:
