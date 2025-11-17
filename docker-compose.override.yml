@@ -18,3 +18,12 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - "8080:80"  # Use different port in development
+
+  bot:
+    # Mount source code for live reload
+    volumes:
+      - ./backend:/app
+    environment:
+      - PYTHONPATH=/app
+    # Override command to restart on changes
+    command: ["python", "main.py"]

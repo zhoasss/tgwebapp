@@ -44,6 +44,24 @@ services:
       timeout: 10s
       retries: 3
 
+  # Telegram Bot
+  bot:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: telegram-mini-app-bot
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN:-demo_token}
+      - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
+    volumes:
+      - backend_data:/app/data
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    command: ["python", "main.py"]
+
   # Database (SQLite file-based, but could be replaced with PostgreSQL)
   db:
     image: alpine:latest
