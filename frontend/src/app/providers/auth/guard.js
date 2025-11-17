@@ -23,9 +23,6 @@ window.appState = { ...initialState };
 // Event для уведомления об изменениях состояния
 const stateChangeEvent = new CustomEvent('appStateChanged');
 
-// Флаг для предотвращения множественных инициализаций
-let isInitializing = false;
-
 /**
  * Обновляет состояние приложения и уведомляет подписчиков
  */
@@ -41,30 +38,36 @@ function updateAppState(updates) {
 }
 
 /**
- * Ожидает инициализации приложения с fallback логикой
+ * Ожидает инициализации приложения с автоматическим запуском Auth Guard
  */
-export function waitForAppInit(timeout = 10000) {
+export function waitForAppInit(timeout = 15000) {
   return new Promise(async (resolve, reject) => {
+    console.log('⏳ waitForAppInit: Начинаем ожидание инициализации...');
+
     // Если уже инициализировано - возвращаем сразу
     if (window.appState.isInitialized) {
+      console.log('✅ waitForAppInit: Приложение уже инициализировано');
       resolve(window.appState);
       return;
     }
 
     // Если есть ошибка инициализации - возвращаем ошибку
     if (window.appState.error && !window.appState.isLoading) {
+      console.error('❌ waitForAppInit: Ошибка инициализации:', window.appState.error);
       reject(new Error(window.appState.error));
       return;
     }
 
     const startTime = Date.now();
     const timeoutId = setTimeout(() => {
+      console.error('⏰ waitForAppInit: Таймаут ожидания инициализации');
       reject(new Error(`Таймаут ожидания инициализации приложения (${timeout}ms)`));
     }, timeout);
 
     const checkState = async () => {
       // Если инициализация завершилась успешно
       if (window.appState.isInitialized) {
+        console.log('✅ waitForAppInit: Инициализация завершена успешно');
         clearTimeout(timeoutId);
         resolve(window.appState);
         return;
@@ -72,32 +75,41 @@ export function waitForAppInit(timeout = 10000) {
 
       // Если произошла ошибка и инициализация не в процессе
       if (window.appState.error && !window.appState.isLoading) {
+        console.error('❌ waitForAppInit: Ошибка инициализации:', window.appState.error);
         clearTimeout(timeoutId);
         reject(new Error(window.appState.error));
         return;
       }
 
-      // Если прошло больше 2 секунд и инициализация не началась - запускаем вручную
-      if (Date.now() - startTime > 2000 && !window.appState.isAuthenticated && !window.appState.isLoading) {
-        console.warn('⚠️ Auth Guard не запустился автоматически, запускаем вручную...');
+      // Если прошло больше 1 секунды и инициализация не началась - запускаем Auth Guard
+      if (Date.now() - startTime > 1000 && !window.appState.isAuthenticated && !window.appState.isLoading && !isInitializing) {
+        console.log('🚀 waitForAppInit: Auth Guard не запустился автоматически, запускаем вручную...');
         try {
           const result = await initAuthGuard();
           if (result) {
+            console.log('✅ waitForAppInit: Auth Guard запущен успешно');
             clearTimeout(timeoutId);
             resolve(window.appState);
             return;
+          } else {
+            console.error('❌ waitForAppInit: Auth Guard вернул false');
+            clearTimeout(timeoutId);
+            reject(new Error('Не удалось инициализировать Auth Guard'));
+            return;
           }
         } catch (error) {
+          console.error('❌ waitForAppInit: Ошибка запуска Auth Guard:', error);
           clearTimeout(timeoutId);
           reject(error);
           return;
         }
       }
 
-      // Продолжаем проверку
-      setTimeout(checkState, 200);
+      // Продолжаем проверку каждые 100ms
+      setTimeout(checkState, 100);
     };
 
+    // Запускаем проверку состояния
     checkState();
   });
 }
@@ -130,32 +142,39 @@ export async function initAuthGuard() {
   isInitializing = true;
   console.log('🔒 Инициализация Auth Guard...');
 
-  // Устанавливаем начальное состояние только при первой инициализации
+  // Устанавливаем начальное состояние
   updateAppState({ isLoading: true, error: null });
 
-  // Показываем индикатор загрузки только если приложение еще не было инициализировано
-  if (!window.appState.isInitialized) {
-    showLoadingOverlay('Подключение к Telegram...');
-    await sleep(300);
-  }
+  // Показываем индикатор загрузки
+  showLoadingOverlay('Подключение к Telegram...');
+  await sleep(300);
 
   try {
     const tg = getTelegramWebApp();
 
     // Шаг 1: Проверка Telegram WebApp
     if (!tg) {
-      throw new Error('Telegram WebApp недоступен');
+      throw new Error('Telegram WebApp недоступен. Убедитесь, что приложение открыто через Telegram бота.');
     }
+
+    console.log('✅ Telegram WebApp доступен, версия:', tg.version);
 
     updateLoadingMessage('Проверка авторизации...');
     await sleep(200);
 
-    // Шаг 2: Проверка валидности initData
-    if (!validateInitData()) {
-      throw new Error('Невалидные данные авторизации');
+    // Шаг 2: Проверка наличия initData
+    if (!tg.initData || tg.initData.length === 0) {
+      throw new Error('Отсутствуют данные авторизации. Пожалуйста, перезапустите приложение через бота.');
     }
 
-    // Шаг 3: Требуем авторизацию
+    // Шаг 3: Проверка валидности initData
+    if (!validateInitData()) {
+      throw new Error('Невалидные данные авторизации. Пожалуйста, перезапустите бота.');
+    }
+
+    console.log('✅ Данные авторизации валидны');
+
+    // Шаг 4: Требуем авторизацию
     const authenticated = requireAuth(() => {
       updateAppState({ isAuthenticated: false, error: 'Требуется авторизация' });
       hideLoadingOverlay();
@@ -166,10 +185,11 @@ export async function initAuthGuard() {
       updateAppState({ isAuthenticated: false, error: 'Авторизация отклонена' });
       hideLoadingOverlay();
       blockAppAccess();
+      isInitializing = false;
       return false;
     }
 
-    console.log('✅ Auth Guard: Авторизация успешна');
+    console.log('✅ Пользователь авторизован');
     updateAppState({ isAuthenticated: true });
 
     updateLoadingMessage('Загрузка данных из БД...');
@@ -179,11 +199,13 @@ export async function initAuthGuard() {
     tg.ready();
     tg.expand();
 
+    console.log('📡 Загружаем данные пользователя из БД...');
+
     // Загружаем данные из БД с retry логикой
     const dataLoaded = await loadUserDataFromDBWithRetry();
 
     if (!dataLoaded) {
-      throw new Error('Не удалось загрузить данные из БД после нескольких попыток');
+      throw new Error('Не удалось загрузить данные из БД после нескольких попыток. Проверьте подключение к интернету.');
     }
 
     console.log('✅ Данные загружены из БД при открытии кабинета');
@@ -193,17 +215,15 @@ export async function initAuthGuard() {
       error: null
     });
 
-    // Скрываем индикатор загрузки только при первой инициализации
-    if (!window.appState.isInitialized) {
-      hideLoadingOverlay();
-    }
+    // Скрываем индикатор загрузки
+    hideLoadingOverlay();
 
-    isInitializing = false; // Сбрасываем флаг
+    isInitializing = false;
     return true;
 
   } catch (error) {
     console.error('❌ Ошибка инициализации Auth Guard:', error);
-    isInitializing = false; // Сбрасываем флаг при ошибке
+    isInitializing = false;
 
     updateAppState({
       isInitialized: true,
@@ -211,24 +231,53 @@ export async function initAuthGuard() {
       error: error.message
     });
 
-    // Скрываем индикатор загрузки только при первой инициализации
-    if (!window.appState.isInitialized) {
-      hideLoadingOverlay();
-    }
+    hideLoadingOverlay();
 
+    // Показываем более понятные сообщения об ошибках
     if (error.message.includes('Telegram WebApp')) {
       showUnauthorizedError('Приложение должно быть открыто через Telegram бота');
     } else if (error.message.includes('авторизации')) {
       showUnauthorizedError('Невалидные данные авторизации. Пожалуйста, перезапустите бота.');
-    } else if (error.message.includes('БД')) {
-      showUnauthorizedError('Не удалось загрузить данные из БД. Проверьте соединение.');
+    } else if (error.message.includes('БД') || error.message.includes('загрузить данные')) {
+      showUnauthorizedError('Не удалось загрузить данные. Проверьте подключение к интернету.');
     } else {
-      showUnauthorizedError('Ошибка инициализации приложения: ' + error.message);
+      showUnauthorizedError('Ошибка инициализации: ' + error.message);
     }
 
     return false;
   }
 }
+
+/**
+ * Автоматическая инициализация Auth Guard при загрузке страницы
+ * Запускается только если страница требует авторизации (профиль, настройки)
+ */
+(function autoInitAuthGuard() {
+  // Проверяем, нужна ли авторизация на этой странице
+  const currentPath = window.location.pathname;
+
+  // Страницы, требующие авторизации
+  const authRequiredPages = [
+    '/src/pages/profile/index.html',
+    '/src/pages/settings/index.html'
+  ];
+
+  const needsAuth = authRequiredPages.some(page => currentPath.includes(page));
+
+  if (needsAuth && !window.appState.isInitialized && !isInitializing) {
+    console.log('🚀 Автоматический запуск Auth Guard для страницы:', currentPath);
+
+    // Небольшая задержка, чтобы Telegram WebApp успел инициализироваться
+    setTimeout(async () => {
+      try {
+        await initAuthGuard();
+        console.log('✅ Auth Guard автоматически инициализирован');
+      } catch (error) {
+        console.error('❌ Ошибка автоматической инициализации Auth Guard:', error);
+      }
+    }, 500);
+  }
+})();
 
 /**
  * Загружает данные пользователя из БД с retry логикой
