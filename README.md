@@ -81,9 +81,9 @@ docker-compose -f docker-compose.yml up --build -d
 ```
 
 **Доступ к приложению:**
-- Frontend: http://localhost:8080 (dev) / http://localhost (prod)
+- Frontend: http://localhost:8080 (dev) / https://yourdomain.com (prod)
 - API: http://localhost:8000 (внутренний)
-- Health checks: http://localhost/health
+- Health checks: https://yourdomain.com/health (prod)
 
 ### Ручной запуск (для разработки)
 
@@ -145,7 +145,7 @@ Frontend автоматически публикуется на GitHub Pages:
 
 ```env
 BOT_TOKEN=your_bot_token_here
-WEB_APP_URL=https://zhoasss.github.io/frontend/index.html
+WEB_APP_URL=https://yourdomain.com
 ```
 
 ## 🎨 Темы
