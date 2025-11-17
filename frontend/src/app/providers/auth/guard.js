@@ -7,14 +7,18 @@ import { requireAuth, isAuthenticated, validateInitData } from '../../../shared/
 import { getTelegramWebApp, showNotification } from '../../../shared/lib/telegram.js';
 import { getProfile } from '../../../shared/lib/profile-api.js';
 
-// Глобальное состояние приложения
-window.appState = {
+// Восстанавливаем состояние из sessionStorage при загрузке
+const savedState = sessionStorage.getItem('telegramAppState');
+const initialState = savedState ? JSON.parse(savedState) : {
   isInitialized: false,
   isAuthenticated: false,
   userData: null,
   isLoading: false,
   error: null
 };
+
+// Глобальное состояние приложения
+window.appState = { ...initialState };
 
 // Event для уведомления об изменениях состояния
 const stateChangeEvent = new CustomEvent('appStateChanged');
@@ -27,6 +31,11 @@ let isInitializing = false;
  */
 function updateAppState(updates) {
   Object.assign(window.appState, updates);
+
+  // Сохраняем состояние в sessionStorage (кроме функций)
+  const stateToSave = { ...window.appState };
+  sessionStorage.setItem('telegramAppState', JSON.stringify(stateToSave));
+
   window.dispatchEvent(stateChangeEvent);
   console.log('📊 App State обновлено:', window.appState);
 }
@@ -121,12 +130,14 @@ export async function initAuthGuard() {
   isInitializing = true;
   console.log('🔒 Инициализация Auth Guard...');
 
-  // Устанавливаем начальное состояние
+  // Устанавливаем начальное состояние только при первой инициализации
   updateAppState({ isLoading: true, error: null });
 
-  // Показываем индикатор загрузки
-  showLoadingOverlay('Подключение к Telegram...');
-  await sleep(300);
+  // Показываем индикатор загрузки только если приложение еще не было инициализировано
+  if (!window.appState.isInitialized) {
+    showLoadingOverlay('Подключение к Telegram...');
+    await sleep(300);
+  }
 
   try {
     const tg = getTelegramWebApp();
@@ -182,8 +193,10 @@ export async function initAuthGuard() {
       error: null
     });
 
-    // Скрываем индикатор загрузки
-    hideLoadingOverlay();
+    // Скрываем индикатор загрузки только при первой инициализации
+    if (!window.appState.isInitialized) {
+      hideLoadingOverlay();
+    }
 
     isInitializing = false; // Сбрасываем флаг
     return true;
@@ -198,7 +211,10 @@ export async function initAuthGuard() {
       error: error.message
     });
 
-    hideLoadingOverlay();
+    // Скрываем индикатор загрузки только при первой инициализации
+    if (!window.appState.isInitialized) {
+      hideLoadingOverlay();
+    }
 
     if (error.message.includes('Telegram WebApp')) {
       showUnauthorizedError('Приложение должно быть открыто через Telegram бота');
