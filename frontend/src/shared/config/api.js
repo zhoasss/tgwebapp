@@ -5,9 +5,9 @@
 
 /**
  * URL API сервера
- * Railway deployment
+ * Selectel deployment
  */
-const API_URL = 'https://zhoasssgithubio-production.up.railway.app';
+const API_URL = 'https://booking-cab.ru';
 
 /**
  * Определяет URL API сервера
