@@ -13,8 +13,6 @@ services:
       - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
     volumes:
       - backend_data:/app/data
-      - ./backend/bot.log:/app/data/bot.log
-      - ./backend/api.log:/app/data/api.log
     networks:
       - app-network
     depends_on:
