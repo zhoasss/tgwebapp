@@ -3,7 +3,7 @@
  * Слой Pages - страницы приложения
  */
 
-import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
+import { getTelegramUser } from '../../shared/lib/telegram.js';
 import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
 import { waitForAppInit, initAuthGuard } from '../../app/providers/auth/guard.js';
 
@@ -148,9 +148,8 @@ function showLoading(show) {
  * Показывает сообщение об ошибке или информационное сообщение
  */
 function showError(message, isError = true) {
-  if (isError) {
-    showNotification(message);
-  }
+  // Не показываем popup уведомления - только UI сообщение
+  console.log(`📢 ${isError ? 'Ошибка' : 'Сообщение'}:`, message);
 
   // Показываем сообщение в UI
   const errorElement = document.getElementById('error-message');
@@ -256,7 +255,7 @@ function generateGradient(userId) {
  */
 function toggleEditMode() {
   if (isLoading) {
-    showNotification('Дождитесь завершения загрузки');
+    console.log('⚠️ Операция уже выполняется');
     return;
   }
 
@@ -291,7 +290,7 @@ function requestPhoneNumber() {
   const tg = window.Telegram?.WebApp;
   
   if (!tg) {
-    showNotification('Telegram WebApp недоступен');
+    console.error('❌ Telegram WebApp недоступен');
     return;
   }
   
@@ -313,7 +312,7 @@ function requestPhoneNumber() {
   } else {
     // Fallback для старых версий - показываем форму редактирования
     console.warn('⚠️ Метод requestContact недоступен в этой версии Telegram');
-    showNotification('Пожалуйста, введите номер телефона вручную');
+    console.log('ℹ️ Пользователь должен ввести номер вручную');
     toggleEditMode();
   }
 }
@@ -327,21 +326,21 @@ async function savePhoneToAPI(phone) {
     const updatedProfile = await updateProfile({ phone });
     
     console.log('✅ Телефон сохранён в БД для ID:', updatedProfile.telegram_id);
-    
+
     // Обновляем локальные данные из ответа БД
     profileData.phone = updatedProfile.phone || '';
-    
+
     // Обновляем глобальные данные (загружены из БД)
     if (window.userData) {
       window.userData.phone = updatedProfile.phone || '';
       console.log('💾 Обновлены данные в памяти (источник - БД)');
     }
-    
+
     updateProfileUI();
-    showNotification('Номер телефона сохранен в БД!');
+    console.log('✅ Номер телефона сохранен в БД!');
   } catch (error) {
     console.error('❌ Ошибка сохранения номера в БД:', error);
-    showNotification('Не удалось сохранить номер телефона');
+    console.error('❌ Не удалось сохранить номер телефона');
   }
 }
 
@@ -350,7 +349,7 @@ async function savePhoneToAPI(phone) {
  */
 async function saveProfile() {
   if (isLoading) {
-    showNotification('Операция уже выполняется');
+    console.log('⚠️ Операция уже выполняется');
     return;
   }
 
@@ -393,11 +392,11 @@ async function saveProfile() {
     toggleEditMode();
     
     // Показываем уведомление
-    showNotification('Профиль успешно обновлен в БД!');
-    
+    console.log('✅ Профиль успешно обновлен в БД!');
+
   } catch (error) {
     console.error('❌ Ошибка сохранения профиля в БД:', error);
-    showNotification('Не удалось сохранить профиль. Проверьте соединение.');
+    console.error('❌ Не удалось сохранить профиль. Проверьте соединение.');
   } finally {
     showLoading(false);
   }
@@ -411,13 +410,8 @@ async function initProfilePage() {
 
   try {
     // Проверяем, инициализирован ли уже Auth Guard
-    if (!window.appState || (!window.appState.isInitialized && !window.appState.isLoading)) {
-      console.log('🔒 Auth Guard не инициализирован, запускаем...');
-      const authResult = await initAuthGuard();
-      if (!authResult) {
-        throw new Error('Не удалось инициализировать авторизацию');
-      }
-    }
+    // Не запускаем initAuthGuard вручную - waitForAppInit сделает это автоматически
+    console.log('🔍 Проверяем состояние Auth Guard...');
 
     // Загружаем данные профиля (ждем Auth Guard)
     await loadProfileData();

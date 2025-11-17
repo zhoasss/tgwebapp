@@ -91,44 +91,49 @@ export function callTelegramMethod(methodName, minVersion = null, ...args) {
  * @param {string} message - Текст сообщения
  * @param {Function} callback - Callback после закрытия (опционально)
  */
+// Флаг для предотвращения множественных popup
+let isPopupOpen = false;
+
 export function showNotification(message, callback = null) {
+  // Если popup уже открыт, просто логируем
+  if (isPopupOpen) {
+    console.log('📢 Уведомление (popup уже открыт):', message);
+    showToastNotification(message);
+    if (callback) setTimeout(callback, 2000);
+    return;
+  }
+
   const tg = getTelegramWebApp();
 
-  // Сначала пробуем showPopup (работает в большинстве версий)
-  const popupResult = callTelegramMethod('showPopup', null, {
-    title: 'Уведомление',
-    message: message,
-    buttons: [{ text: 'OK', type: 'ok' }]
-  }, callback);
+  // Пробуем showPopup
+  try {
+    isPopupOpen = true; // Устанавливаем флаг
 
-  if (popupResult !== null) {
-    return popupResult;
-  }
+    const popupResult = callTelegramMethod('showPopup', null, {
+      title: 'Уведомление',
+      message: message,
+      buttons: [{ text: 'OK', type: 'ok' }]
+    }, (buttonId) => {
+      isPopupOpen = false; // Сбрасываем флаг при закрытии
+      if (callback) callback(buttonId);
+    });
 
-  // Если showPopup не работает, пробуем Snackbar (новый метод)
-  if (tg && typeof tg.HapticFeedback !== 'undefined' && tg.showPopup) {
-    try {
-      // Используем Snackbar для коротких уведомлений
-      const snackbarResult = callTelegramMethod('showPopup', null, {
-        message: message.length > 50 ? message.substring(0, 50) + '...' : message,
-        buttons: [{ text: 'OK', type: 'ok' }]
-      }, callback);
-
-      if (snackbarResult !== null) {
-        return snackbarResult;
-      }
-    } catch (e) {
-      console.warn('Snackbar не поддерживается');
+    if (popupResult !== null) {
+      return popupResult;
     }
+  } catch (error) {
+    isPopupOpen = false; // Сбрасываем флаг при ошибке
+    console.warn('Popup failed:', error);
   }
+
+  // Если popup не сработал, пробуем альтернативные методы
+  isPopupOpen = false; // Сбрасываем флаг
 
   // Fallback: просто логируем в консоль и показываем toast-style уведомление
   console.log('📢 Уведомление:', message);
-
-  // Показываем toast-style уведомление в DOM
   showToastNotification(message);
 
-  if (callback) setTimeout(callback, 2000); // Имитируем задержку
+  if (callback) setTimeout(callback, 2000);
 }
 
 function showToastNotification(message) {

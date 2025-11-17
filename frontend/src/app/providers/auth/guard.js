@@ -19,6 +19,9 @@ window.appState = {
 // Event для уведомления об изменениях состояния
 const stateChangeEvent = new CustomEvent('appStateChanged');
 
+// Флаг для предотвращения множественных инициализаций
+let isInitializing = false;
+
 /**
  * Обновляет состояние приложения и уведомляет подписчиков
  */
@@ -95,6 +98,27 @@ export function waitForAppInit(timeout = 10000) {
  * Вызывается автоматически при загрузке любой страницы
  */
 export async function initAuthGuard() {
+  // Предотвращаем множественные инициализации
+  if (isInitializing) {
+    console.log('🔒 Auth Guard уже инициализируется, ждем...');
+    return new Promise((resolve) => {
+      const checkInit = () => {
+        if (!isInitializing) {
+          resolve(window.appState.isInitialized);
+        } else {
+          setTimeout(checkInit, 100);
+        }
+      };
+      checkInit();
+    });
+  }
+
+  if (window.appState.isInitialized) {
+    console.log('🔒 Auth Guard уже инициализирован');
+    return true;
+  }
+
+  isInitializing = true;
   console.log('🔒 Инициализация Auth Guard...');
 
   // Устанавливаем начальное состояние
@@ -161,10 +185,12 @@ export async function initAuthGuard() {
     // Скрываем индикатор загрузки
     hideLoadingOverlay();
 
+    isInitializing = false; // Сбрасываем флаг
     return true;
 
   } catch (error) {
     console.error('❌ Ошибка инициализации Auth Guard:', error);
+    isInitializing = false; // Сбрасываем флаг при ошибке
 
     updateAppState({
       isInitialized: true,
