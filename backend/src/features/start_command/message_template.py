@@ -15,15 +15,27 @@ def create_welcome_message(user) -> str:
     )
 
 def create_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
-    """Создает клавиатуру с кнопкой открытия Mini App"""
-    # Всегда используем Web App кнопку (Telegram требует HTTPS для Web Apps)
-    # Если URL не HTTPS, кнопка будет открывать в браузере через Telegram
-    keyboard = [
-        [InlineKeyboardButton(
-            "Открыть кабинет 🚀",
-            web_app=WebAppInfo(url=web_app_url)
-        )]
-    ]
+    """Создает клавиатуру с кнопкой открытия кабинета"""
+    # Проверяем протокол URL
+    if web_app_url.startswith('https://'):
+        # HTTPS - используем Web App кнопку для открытия в Telegram
+        keyboard = [
+            [InlineKeyboardButton(
+                "Открыть кабинет 🚀",
+                web_app=WebAppInfo(url=web_app_url)
+            )]
+        ]
+        print(f"✅ Используем Web App кнопку для HTTPS URL: {web_app_url}")
+    else:
+        # HTTP - используем обычную ссылку (Telegram не позволяет Web App для HTTP)
+        keyboard = [
+            [InlineKeyboardButton(
+                "Открыть кабинет 🌐",
+                url=web_app_url
+            )]
+        ]
+        print(f"⚠️ Используем обычную ссылку для HTTP URL: {web_app_url}")
+        print("💡 Для Web App в Telegram настройте HTTPS!")
     return InlineKeyboardMarkup(keyboard)
 
 def create_contact_keyboard() -> ReplyKeyboardMarkup:
