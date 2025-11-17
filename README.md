@@ -20,7 +20,6 @@
 │
 ├── frontend/                # Telegram Mini App
 │   ├── Dockerfile           # Docker для frontend
-│   ├── nginx.conf           # Nginx конфигурация
 │   ├── index.html           # Главная страница
 │   └── src/
 │       ├── app/             # Глобальные настройки
@@ -46,6 +45,7 @@
 ├── docker-compose.yml       # Docker Compose для production
 ├── docker-compose.override.yml  # Переопределения для разработки
 ├── docker-env.example       # Шаблон переменных окружения
+├── nginx.conf               # Nginx конфигурация
 ├── Makefile                 # Команды для управления Docker
 └── README.md               # Документация
 ```
