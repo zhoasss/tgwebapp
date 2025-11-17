@@ -9,6 +9,8 @@ import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
 let isEditMode = false;
 let profileData = {};
 let isLoading = false;
+let loadAttempts = 0;
+const MAX_LOAD_ATTEMPTS = 10;
 
 /**
  * Загружает данные профиля из памяти (уже загружены из БД при старте)
@@ -16,22 +18,44 @@ let isLoading = false;
  */
 function loadProfileData() {
   console.log('📋 Загрузка данных профиля из памяти...');
-  
+
   // Проверяем, есть ли данные в памяти (загружены из БД при старте)
   if (!window.userData) {
-    console.error('❌ Данные не загружены из БД');
-    showError('Данные не загружены. Пожалуйста, перезапустите приложение.');
+    loadAttempts++;
+
+    if (loadAttempts >= MAX_LOAD_ATTEMPTS) {
+      console.error('❌ Превышено максимальное количество попыток загрузки данных');
+      showError('Не удалось загрузить данные профиля. Пожалуйста, перезапустите приложение.');
+      return;
+    }
+
+    console.warn(`⚠️ Данные еще не загружены из БД, ждем... (попытка ${loadAttempts}/${MAX_LOAD_ATTEMPTS})`);
+    showError('Загрузка данных профиля...', false);
+
+    // Повторяем попытку через 500ms
+    setTimeout(() => {
+      loadProfileData();
+    }, 500);
     return;
   }
 
   console.log('✅ Данные из БД есть в памяти:', window.userData);
-  
+
+  // Сбрасываем счетчик попыток
+  loadAttempts = 0;
+
   // Используем данные из памяти (они были загружены из БД при старте)
   profileData = { ...window.userData };
-  
+
+  // Скрываем сообщение об ошибке если оно было
+  const errorElement = document.getElementById('error-message');
+  if (errorElement) {
+    errorElement.style.display = 'none';
+  }
+
   // Обновляем UI
   updateProfileUI();
-  
+
   console.log('🎉 Профиль отображён (данные из БД, загружены при старте)');
 }
 
@@ -53,16 +77,19 @@ function showLoading(show) {
 }
 
 /**
- * Показывает сообщение об ошибке
+ * Показывает сообщение об ошибке или информационное сообщение
  */
-function showError(message) {
-  showNotification(message);
-  
-  // Показываем сообщение об ошибке в UI
+function showError(message, isError = true) {
+  if (isError) {
+    showNotification(message);
+  }
+
+  // Показываем сообщение в UI
   const errorElement = document.getElementById('error-message');
   if (errorElement) {
     errorElement.textContent = message;
     errorElement.style.display = 'block';
+    errorElement.style.color = isError ? 'var(--error-color, #e74c3c)' : 'var(--text-secondary, #666)';
   }
 }
 
