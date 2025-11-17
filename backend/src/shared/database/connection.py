@@ -9,9 +9,10 @@ import logging
 
 from .models import Base
 
-# Получаем путь к директории backend для размещения БД
-backend_dir = Path(__file__).parent.parent.parent.parent
-database_path = backend_dir / "database.db"
+# Получаем путь к директории для размещения БД
+data_dir = Path("/app/data")
+data_dir.mkdir(exist_ok=True)
+database_path = data_dir / "database.db"
 
 # URL для подключения к SQLite
 DATABASE_URL = f"sqlite+aiosqlite:///{database_path}"

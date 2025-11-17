@@ -76,3 +76,16 @@ health: ## Check health of all services
 	@curl -f http://localhost:8000/health || echo "Backend not healthy"
 	@echo "Checking frontend health..."
 	@curl -f http://localhost/health || echo "Frontend not healthy"
+
+debug-backend: ## Debug backend container
+	@echo "=== Backend Container Status ==="
+	@docker compose ps backend
+	@echo ""
+	@echo "=== Backend Logs ==="
+	@docker compose logs --tail=20 backend
+	@echo ""
+	@echo "=== Backend Health Check ==="
+	@docker compose exec backend python -c "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close(); print('Port 8000 is open')" 2>/dev/null || echo "Port 8000 is not accessible"
+	@echo ""
+	@echo "=== Environment Variables ==="
+	@docker compose exec backend env | grep -E "(BOT_TOKEN|WEB_APP_URL)" || echo "Environment variables not set"

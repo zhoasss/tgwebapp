@@ -9,22 +9,20 @@ services:
     container_name: telegram-mini-app-backend
     restart: unless-stopped
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - WEB_APP_URL=${WEB_APP_URL}
+      - BOT_TOKEN=${BOT_TOKEN:-demo_token}
+      - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
     volumes:
-      - ./backend/database.db:/app/database.db
-      - ./backend/bot.log:/app/bot.log
-      - ./backend/api.log:/app/api.log
+      - backend_data:/app/data
     networks:
       - app-network
     depends_on:
       - db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 40s
+      retries: 5
+      start_period: 45s
 
   # Frontend with nginx
   frontend:
@@ -63,3 +61,4 @@ networks:
 
 volumes:
   db-data:
+  backend_data:
