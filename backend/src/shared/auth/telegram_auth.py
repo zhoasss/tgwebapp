@@ -111,13 +111,21 @@ async def get_telegram_user(
     Returns:
         dict: Данные пользователя
     """
+    logging.debug(f"🔐 Получен X-Init-Data заголовок (длина: {len(x_init_data) if x_init_data else 0})")
+
     if not bot_token:
         # В production нужно получать из config
         from ..config.env_loader import load_config
         config = load_config()
         bot_token = config['bot_token']
 
-    return validate_telegram_init_data(x_init_data, bot_token)
+    user_data = validate_telegram_init_data(x_init_data, bot_token)
+
+    username = user_data.get('username', 'unknown')
+    user_id = user_data.get('id', 'unknown')
+    logging.info(f"✅ Авторизация успешна: @{username} (ID: {user_id})")
+
+    return user_data
 
 async def get_current_user(
     authorization: str = Header(..., alias="Authorization")

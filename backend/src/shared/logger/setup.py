@@ -16,18 +16,18 @@ def setup_logging(log_file='app.log', max_bytes=10*1024*1024, backup_count=5):
     backend_dir = Path(__file__).parent.parent.parent.parent
     log_path = backend_dir / log_file
     
-    # Console handler
+    # Console handler - выводим все логи начиная с INFO
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
-    
-    # File handler с ротацией
+
+    # File handler с ротацией - сохраняем все логи начиная с DEBUG
     file_handler = RotatingFileHandler(
         log_path,
         maxBytes=max_bytes,
         backupCount=backup_count,
         encoding='utf-8'
     )
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     
     # Формат логов
     formatter = logging.Formatter(

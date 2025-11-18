@@ -22,11 +22,14 @@ async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
     # Startup
     logging.info("🚀 Запуск API сервера...")
+    logging.info("📊 Инициализация базы данных...")
     await init_database()
-    logging.info("✅ API сервер запущен")
-    
+    logging.info("✅ База данных инициализирована")
+    logging.info("🎯 API сервер готов к работе")
+    logging.info(f"📍 Доступные эндпоинты: {list(app.routes)}")
+
     yield
-    
+
     # Shutdown
     logging.info("⏹️ Остановка API сервера...")
 
@@ -67,18 +70,22 @@ app.include_router(router)
 @app.get("/")
 async def root():
     """Корневой endpoint"""
+    logging.info("📡 Запрос к корневому эндпоинту /")
     return {
         "message": "API сервер работает",
         "version": "1.0.0",
+        "status": "healthy",
         "endpoints": [
-            "/api/profile/ (GET, PUT) - требуется X-Init-Data заголовок"
+            "/api/profile/ (GET, PUT) - требуется X-Init-Data заголовок",
+            "/health - проверка здоровья"
         ]
     }
 
 @app.get("/health")
 async def health_check():
     """Проверка здоровья сервера"""
-    return {"status": "ok"}
+    logging.debug("💓 Health check запрос")
+    return {"status": "ok", "timestamp": "now"}
 
 if __name__ == "__main__":
     import uvicorn

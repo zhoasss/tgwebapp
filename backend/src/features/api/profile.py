@@ -28,38 +28,43 @@ async def get_profile(
 ):
     """
     Получить профиль пользователя
-    
+
     Headers:
         X-Init-Data: initData от Telegram WebApp
-    
+
     Returns:
         Данные профиля пользователя
     """
     telegram_id = telegram_user['id']
-    
-    logging.info(f"📡 Запрос профиля для пользователя {telegram_id}")
-    
+    username = telegram_user.get('username', 'unknown')
+
+    logging.info(f"📡 GET /api/profile/ - запрос профиля для @{username} (ID: {telegram_id})")
+
     # Ищем пользователя в БД
     result = await session.execute(
         select(User).where(User.telegram_id == telegram_id)
     )
     user = result.scalar_one_or_none()
-    
+
     # Если пользователя нет - создаем
     if not user:
-        logging.info(f"✨ Создание нового пользователя {telegram_id}")
+        logging.info(f"✨ Создание нового профиля для @{username} (ID: {telegram_id})")
         user = User(
             telegram_id=telegram_id,
             first_name=telegram_user.get('first_name', 'Пользователь'),
             last_name=telegram_user.get('last_name'),
-            username=telegram_user.get('username')
+            username=username
         )
         session.add(user)
         await session.commit()
         await session.refresh(user)
-    
-    logging.info(f"✅ Профиль получен для пользователя {telegram_id}")
-    return user.to_dict()
+        logging.info(f"✅ Новый профиль создан для @{username}")
+    else:
+        logging.info(f"📋 Найден существующий профиль @{username}")
+
+    profile_data = user.to_dict()
+    logging.info(f"📤 Отправка профиля: {profile_data.get('first_name')} {profile_data.get('last_name')}")
+    return profile_data
 
 @router.put("/")
 async def update_profile(
@@ -69,48 +74,62 @@ async def update_profile(
 ):
     """
     Обновить профиль пользователя
-    
+
     Headers:
         X-Init-Data: initData от Telegram WebApp
-    
+
     Body:
         ProfileUpdate: Данные для обновления
-    
+
     Returns:
         Обновленные данные профиля
     """
     telegram_id = telegram_user['id']
-    
-    logging.info(f"📝 Обновление профиля для пользователя {telegram_id}")
-    
+    username = telegram_user.get('username', 'unknown')
+
+    logging.info(f"📝 PUT /api/profile/ - обновление профиля @{username} (ID: {telegram_id})")
+    logging.info(f"📊 Данные для обновления: phone={data.phone}, business={data.business_name}, address={data.address}")
+
     # Ищем пользователя
     result = await session.execute(
         select(User).where(User.telegram_id == telegram_id)
     )
     user = result.scalar_one_or_none()
-    
+
     if not user:
         # Создаем пользователя, если не существует
+        logging.warning(f"⚠️ Пользователь @{username} не найден, создаем новый")
         user = User(
             telegram_id=telegram_id,
             first_name=telegram_user.get('first_name', 'Пользователь'),
             last_name=telegram_user.get('last_name'),
-            username=telegram_user.get('username')
+            username=username
         )
         session.add(user)
-    
+
     # Обновляем поля
+    changes = []
     if data.phone is not None:
+        old_phone = user.phone
         user.phone = data.phone
+        changes.append(f"phone: {old_phone} → {data.phone}")
     if data.business_name is not None:
+        old_business = user.business_name
         user.business_name = data.business_name
+        changes.append(f"business: {old_business} → {data.business_name}")
     if data.address is not None:
+        old_address = user.address
         user.address = data.address
-    
+        changes.append(f"address: {old_address} → {data.address}")
+
     await session.commit()
     await session.refresh(user)
-    
-    logging.info(f"✅ Профиль обновлен для пользователя {telegram_id}")
+
+    if changes:
+        logging.info(f"✅ Профиль @{username} обновлен: {', '.join(changes)}")
+    else:
+        logging.info(f"ℹ️ Профиль @{username} без изменений")
+
     return user.to_dict()
 
 # Экспорт роутеров
