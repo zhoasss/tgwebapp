@@ -3,151 +3,56 @@
  * Слой Pages - страницы приложения
  */
 
-import { isAuthenticated, logout } from '../../shared/lib/auth-api.js';
+import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
 import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
-
-// Проверяем авторизацию при загрузке страницы
-if (!isAuthenticated()) {
-  console.log('❌ Пользователь не авторизован, перенаправляем на login');
-  window.location.href = '../login/index.html';
-  // Прерываем выполнение скрипта
-  throw new Error('User not authenticated');
-}
-
-// Функция выхода
-window.handleLogout = function() {
-  if (confirm('Вы уверены, что хотите выйти?')) {
-    logout();
-  }
-};
 
 let isEditMode = false;
 let profileData = {};
 let isLoading = false;
-let loadAttempts = 0;
-const MAX_LOAD_ATTEMPTS = 10;
 
 /**
- * Загружает данные профиля из глобального состояния приложения
- * Ждет инициализации Auth Guard перед отображением данных
+ * Загружает данные профиля из API
  */
 async function loadProfileData() {
-  console.log('📋 Загрузка данных профиля...');
-  console.log('📊 Текущее состояние appState:', window.appState);
+  console.log('📡 Загрузка данных профиля...');
+  console.log('🔍 Проверка Telegram WebApp:', window.Telegram?.WebApp);
+  console.log('🔍 initData:', window.Telegram?.WebApp?.initData);
+  console.log('🔍 initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
+  
+  const user = getTelegramUser();
+  console.log('👤 Данные пользователя из Telegram:', user);
+  
+  if (!user) {
+    console.error('❌ Не удалось получить данные пользователя из Telegram');
+    showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите бот.');
+    return;
+  }
+
+  // Показываем индикатор загрузки
+  showLoading(true);
 
   try {
-    console.log('⏳ Ждем инициализации Auth Guard...');
-
-    // Ждем инициализации приложения (Auth Guard загрузит данные)
-    const appState = await waitForAppInit();
-    console.log('✅ Auth Guard инициализирован, состояние:', appState);
-
-    if (!appState.isAuthenticated) {
-      console.error('❌ Пользователь не авторизован');
-      throw new Error('Пользователь не авторизован');
-    }
-
-    if (appState.error) {
-      console.error('❌ Ошибка в appState:', appState.error);
-      throw new Error(appState.error);
-    }
-
-    if (!appState.userData) {
-      console.error('❌ Данные пользователя отсутствуют в appState');
-      console.log('📊 Полное состояние appState:', JSON.stringify(appState, null, 2));
-      throw new Error('Данные пользователя не загружены');
-    }
-
-    console.log('✅ Данные из глобального состояния:', appState.userData);
-
-    // Используем данные из глобального состояния
-    profileData = { ...appState.userData };
-
-    // Скрываем сообщение об ошибке если оно было
-    const errorElement = document.getElementById('error-message');
-    if (errorElement) {
-      errorElement.style.display = 'none';
-    }
-
-    // Обновляем UI
+    console.log('🌐 Загрузка профиля из API...');
+    const apiProfile = await getProfile();
+    console.log('✅ Профиль получен из API:', apiProfile);
+    
+    profileData = {
+      id: apiProfile.telegram_id,
+      firstName: apiProfile.first_name || 'Пользователь',
+      lastName: apiProfile.last_name || '',
+      username: apiProfile.username || '',
+      phone: apiProfile.phone || '',
+      businessName: apiProfile.business_name || '',
+      address: apiProfile.address || ''
+    };
+    
     updateProfileUI();
-
-    console.log('🎉 Профиль отображён успешно');
-
   } catch (error) {
     console.error('❌ Ошибка загрузки профиля:', error);
-    console.error('📊 Состояние appState на момент ошибки:', window.appState);
-
-    let errorMessage = 'Не удалось загрузить данные профиля.';
-    let showRetry = true;
-
-    if (error.message.includes('Таймаут')) {
-      errorMessage = 'Превышено время ожидания загрузки данных. Проверьте подключение к интернету.';
-    } else if (error.message.includes('Telegram WebApp')) {
-      errorMessage = 'Приложение должно быть открыто через Telegram бота.';
-      showRetry = false;
-    } else if (error.message.includes('авторизации') || error.message.includes('Невалидные данные')) {
-      errorMessage = 'Невалидные данные авторизации. Пожалуйста, перезапустите бота.';
-      showRetry = false;
-    } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-      errorMessage = 'Нет связи с сервером. Проверьте подключение к интернету.';
-    } else if (error.message.includes('не загружены')) {
-      errorMessage = 'Данные профиля не найдены. Попробуйте перезапустить приложение.';
-    } else if (error.message.includes('загрузить данные')) {
-      errorMessage = 'Не удалось загрузить данные из базы данных.';
-    }
-
-    showError(errorMessage);
-
-    // Показываем кнопку повторной попытки только для сетевых ошибок
-    if (showRetry) {
-      showRetryButton();
-    }
+    showError('Не удалось загрузить данные профиля. Проверьте соединение.');
+  } finally {
+    showLoading(false);
   }
-}
-
-/**
- * Показывает кнопку повторной попытки загрузки
- */
-function showRetryButton() {
-  const container = document.querySelector('.profile-container') || document.body;
-
-  // Удаляем старую кнопку, если есть
-  const existingButton = document.getElementById('retry-load-btn');
-  if (existingButton) {
-    existingButton.remove();
-  }
-
-  const retryButton = document.createElement('button');
-  retryButton.id = 'retry-load-btn';
-  retryButton.textContent = '🔄 Повторить загрузку';
-  retryButton.style.cssText = `
-    display: block;
-    margin: 20px auto;
-    padding: 12px 24px;
-    background: var(--accent-color, #3390ec);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  `;
-
-  retryButton.addEventListener('click', () => {
-    retryButton.remove();
-    loadProfileData();
-  });
-
-  retryButton.addEventListener('mouseover', () => {
-    retryButton.style.background = 'var(--accent-hover, #2980d6)';
-  });
-
-  retryButton.addEventListener('mouseout', () => {
-    retryButton.style.background = 'var(--accent-color, #3390ec)';
-  });
-
-  container.appendChild(retryButton);
 }
 
 /**
@@ -168,18 +73,16 @@ function showLoading(show) {
 }
 
 /**
- * Показывает сообщение об ошибке или информационное сообщение
+ * Показывает сообщение об ошибке
  */
-function showError(message, isError = true) {
-  // Не показываем popup уведомления - только UI сообщение
-  console.log(`📢 ${isError ? 'Ошибка' : 'Сообщение'}:`, message);
-
-  // Показываем сообщение в UI
+function showError(message) {
+  showNotification(message);
+  
+  // Показываем сообщение об ошибке в UI
   const errorElement = document.getElementById('error-message');
   if (errorElement) {
     errorElement.textContent = message;
     errorElement.style.display = 'block';
-    errorElement.style.color = isError ? 'var(--error-color, #e74c3c)' : 'var(--text-secondary, #666)';
   }
 }
 
@@ -278,7 +181,7 @@ function generateGradient(userId) {
  */
 function toggleEditMode() {
   if (isLoading) {
-    console.log('⚠️ Операция уже выполняется');
+    showNotification('Дождитесь завершения загрузки');
     return;
   }
 
@@ -313,7 +216,7 @@ function requestPhoneNumber() {
   const tg = window.Telegram?.WebApp;
   
   if (!tg) {
-    console.error('❌ Telegram WebApp недоступен');
+    showNotification('Telegram WebApp недоступен');
     return;
   }
   
@@ -335,35 +238,24 @@ function requestPhoneNumber() {
   } else {
     // Fallback для старых версий - показываем форму редактирования
     console.warn('⚠️ Метод requestContact недоступен в этой версии Telegram');
-    console.log('ℹ️ Пользователь должен ввести номер вручную');
+    showNotification('Пожалуйста, введите номер телефона вручную');
     toggleEditMode();
   }
 }
 
 /**
- * Сохраняет только номер телефона через API в БД
+ * Сохраняет только номер телефона через API
  */
 async function savePhoneToAPI(phone) {
   try {
-    console.log('🌐 API запрос: PUT /api/profile/ - сохранение телефона в БД');
     const updatedProfile = await updateProfile({ phone });
-    
-    console.log('✅ Телефон сохранён в БД для ID:', updatedProfile.telegram_id);
-
-    // Обновляем локальные данные из ответа БД
     profileData.phone = updatedProfile.phone || '';
-
-    // Обновляем глобальные данные (загружены из БД)
-    if (window.userData) {
-      window.userData.phone = updatedProfile.phone || '';
-      console.log('💾 Обновлены данные в памяти (источник - БД)');
-    }
-
     updateProfileUI();
-    console.log('✅ Номер телефона сохранен в БД!');
+    showNotification('Номер телефона сохранен!');
+    console.log('✅ Номер телефона сохранен:', phone);
   } catch (error) {
-    console.error('❌ Ошибка сохранения номера в БД:', error);
-    console.error('❌ Не удалось сохранить номер телефона');
+    console.error('❌ Ошибка сохранения номера:', error);
+    showNotification('Не удалось сохранить номер телефона');
   }
 }
 
@@ -372,7 +264,7 @@ async function savePhoneToAPI(phone) {
  */
 async function saveProfile() {
   if (isLoading) {
-    console.log('⚠️ Операция уже выполняется');
+    showNotification('Операция уже выполняется');
     return;
   }
 
@@ -389,37 +281,25 @@ async function saveProfile() {
   showLoading(true);
 
   try {
-    console.log('🌐 API запрос: PUT /api/profile/ - сохранение в БД');
-    console.log('📝 Данные для сохранения в БД:', updateData);
-    
+    console.log('🌐 Сохранение профиля через API...');
     const updatedProfile = await updateProfile(updateData);
+    console.log('✅ Профиль обновлен через API:', updatedProfile);
     
-    console.log('✅ Профиль обновлён в БД для ID:', updatedProfile.telegram_id);
-    console.log('💾 Обновлённые данные из БД:', updatedProfile);
-    
-    // Обновляем локальные данные из ответа БД
+    // Обновляем локальные данные из ответа сервера
     profileData.phone = updatedProfile.phone || '';
     profileData.businessName = updatedProfile.business_name || '';
     profileData.address = updatedProfile.address || '';
-    
-    // Обновляем глобальные данные (источник - БД)
-    if (window.userData) {
-      window.userData.phone = updatedProfile.phone || '';
-      window.userData.businessName = updatedProfile.business_name || '';
-      window.userData.address = updatedProfile.address || '';
-      console.log('💾 Обновлены данные в памяти (источник - БД)');
-    }
     
     // Обновляем UI и выходим из режима редактирования
     updateProfileUI();
     toggleEditMode();
     
     // Показываем уведомление
-    console.log('✅ Профиль успешно обновлен в БД!');
-
+    showNotification('Профиль успешно обновлен!');
+    
   } catch (error) {
-    console.error('❌ Ошибка сохранения профиля в БД:', error);
-    console.error('❌ Не удалось сохранить профиль. Проверьте соединение.');
+    console.error('❌ Ошибка сохранения профиля:', error);
+    showNotification('Не удалось сохранить профиль. Проверьте соединение.');
   } finally {
     showLoading(false);
   }
@@ -428,64 +308,45 @@ async function saveProfile() {
 /**
  * Инициализация страницы профиля
  */
-async function initProfilePage() {
+function initProfilePage() {
   console.log('🚀 Инициализация страницы профиля...');
-
-  try {
-    // Проверяем, инициализирован ли уже Auth Guard
-    // Не запускаем initAuthGuard вручную - waitForAppInit сделает это автоматически
-    console.log('🔍 Проверяем состояние Auth Guard...');
-
-    // Загружаем данные профиля (ждем Auth Guard)
-    await loadProfileData();
-
-    // Настраиваем обработчики событий
-    setupEventListeners();
-
-    console.log('✅ Страница профиля инициализирована');
-
-  } catch (error) {
-    console.error('❌ Ошибка инициализации страницы профиля:', error);
-    showError('Ошибка инициализации страницы. Попробуйте перезагрузить приложение.');
-  }
-}
-
-/**
- * Настраивает обработчики событий страницы
- */
-function setupEventListeners() {
+  
+  // Загружаем данные профиля
+  loadProfileData();
+  
+  // Настраиваем обработчики событий
   const editButton = document.getElementById('edit-profile-btn');
   const saveButton = document.getElementById('save-profile-btn');
   const cancelButton = document.getElementById('cancel-edit-btn');
-
+  
   if (editButton) {
     editButton.addEventListener('click', (e) => {
       e.preventDefault();
       toggleEditMode();
     });
   }
-
+  
   if (saveButton) {
     saveButton.addEventListener('click', async (e) => {
       e.preventDefault();
       await saveProfile();
     });
   }
-
+  
   if (cancelButton) {
     cancelButton.addEventListener('click', (e) => {
       e.preventDefault();
       toggleEditMode();
     });
   }
+  
+  console.log('✅ Страница профиля инициализирована');
 }
 
 // Инициализация при загрузке страницы
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initProfilePage().catch(console.error);
-  });
+  document.addEventListener('DOMContentLoaded', initProfilePage);
 } else {
-  initProfilePage().catch(console.error);
+  initProfilePage();
 }
 
