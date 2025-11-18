@@ -137,18 +137,27 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
 
 async def get_telegram_user(
     x_init_data: str = Header(..., alias="X-Init-Data"),
+    user_agent: str = Header(..., alias="User-Agent"),
     bot_token: str = None
 ) -> dict:
     """
     Dependency для получения данных пользователя из Telegram init_data
     УПРОЩЕННАЯ ВЕРСИЯ: парсит user данные без полной валидации hash
     """
+    # Определяем платформу по User-Agent
+    is_mobile = any(keyword in user_agent.lower() for keyword in [
+        'android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos', 'blackberry'
+    ])
+    platform = "📱 Mobile" if is_mobile else "💻 Desktop"
+
+    logging.info(f"{platform} запрос - User-Agent: {user_agent[:100]}...")
+
     # Проверяем наличие токена
     if not x_init_data or x_init_data.strip() == "":
-        logging.error("❌ Отсутствует X-Init-Data заголовок")
+        logging.error(f"❌ {platform} - Отсутствует X-Init-Data заголовок")
         raise HTTPException(status_code=401, detail="Отсутствует токен авторизации (X-Init-Data)")
 
-    logging.info(f"🔐 Получен токен авторизации (длина: {len(x_init_data)} символов)")
+    logging.info(f"🔐 {platform} - Получен токен авторизации (длина: {len(x_init_data)} символов)")
 
     # УПРОЩЕННАЯ ОБРАБОТКА: просто парсим user данные
     try:

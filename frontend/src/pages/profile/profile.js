@@ -16,6 +16,11 @@ let isLoading = false;
 async function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
 
+  // Определяем платформу
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const platform = isMobile ? '📱 Mobile' : '💻 Desktop';
+  console.log(`${platform} - UserAgent: ${navigator.userAgent.substring(0, 100)}...`);
+
   // Ждем инициализации Telegram WebApp
   if (!window.Telegram?.WebApp) {
     console.log('⏳ Ожидание загрузки Telegram WebApp...');
@@ -31,14 +36,26 @@ async function loadProfileData() {
     });
   }
 
-  console.log('🔍 Проверка Telegram WebApp:', window.Telegram?.WebApp);
-  console.log('🔍 initData:', window.Telegram?.WebApp?.initData);
-  console.log('🔍 initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
+  const tg = window.Telegram.WebApp;
+  console.log('🔍 Telegram WebApp версия:', tg?.version);
+  console.log('🔍 Платформа Telegram:', tg?.platform);
+  console.log('🔍 Тема:', tg?.colorScheme);
+  console.log('🔍 Viewport:', `${window.innerWidth}x${window.innerHeight}`);
+
+  console.log('🔍 initData длина:', tg?.initData?.length || 0);
+  console.log('🔍 initDataUnsafe:', !!tg?.initDataUnsafe);
+
+  if (tg?.initData) {
+    console.log('🔍 initData preview:', tg.initData.substring(0, 100) + '...');
+  }
 
   // Ждем, пока initData будет доступна
+  // На мобильных устройствах может потребоваться больше времени
+  const maxAttempts = isMobile ? 100 : 50;  // Удваиваем время ожидания для мобильных
   let attempts = 0;
-  while (!window.Telegram?.WebApp?.initData && attempts < 50) {
-    console.log(`⏳ Ожидание initData... (попытка ${attempts + 1})`);
+
+  while (!window.Telegram?.WebApp?.initData && attempts < maxAttempts) {
+    console.log(`${platform} ⏳ Ожидание initData... (попытка ${attempts + 1}/${maxAttempts})`);
     await new Promise(resolve => setTimeout(resolve, 100));
     attempts++;
   }
@@ -52,15 +69,24 @@ async function loadProfileData() {
   console.log('✅ initData получена, извлекаем данные пользователя...');
 
   const user = getTelegramUser();
-  console.log('👤 Данные пользователя из Telegram:', user);
+  console.log(`${platform} 👤 Данные пользователя из Telegram:`, user);
 
   if (!user) {
-    console.error('❌ Не удалось получить данные пользователя из Telegram');
+    console.error(`${platform} ❌ Не удалось получить данные пользователя из Telegram`);
+    console.error(`${platform} ❌ initData доступна:`, !!tg?.initData);
+    console.error(`${platform} ❌ initDataUnsafe доступна:`, !!tg?.initDataUnsafe);
+
+    // Для мобильных устройств пробуем альтернативный подход
+    if (isMobile && tg?.initDataUnsafe?.user) {
+      console.log(`${platform} 🔄 Попытка использовать initDataUnsafe.user для мобильного`);
+      // Здесь можно добавить специальную логику для мобильных
+    }
+
     showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите приложение через бота.');
     return;
   }
 
-  console.log('✅ Пользователь авторизован:', user.username || user.first_name);
+  console.log(`${platform} ✅ Пользователь авторизован:`, user.username || user.first_name);
 
   // Показываем индикатор загрузки
   showLoading(true);

@@ -24,6 +24,7 @@ class ProfileUpdate(BaseModel):
 @router.get("/")
 async def get_profile(
     telegram_user: dict = Depends(get_telegram_user),
+    user_agent: str = Header(..., alias="User-Agent"),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -32,7 +33,13 @@ async def get_profile(
     telegram_id = telegram_user['id']
     username = telegram_user.get('username', 'unknown')
 
-    logging.info(f"📡 GET /api/profile/ - запрос профиля для @{username} (ID: {telegram_id})")
+    # Определяем платформу
+    is_mobile = any(keyword in user_agent.lower() for keyword in [
+        'android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos', 'blackberry'
+    ])
+    platform = "📱 Mobile" if is_mobile else "💻 Desktop"
+
+    logging.info(f"📡 {platform} GET /api/profile/ - запрос профиля для @{username} (ID: {telegram_id})")
 
     try:
         # Ищем пользователя в БД
@@ -230,7 +237,8 @@ async def validate_token_only(
 
 @router.get("/debug-token")
 async def debug_token(
-    x_init_data: str = Header(..., alias="X-Init-Data")
+    x_init_data: str = Header(..., alias="X-Init-Data"),
+    user_agent: str = Header(..., alias="User-Agent")
 ):
     """
     Отладка токена - показывает полную информацию без валидации
@@ -241,11 +249,19 @@ async def debug_token(
     Returns:
         Полная информация о токене для отладки
     """
-    logging.info("🐛 Запрос отладки токена")
+    # Определяем платформу
+    is_mobile = any(keyword in user_agent.lower() for keyword in [
+        'android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos', 'blackberry'
+    ])
+    platform = "📱 Mobile" if is_mobile else "💻 Desktop"
+
+    logging.info(f"🐛 {platform} Запрос отладки токена")
 
     return {
+        "platform": platform,
+        "user_agent": user_agent[:200],
         "token_length": len(x_init_data),
-        "token_full": x_init_data,
+        "token_preview": x_init_data[:200] + "..." if len(x_init_data) > 200 else x_init_data,
         "has_user": 'user=' in x_init_data,
         "has_hash": 'hash=' in x_init_data,
         "has_query_id": 'query_id=' in x_init_data,
