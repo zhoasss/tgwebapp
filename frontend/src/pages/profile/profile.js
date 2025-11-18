@@ -15,18 +15,52 @@ let isLoading = false;
  */
 async function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
+
+  // Ждем инициализации Telegram WebApp
+  if (!window.Telegram?.WebApp) {
+    console.log('⏳ Ожидание загрузки Telegram WebApp...');
+    await new Promise(resolve => {
+      const checkTg = () => {
+        if (window.Telegram?.WebApp) {
+          resolve();
+        } else {
+          setTimeout(checkTg, 100);
+        }
+      };
+      checkTg();
+    });
+  }
+
   console.log('🔍 Проверка Telegram WebApp:', window.Telegram?.WebApp);
   console.log('🔍 initData:', window.Telegram?.WebApp?.initData);
   console.log('🔍 initDataUnsafe:', window.Telegram?.WebApp?.initDataUnsafe);
-  
-  const user = getTelegramUser();
-  console.log('👤 Данные пользователя из Telegram:', user);
-  
-  if (!user) {
-    console.error('❌ Не удалось получить данные пользователя из Telegram');
-    showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите бот.');
+
+  // Ждем, пока initData будет доступна
+  let attempts = 0;
+  while (!window.Telegram?.WebApp?.initData && attempts < 50) {
+    console.log(`⏳ Ожидание initData... (попытка ${attempts + 1})`);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
+
+  if (!window.Telegram?.WebApp?.initData) {
+    console.error('❌ initData не доступна после ожидания');
+    showError('Не удалось получить авторизационные данные от Telegram. Пожалуйста, перезапустите приложение через бота.');
     return;
   }
+
+  console.log('✅ initData получена, извлекаем данные пользователя...');
+
+  const user = getTelegramUser();
+  console.log('👤 Данные пользователя из Telegram:', user);
+
+  if (!user) {
+    console.error('❌ Не удалось получить данные пользователя из Telegram');
+    showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите приложение через бота.');
+    return;
+  }
+
+  console.log('✅ Пользователь авторизован:', user.username || user.first_name);
 
   // Показываем индикатор загрузки
   showLoading(true);
@@ -310,7 +344,16 @@ async function saveProfile() {
  */
 function initProfilePage() {
   console.log('🚀 Инициализация страницы профиля...');
-  
+
+  // Проверяем, что мы в Telegram WebApp
+  if (!window.Telegram?.WebApp) {
+    console.error('❌ Приложение запущено не в Telegram WebApp!');
+    showError('Это приложение работает только в Telegram. Пожалуйста, запустите его через бота.');
+    return;
+  }
+
+  console.log('✅ Telegram WebApp обнаружен, инициализация продолжается...');
+
   // Загружаем данные профиля
   loadProfileData();
   

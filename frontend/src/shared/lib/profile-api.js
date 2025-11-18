@@ -5,8 +5,8 @@
 
 import { getInitData } from './telegram.js';
 
-// URL API сервера
-const API_BASE_URL = 'http://localhost:8000';
+// URL API сервера (пустая строка = относительный путь, nginx проксирует /api/*)
+const API_BASE_URL = '';
 
 /**
  * Выполняет запрос к API
