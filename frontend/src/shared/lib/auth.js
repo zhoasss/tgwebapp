@@ -86,22 +86,35 @@ export function getAuthenticatedUser() {
  */
 export function validateInitData() {
   const initData = getInitData();
-  
+
+  console.log('🔍 validateInitData - проверка:', {
+    hasInitData: !!initData,
+    initDataPreview: initData ? initData.substring(0, 100) + '...' : 'null'
+  });
+
   if (!initData) {
+    console.error('❌ validateInitData: initData отсутствует');
     return false;
   }
-  
+
   // Проверяем, что initData содержит необходимые параметры
   const requiredParams = ['user', 'auth_date', 'hash'];
-  const hasRequiredParams = requiredParams.every(param => 
+  const hasRequiredParams = requiredParams.every(param =>
     initData.includes(`${param}=`)
   );
-  
+
+  console.log('🔍 validateInitData - параметры:', {
+    requiredParams: requiredParams,
+    hasRequiredParams: hasRequiredParams,
+    missingParams: requiredParams.filter(param => !initData.includes(`${param}=`))
+  });
+
   if (!hasRequiredParams) {
-    console.error('❌ initData не содержит необходимых параметров');
+    console.error('❌ validateInitData: отсутствуют необходимые параметры');
     return false;
   }
-  
+
+  console.log('✅ validateInitData: все проверки пройдены');
   return true;
 }
 

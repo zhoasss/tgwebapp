@@ -13,28 +13,35 @@ import logging
 def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
     """
     Проверяет подлинность initData от Telegram WebApp
-    
+
     Args:
         init_data: Строка initData от Telegram WebApp
         bot_token: Токен бота
-        
+
     Returns:
         dict: Распарсенные данные пользователя
-        
+
     Raises:
         HTTPException: Если данные невалидны
     """
+    logging.info(f"🔐 Начинаем валидацию init_data (длина: {len(init_data) if init_data else 0})")
+
     if not init_data:
+        logging.error("❌ Init data отсутствует")
         raise HTTPException(status_code=401, detail="Init data отсутствует")
-    
+
     try:
         # Парсим init_data
         parsed_data = parse_qs(init_data)
-        
+        logging.info(f"📋 Распарсенные параметры: {list(parsed_data.keys())}")
+
         # Извлекаем hash
         received_hash = parsed_data.get('hash', [None])[0]
         if not received_hash:
+            logging.error("❌ Hash отсутствует в init_data")
             raise HTTPException(status_code=401, detail="Hash отсутствует в init_data")
+
+        logging.info(f"🔒 Получен hash: {received_hash[:10]}...")
         
         # Удаляем hash из данных для проверки
         data_check_string_parts = []
@@ -51,27 +58,36 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
             bot_token.encode(),
             hashlib.sha256
         ).digest()
-        
+
+        logging.info(f"🔑 Secret key создан из токена (длина: {len(bot_token)})")
+
         # Вычисляем hash
         calculated_hash = hmac.new(
             secret_key,
             data_check_string.encode(),
             hashlib.sha256
         ).hexdigest()
-        
+
+        logging.info(f"🔢 Вычислен hash: {calculated_hash[:10]}...")
+        logging.info(f"🔍 Сравнение: received={received_hash[:10]}... vs calculated={calculated_hash[:10]}...")
+
         # Сравниваем хеши
         if calculated_hash != received_hash:
+            logging.error("❌ Hash не совпадает - init data невалидны")
             raise HTTPException(status_code=401, detail="Init data невалидны")
         
         # Парсим данные пользователя
         user_data = parsed_data.get('user', [None])[0]
         if user_data:
             user = json.loads(user_data)
+            logging.info(f"✅ Валидация init_data успешна для пользователя: {user.get('id', 'unknown')}")
             return user
         else:
+            logging.error("❌ Данные пользователя отсутствуют в init_data")
             raise HTTPException(status_code=401, detail="Данные пользователя отсутствуют")
-            
-    except json.JSONDecodeError:
+
+    except json.JSONDecodeError as e:
+        logging.error(f"❌ Ошибка парсинга JSON данных пользователя: {e}")
         raise HTTPException(status_code=401, detail="Ошибка парсинга данных пользователя")
     except Exception as e:
         logging.error(f"❌ Ошибка валидации init_data: {e}")

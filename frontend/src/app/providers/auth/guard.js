@@ -163,8 +163,19 @@ export async function initAuthGuard() {
     await sleep(200);
 
     // Шаг 2: Проверка наличия initData
+    console.log('🔍 Auth Guard - проверка initData:', {
+      hasTg: !!tg,
+      hasInitData: !!tg.initData,
+      initDataLength: tg.initData?.length || 0,
+      platform: tg.platform || 'unknown'
+    });
+
     if (!tg.initData || tg.initData.length === 0) {
       throw new Error('Отсутствуют данные авторизации. Пожалуйста, перезапустите приложение через бота.');
+    }
+
+    if (tg.initData.length < 50) {
+      console.warn('⚠️ initData очень короткий, возможно проблема с инициализацией');
     }
 
     // Шаг 3: Проверка валидности initData

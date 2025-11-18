@@ -12,8 +12,18 @@ import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
 async function apiRequest(endpoint, options = {}, maxRetries = 2) {
   const initData = getInitData();
 
+  console.log('🔍 API Request - InitData check:', {
+    hasInitData: !!initData,
+    initDataLength: initData?.length || 0,
+    endpoint: endpoint
+  });
+
   if (!initData) {
-    throw new Error('Telegram WebApp не инициализирован');
+    throw new Error('Telegram WebApp не инициализирован - отсутствует initData');
+  }
+
+  if (initData.length < 10) {
+    throw new Error('Telegram WebApp не инициализирован - initData слишком короткий');
   }
 
   const url = `${API_BASE_URL}${endpoint}`;
