@@ -89,3 +89,22 @@ debug-backend: ## Debug backend container
 	@echo ""
 	@echo "=== Environment Variables ==="
 	@docker compose exec backend env | grep -E "(BOT_TOKEN|WEB_APP_URL)" || echo "Environment variables not set"
+
+diagnose: ## Complete diagnosis of all services
+	@echo "=== SYSTEM DIAGNOSIS ==="
+	@echo "1. Container Status:"
+	@docker compose ps
+	@echo ""
+	@echo "2. Environment Variables:"
+	@docker compose exec backend env | grep -E "(BOT_TOKEN|WEB_APP_URL|ENVIRONMENT)" | head -10 || echo "Variables not accessible"
+	@echo ""
+	@echo "3. API Health Check:"
+	@curl -f http://localhost/api/test 2>/dev/null && echo "✅ API accessible" || echo "❌ API not accessible"
+	@echo ""
+	@echo "4. Database Check:"
+	@docker compose exec backend ls -la /app/data/ || echo "Data directory not accessible"
+	@echo ""
+	@echo "5. Network Check:"
+	@docker compose exec backend python -c "import socket; s=socket.socket(); s.connect(('db', 0)); print('✅ Network OK')" 2>/dev/null || echo "❌ Network issues"
+	@echo ""
+	@echo "=== DIAGNOSIS COMPLETE ==="
