@@ -24,11 +24,27 @@
   <main id="app">
     <div class="view-content">
       <h1>📅 Записи</h1>
+
+      <!-- Фильтры записей -->
+      <div class="records-filters">
+        <button class="filter-btn active" data-status="">Все</button>
+        <button class="filter-btn" data-status="pending">Ожидают</button>
+        <button class="filter-btn" data-status="confirmed">Подтверждены</button>
+        <button class="filter-btn" data-status="completed">Завершены</button>
+      </div>
+
+      <!-- Список записей -->
       <div id="records-list" class="records-list">
         <!-- Записи будут загружены через JS -->
       </div>
     </div>
   </main>
+
+  <!-- Индикатор загрузки -->
+  <div id="loading-indicator" class="loading-indicator" style="display: none;">
+    <div class="loading-spinner"></div>
+    <p>Загрузка...</p>
+  </div>
 
   <!-- Footer Navigation Widget -->
   <footer class="footer">

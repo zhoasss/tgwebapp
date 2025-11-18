@@ -15,6 +15,7 @@
   border-radius: 12px;
   padding: 16px;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
 }
 
 .record-item:hover {
@@ -22,15 +23,174 @@
   transform: translateY(-2px);
 }
 
-.record-item h3 {
-  font-size: 18px;
-  margin-bottom: 8px;
-  color: var(--text-primary);
+/* Заголовок записи с именем клиента и статусом */
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.record-item p {
-  margin: 4px 0;
+.client-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* Бейдж статуса */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Детали записи */
+.record-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Информация об услуге */
+.service-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.service-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.price {
+  color: var(--accent-color, #4CAF50);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Дата и время */
+.datetime-info {
   color: var(--text-secondary);
   font-size: 14px;
+  margin: 0;
+}
+
+/* Заметки */
+.notes {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0;
+  font-style: italic;
+}
+
+.client-notes {
+  color: var(--text-primary);
+  font-size: 13px;
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--bg-secondary, rgba(0,0,0,0.05));
+  border-radius: 8px;
+  border-left: 3px solid var(--accent-color, #4CAF50);
+}
+
+/* Состояния загрузки и ошибок */
+.loading-placeholder {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.no-records {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin: 0;
+}
+
+.error-message {
+  text-align: center;
+  padding: 40px;
+  color: var(--error-color, #f44336);
+}
+
+.error-message p {
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.retry-btn {
+  background: var(--accent-color, #4CAF50);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: var(--accent-hover, #45a049);
+}
+
+/* Фильтры записей (опционально) */
+.records-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: var(--bg-hover, rgba(0,0,0,0.05));
+}
+
+.filter-btn.active {
+  background: var(--accent-color, #4CAF50);
+  color: white;
+  border-color: var(--accent-color, #4CAF50);
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .record-item {
+    padding: 12px;
+  }
+
+  .record-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .status-badge {
+    align-self: flex-end;
+  }
+
+  .service-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
 
