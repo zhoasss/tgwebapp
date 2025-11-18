@@ -4,7 +4,7 @@
  */
 
 import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
-import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
+import { getProfile, updateProfile, testApiConnection } from '../../shared/lib/profile-api.js';
 
 let isEditMode = false;
 let profileData = {};
@@ -66,6 +66,17 @@ async function loadProfileData() {
   showLoading(true);
 
   try {
+    // Сначала тестируем подключение к API
+    console.log('🔍 Тестирование подключения к API...');
+    try {
+      await testApiConnection();
+      console.log('✅ API доступен');
+    } catch (testError) {
+      console.error('❌ API недоступен:', testError);
+      showError('Сервер API недоступен. Проверьте подключение.');
+      return;
+    }
+
     console.log('🌐 Загрузка профиля из API...');
     const apiProfile = await getProfile();
     console.log('✅ Профиль получен из API:', apiProfile);

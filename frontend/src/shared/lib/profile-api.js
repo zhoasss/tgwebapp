@@ -36,19 +36,51 @@ async function apiRequest(endpoint, options = {}) {
   });
 
   try {
+    console.log('📡 Выполнение fetch запроса...');
     const response = await fetch(url, {
       ...options,
       headers,
     });
 
+    console.log(`📥 Ответ получен: ${response.status} ${response.statusText}`);
+    console.log('📋 Заголовки ответа:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Ошибка сервера' }));
-      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+      console.error(`❌ HTTP ошибка: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ Тело ошибки:', errorText);
+
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail || errorMessage;
+      } catch (e) {
+        // Не JSON, используем текст как есть
+      }
+
+      throw new Error(errorMessage);
     }
 
-    return await response.json();
+    const responseData = await response.json();
+    console.log('✅ Успешный ответ API:', responseData);
+    return responseData;
+
   } catch (error) {
-    console.error('API Request Error:', error);
+    console.error('🚨 API Request Error:', error);
+    console.error('🚨 Тип ошибки:', error.constructor.name);
+    console.error('🚨 URL запроса:', url);
+    console.error('🚨 Заголовки запроса:', headers);
+
+    // Специальная обработка CORS ошибок
+    if (error.name === 'TypeError' && error.message.includes('Load failed')) {
+      console.error('🚨 Вероятно CORS ошибка или network error');
+      console.error('💡 Проверьте:');
+      console.error('   - CORS настройки в nginx');
+      console.error('   - Доступность backend сервиса');
+      console.error('   - HTTPS сертификаты');
+      throw new Error('Ошибка сети или CORS. Проверьте подключение к серверу.');
+    }
+
     throw error;
   }
 }
@@ -76,6 +108,38 @@ export async function updateProfile(data) {
     });
   } catch (error) {
     console.error('❌ Ошибка обновления профиля:', error);
+    throw error;
+  }
+}
+
+/**
+ * Тестовый запрос API без авторизации
+ */
+export async function testApiConnection() {
+  try {
+    console.log('🧪 Тестирование подключения к API...');
+    const url = `${API_BASE_URL}/api/test`;
+    console.log(`🌐 Test URL: ${window.location.protocol}//${window.location.host}${url}`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log(`📥 Test response: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ API test successful:', data);
+    return data;
+
+  } catch (error) {
+    console.error('❌ API test failed:', error);
     throw error;
   }
 }

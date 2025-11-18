@@ -85,7 +85,18 @@ async def root():
 async def health_check():
     """Проверка здоровья сервера"""
     logging.debug("💓 Health check запрос")
-    return {"status": "ok", "timestamp": "now"}
+    return {"status": "ok", "timestamp": "now", "service": "api"}
+
+@app.get("/api/test")
+async def api_test():
+    """Тестовый endpoint для проверки API доступности"""
+    logging.info("🧪 API test endpoint called")
+    return {
+        "status": "ok",
+        "message": "API доступен",
+        "cors_test": "CORS должен работать",
+        "timestamp": "now"
+    }
 
 if __name__ == "__main__":
     import uvicorn
