@@ -63,8 +63,19 @@ async def get_clients(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Строим запрос
     query = select(Client).where(Client.user_id == user.id)
@@ -129,8 +140,19 @@ async def create_client(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Создаем клиента
     client = Client(
@@ -176,8 +198,19 @@ async def get_client(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Находим клиента
     result = await session.execute(
@@ -224,8 +257,19 @@ async def update_client(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Находим клиента
     result = await session.execute(
@@ -277,8 +321,19 @@ async def delete_client(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Находим клиента
     result = await session.execute(

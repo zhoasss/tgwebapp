@@ -56,8 +56,19 @@ async def get_services(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Получаем услуги пользователя
     result = await session.execute(
@@ -97,8 +108,19 @@ async def create_service(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Создаем услугу
     service = Service(
@@ -144,8 +166,19 @@ async def get_service(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Находим услугу
     result = await session.execute(
@@ -192,8 +225,19 @@ async def update_service(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Находим услугу
     result = await session.execute(
@@ -245,8 +289,19 @@ async def delete_service(
     )
     user = result.scalar_one_or_none()
 
+    # Если пользователя нет - создаем (автоматическая регистрация)
     if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
     # Находим услугу
     result = await session.execute(
