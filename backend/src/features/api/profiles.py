@@ -354,5 +354,20 @@ async def get_current_user_info(
         logging.error(f"❌ Ошибка получения информации о пользователе: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Ошибка получения информации о пользователе")
 
+@router.get("/debug")
+async def debug_profile():
+    """
+    Временный endpoint для тестирования API без авторизации
+    """
+    return {
+        "status": "ok",
+        "message": "API работает корректно",
+        "timestamp": "2025-01-01T12:00:00Z",
+        "debug_info": {
+            "endpoint": "/api/debug",
+            "auth_required": False
+        }
+    }
+
 # Экспорт роутеров
 __all__ = ["router"]

@@ -101,10 +101,22 @@ diagnose: ## Complete diagnosis of all services
 	@echo "3. API Health Check:"
 	@curl -f http://localhost/api/test 2>/dev/null && echo "✅ API accessible" || echo "❌ API not accessible"
 	@echo ""
-	@echo "4. Database Check:"
+	@echo "4. API Routes Check:"
+	@docker compose exec backend python -c "
+	try:
+	    from src.api_server import app
+	    routes = [f'{list(route.methods)[0]} {route.path}' for route in app.routes if hasattr(route, 'methods') and hasattr(route, 'path')]
+	    print('API Routes:')
+	    for route in sorted(routes):
+	        print(f'  {route}')
+	except Exception as e:
+	    print(f'❌ Error loading routes: {e}')
+	" 2>/dev/null || echo "Cannot check routes"
+	@echo ""
+	@echo "5. Database Check:"
 	@docker compose exec backend ls -la /app/data/ || echo "Data directory not accessible"
 	@echo ""
-	@echo "5. Network Check:"
+	@echo "6. Network Check:"
 	@docker compose exec backend python -c "import socket; s=socket.socket(); s.connect(('db', 0)); print('✅ Network OK')" 2>/dev/null || echo "❌ Network issues"
 	@echo ""
 	@echo "=== DIAGNOSIS COMPLETE ==="
