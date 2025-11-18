@@ -19,6 +19,8 @@ async function apiRequest(endpoint, options = {}) {
   }
 
   const url = `${API_BASE_URL}${endpoint}`;
+  console.log(`🌐 API запрос: ${window.location.protocol}//${window.location.host}${url}`);
+
   const headers = {
     'Content-Type': 'application/json',
     'X-Init-Data': initData,
