@@ -4,8 +4,15 @@ from dotenv import load_dotenv
 
 def load_config():
     """Загружает конфигурацию из .env файла или переменных окружения"""
-    # Проверяем возможные пути к .env файлу
-    possible_paths = [Path(".env"), Path("/app/.env")]
+    # Получаем путь к корневой папке проекта (где находится .env)
+    project_root = Path(__file__).parent.parent.parent.parent.parent
+
+    # Проверяем возможные пути к .env файлу (сначала корневая папка проекта)
+    possible_paths = [
+        project_root / ".env",  # Корневая папка проекта
+        Path(".env"),           # Текущая рабочая директория
+        Path("/app/.env")       # Docker контейнер
+    ]
 
     env_path = None
     for path in possible_paths:
