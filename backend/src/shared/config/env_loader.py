@@ -25,6 +25,10 @@ class Config:
         # Загружаем переменные окружения
         self._load_env_file()
 
+        # Настройки данных (нужно перед database_url)
+        self.data_dir: Path = Path(self._get_env("DATA_DIR", "/app/data"))
+        self.data_dir.mkdir(exist_ok=True)
+
         # Настройки Telegram
         self.bot_token: str = self._get_required_env("BOT_TOKEN")
         self.web_app_url: str = self._get_required_env("WEB_APP_URL")
@@ -60,10 +64,6 @@ class Config:
         self.app_title: str = "Booking Cabinet API"
         self.app_description: str = "API для системы управления записями и бронированиями"
         self.app_version: str = "2.0.0"
-
-        # Настройки данных
-        self.data_dir: Path = Path(self._get_env("DATA_DIR", "/app/data"))
-        self.data_dir.mkdir(exist_ok=True)
 
         logger.info(f"✅ Конфигурация загружена для окружения: {self.environment}")
 
