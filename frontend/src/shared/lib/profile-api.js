@@ -216,3 +216,35 @@ export async function testApiConnection() {
   }
 }
 
+/**
+ * Debug запрос для проверки API без авторизации
+ */
+export async function debugApiConnection() {
+  try {
+    console.log('🐛 Debug запрос к API...');
+    const url = `${API_BASE_URL}/api/debug`;
+    console.log(`🌐 Debug URL: ${url}`);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log(`📥 Debug response: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Debug API successful:', data);
+    return data;
+
+  } catch (error) {
+    console.error('❌ Debug API failed:', error);
+    throw error;
+  }
+}
+

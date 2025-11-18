@@ -4,17 +4,20 @@
  */
 
 /**
- * URL API сервера
- * Selectel deployment
- */
-const API_URL = 'https://booking-cab.ru';
-
-/**
  * Определяет URL API сервера
+ * Автоматически выбирает между localhost (разработка) и production доменом
  * @returns {string} Base URL для API
  */
 export function getApiBaseUrl() {
-  return API_URL;
+  // Проверяем, находимся ли мы на production домене
+  const isProduction = window.location.hostname === 'booking-cab.ru' ||
+                      window.location.hostname === 'www.booking-cab.ru';
+
+  // Для production используем HTTPS, для разработки - текущий протокол
+  const protocol = isProduction ? 'https:' : window.location.protocol;
+  const hostname = isProduction ? 'booking-cab.ru' : window.location.hostname;
+
+  return `${protocol}//${hostname}`;
 }
 
 /**
@@ -28,5 +31,6 @@ export const API_BASE_URL = getApiBaseUrl();
 export const API_ENDPOINTS = {
   PROFILE: '/api/profile/',
   HEALTH: '/health',
+  DEBUG: '/api/debug',
 };
 

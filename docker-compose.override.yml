@@ -17,12 +17,12 @@ services:
     volumes:
       - ./frontend:/usr/share/nginx/html
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      # Mount SSL certificates from host
+      # Mount SSL certificates from host (if exist)
       - /etc/letsencrypt/live/booking-cab.ru/fullchain.pem:/etc/ssl/certs/ssl-cert.pem
       - /etc/letsencrypt/live/booking-cab.ru/privkey.pem:/etc/ssl/private/ssl-cert.key
     ports:
-      - "80:80"    # HTTP
-      - "443:443"  # HTTPS
+      - "80:80"    # HTTP (localhost + domain)
+      - "443:443"  # HTTPS (domain only)
 
   bot:
     # Mount source code for live reload
