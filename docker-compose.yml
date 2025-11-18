@@ -18,6 +18,7 @@ services:
       - app-network
     depends_on:
       - db
+    user: root
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
       interval: 30s
@@ -62,6 +63,7 @@ services:
       - app-network
     depends_on:
       - backend
+    user: root
     command: ["python", "main.py"]
 
   # Database (SQLite file-based, but could be replaced with PostgreSQL)

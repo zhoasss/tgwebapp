@@ -49,22 +49,8 @@ WORKDIR /app
 # Copy application code with proper ownership
 COPY --chown=appuser:appuser . .
 
-# Create data directory with proper permissions
-RUN mkdir -p /app/data && \
-    chown -R appuser:appuser /app/data && \
-    chmod -R 777 /app/data
-
-# Create an entrypoint script to handle permissions
-RUN echo '#!/bin/bash\n\
-# Ensure data directory has proper permissions\n\
-mkdir -p /app/data\n\
-chmod -R 777 /app/data\n\
-\n\
-# Execute the main command\n\
-exec "$@"' > /entrypoint.sh && chmod +x /entrypoint.sh
-
-# Switch to non-root user
-USER appuser
+# Create data directory
+RUN mkdir -p /app/data
 
 # Expose port
 EXPOSE 8000
@@ -74,5 +60,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the API server
-ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "api_server.py"]
