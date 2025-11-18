@@ -13,6 +13,7 @@ services:
       - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
     volumes:
       - backend_data:/app/data
+      - ./.env:/app/.env
     networks:
       - app-network
     depends_on:
@@ -56,6 +57,7 @@ services:
       - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
     volumes:
       - backend_data:/app/data
+      - ./.env:/app/.env
     networks:
       - app-network
     depends_on:
