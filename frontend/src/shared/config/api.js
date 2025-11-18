@@ -42,8 +42,13 @@ export const API_BASE_URL = getApiBaseUrl();
  * Endpoints API
  */
 export const API_ENDPOINTS = {
-  PROFILE: '/api/profile/',
+  PROFILE: '/api/',
+  APPOINTMENTS: '/api/appointments/',
+  SERVICES: '/api/services/',
+  CLIENTS: '/api/clients/',
+  SCHEDULE: '/api/schedule/',
   HEALTH: '/health',
   DEBUG: '/api/debug',
+  TEST: '/api/test',
 };
 

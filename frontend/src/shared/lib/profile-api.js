@@ -4,7 +4,7 @@
  */
 
 import { getInitData } from './telegram.js';
-import { API_BASE_URL } from '../config/api.js';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
 
 /**
  * Выполняет запрос к API
@@ -91,7 +91,7 @@ async function apiRequest(endpoint, options = {}) {
  */
 export async function getProfile() {
   try {
-    return await apiRequest('/api/profile/');
+    return await apiRequest(API_ENDPOINTS.PROFILE);
   } catch (error) {
     console.error('❌ Ошибка получения профиля:', error);
     throw error;
@@ -103,7 +103,7 @@ export async function getProfile() {
  */
 export async function updateProfile(data) {
   try {
-    return await apiRequest('/api/profile/', {
+    return await apiRequest(API_ENDPOINTS.PROFILE, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -129,13 +129,12 @@ export async function getAppointments(status = null, dateFrom = null, dateTo = n
     if (offset !== 0) params.append('offset', offset.toString());
 
     const queryString = params.toString();
-    const endpoint = `/api/appointments/${queryString ? '?' + queryString : ''}`;
-    const url = `${API_BASE_URL}${endpoint}`;
+    const endpoint = `${API_ENDPOINTS.APPOINTMENTS}${queryString ? '?' + queryString : ''}`;
 
-    console.log('🔗 Final URL:', url);
+    console.log('🔗 Final URL:', `${API_BASE_URL}${endpoint}`);
     console.log('📍 Endpoint:', endpoint);
 
-    return await apiRequest(url);
+    return await apiRequest(endpoint);
   } catch (error) {
     console.error('❌ Ошибка получения записей:', error);
     throw error;
@@ -149,7 +148,7 @@ export async function createAppointment(appointmentData) {
   try {
     console.log('📝 Создание новой записи...', appointmentData);
 
-    return await apiRequest('/api/appointments/', {
+    return await apiRequest(API_ENDPOINTS.APPOINTMENTS, {
       method: 'POST',
       body: JSON.stringify(appointmentData),
     });
@@ -166,7 +165,7 @@ export async function updateAppointment(appointmentId, appointmentData) {
   try {
     console.log(`📝 Обновление записи ${appointmentId}...`, appointmentData);
 
-    return await apiRequest(`/api/appointments/${appointmentId}`, {
+    return await apiRequest(`${API_ENDPOINTS.APPOINTMENTS}${appointmentId}`, {
       method: 'PUT',
       body: JSON.stringify(appointmentData),
     });
@@ -183,7 +182,7 @@ export async function deleteAppointment(appointmentId) {
   try {
     console.log(`🗑️ Удаление записи ${appointmentId}...`);
 
-    return await apiRequest(`/api/appointments/${appointmentId}`, {
+    return await apiRequest(`${API_ENDPOINTS.APPOINTMENTS}${appointmentId}`, {
       method: 'DELETE',
     });
   } catch (error) {
@@ -198,26 +197,7 @@ export async function deleteAppointment(appointmentId) {
 export async function testApiConnection() {
   try {
     console.log('🧪 Тестирование подключения к API...');
-    const url = `${API_BASE_URL}/api/test`;
-    console.log(`🌐 Test URL: ${window.location.protocol}//${window.location.host}${url}`);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log(`📥 Test response: ${response.status} ${response.statusText}`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ API test successful:', data);
-    return data;
-
+    return await apiRequest(API_ENDPOINTS.TEST);
   } catch (error) {
     console.error('❌ API test failed:', error);
     throw error;
@@ -230,26 +210,7 @@ export async function testApiConnection() {
 export async function debugApiConnection() {
   try {
     console.log('🐛 Debug запрос к API...');
-    const url = `${API_BASE_URL}/api/debug`;
-    console.log(`🌐 Debug URL: ${url}`);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log(`📥 Debug response: ${response.status} ${response.statusText}`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Debug API successful:', data);
-    return data;
-
+    return await apiRequest(API_ENDPOINTS.DEBUG);
   } catch (error) {
     console.error('❌ Debug API failed:', error);
     throw error;
