@@ -3,33 +3,26 @@
  * Слой Shared - переиспользуемый код
  */
 
-import { getInitData } from './telegram.js';
+import { getAuthHeader, isAuthenticated } from './auth-api.js';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
 
 /**
  * Выполняет запрос к API с retry логикой
  */
 async function apiRequest(endpoint, options = {}, maxRetries = 2) {
-  const initData = getInitData();
-
-  console.log('🔍 API Request - InitData check:', {
-    hasInitData: !!initData,
-    initDataLength: initData?.length || 0,
+  console.log('🔍 API Request - Auth check:', {
+    isAuthenticated: isAuthenticated(),
     endpoint: endpoint
   });
 
-  if (!initData) {
-    throw new Error('Telegram WebApp не инициализирован - отсутствует initData');
-  }
-
-  if (initData.length < 10) {
-    throw new Error('Telegram WebApp не инициализирован - initData слишком короткий');
+  if (!isAuthenticated()) {
+    throw new Error('Пользователь не авторизован');
   }
 
   const url = `${API_BASE_URL}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
-    'X-Init-Data': initData,
+    'Authorization': getAuthHeader(),
     ...options.headers,
   };
 

@@ -260,35 +260,9 @@ export async function initAuthGuard() {
 }
 
 /**
- * Автоматическая инициализация Auth Guard при загрузке страницы
- * Запускается только если страница требует авторизации (профиль, настройки)
+ * Auth Guard теперь инициализируется вручную через login/register формы
+ * Автоматическая инициализация убрана
  */
-(function autoInitAuthGuard() {
-  // Проверяем, нужна ли авторизация на этой странице
-  const currentPath = window.location.pathname;
-
-  // Страницы, требующие авторизации
-  const authRequiredPages = [
-    '/src/pages/profile/index.html',
-    '/src/pages/settings/index.html'
-  ];
-
-  const needsAuth = authRequiredPages.some(page => currentPath.includes(page));
-
-  if (needsAuth && !window.appState.isInitialized && !isInitializing) {
-    console.log('🚀 Автоматический запуск Auth Guard для страницы:', currentPath);
-
-    // Небольшая задержка, чтобы Telegram WebApp успел инициализироваться
-    setTimeout(async () => {
-      try {
-        await initAuthGuard();
-        console.log('✅ Auth Guard автоматически инициализирован');
-      } catch (error) {
-        console.error('❌ Ошибка автоматической инициализации Auth Guard:', error);
-      }
-    }, 500);
-  }
-})();
 
 /**
  * Загружает данные пользователя из БД с retry логикой

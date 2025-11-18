@@ -3,6 +3,23 @@
  * Слой Pages - страницы приложения
  */
 
+import { isAuthenticated, logout } from '../../shared/lib/auth-api.js';
+
+// Проверяем авторизацию при загрузке страницы
+if (!isAuthenticated()) {
+  console.log('❌ Пользователь не авторизован, перенаправляем на login');
+  window.location.href = '../login/index.html';
+  // Прерываем выполнение скрипта
+  throw new Error('User not authenticated');
+}
+
+// Функция выхода
+window.handleLogout = function() {
+  if (confirm('Вы уверены, что хотите выйти?')) {
+    logout();
+  }
+};
+
 // Пример данных (потом заменить на API)
 const mockRecords = [
   {

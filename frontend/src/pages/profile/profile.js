@@ -3,9 +3,23 @@
  * Слой Pages - страницы приложения
  */
 
-import { getTelegramUser } from '../../shared/lib/telegram.js';
+import { isAuthenticated, logout } from '../../shared/lib/auth-api.js';
 import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
-import { waitForAppInit, initAuthGuard } from '../../app/providers/auth/guard.js';
+
+// Проверяем авторизацию при загрузке страницы
+if (!isAuthenticated()) {
+  console.log('❌ Пользователь не авторизован, перенаправляем на login');
+  window.location.href = '../login/index.html';
+  // Прерываем выполнение скрипта
+  throw new Error('User not authenticated');
+}
+
+// Функция выхода
+window.handleLogout = function() {
+  if (confirm('Вы уверены, что хотите выйти?')) {
+    logout();
+  }
+};
 
 let isEditMode = false;
 let profileData = {};

@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 
 from src.shared.database.connection import init_database
 from src.shared.logger.setup import setup_logging
-from src.features.api.profile import router as profile_router
+from src.features.api.profile import profile_router, auth_router
 
 # Настройка логирования с ротацией
 from pathlib import Path
@@ -62,6 +62,7 @@ app.add_middleware(
 )
 
 # Подключение роутеров
+app.include_router(auth_router)
 app.include_router(profile_router)
 
 @app.get("/")

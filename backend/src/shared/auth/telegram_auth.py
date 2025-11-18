@@ -8,7 +8,11 @@ import hmac
 import json
 from urllib.parse import parse_qs
 from fastapi import HTTPException, Header
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 import logging
+
+from ..database.models import User
 
 def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
     """
@@ -99,11 +103,11 @@ async def get_telegram_user(
 ) -> dict:
     """
     Dependency для получения данных пользователя из Telegram init_data
-    
+
     Args:
         x_init_data: Init data из заголовка запроса
         bot_token: Токен бота для валидации
-        
+
     Returns:
         dict: Данные пользователя
     """
@@ -112,6 +116,36 @@ async def get_telegram_user(
         from ..config.env_loader import load_config
         config = load_config()
         bot_token = config['bot_token']
-    
+
     return validate_telegram_init_data(x_init_data, bot_token)
+
+async def get_current_user(
+    authorization: str = Header(..., alias="Authorization")
+) -> dict:
+    """
+    Dependency для получения данных пользователя по токену
+
+    Args:
+        authorization: Токен авторизации (Bearer token)
+
+    Returns:
+        dict: Данные пользователя
+    """
+    from ..database.connection import get_session
+
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Требуется авторизация")
+
+    token = authorization.replace("Bearer ", "")
+
+    async with get_session() as session:
+        result = await session.execute(
+            select(User).where(User.token == token)
+        )
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(status_code=401, detail="Неверный токен")
+
+        return user.to_dict()
 
