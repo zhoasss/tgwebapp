@@ -6,6 +6,7 @@ services:
     # Mount source code for live reload
     volumes:
       - ./backend:/app
+      - ./.env:/app/.env
     environment:
       - PYTHONPATH=/app
     # Override command to use reload
@@ -27,6 +28,7 @@ services:
     # Mount source code for live reload
     volumes:
       - ./backend:/app
+      - ./.env:/app/.env
     environment:
       - PYTHONPATH=/app
     # Override command to restart on changes
