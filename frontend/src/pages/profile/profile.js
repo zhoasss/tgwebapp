@@ -179,9 +179,110 @@ function showLoading(show) {
 /**
  * Показывает сообщение об ошибке
  */
+/**
+ * Показывает уведомление с типом
+ */
+function showNotification(message, type = 'info') {
+  const tg = window.Telegram?.WebApp;
+
+  // Пытаемся использовать Telegram popup
+  if (tg && typeof tg.showPopup === 'function') {
+    try {
+      tg.showPopup({
+        title: type === 'error' ? 'Ошибка' : type === 'success' ? 'Успех' : 'Уведомление',
+        message: message,
+        buttons: [{ text: 'OK', type: 'ok' }]
+      });
+      return;
+    } catch (e) {
+      console.warn('Telegram popup failed, using fallback');
+    }
+  }
+
+  // Fallback - кастомное уведомление
+  showCustomNotification(message, type);
+}
+
+/**
+ * Показывает кастомное уведомление
+ */
+function showCustomNotification(message, type = 'info') {
+  // Удаляем предыдущее уведомление
+  const existingNotification = document.querySelector('.custom-notification');
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+
+  const notification = document.createElement('div');
+  notification.className = `custom-notification notification-${type}`;
+
+  const colors = {
+    success: '#4CAF50',
+    error: '#f44336',
+    warning: '#FF9800',
+    info: '#2196F3'
+  };
+
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${colors[type]};
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 90%;
+    text-align: center;
+    animation: slideDown 0.3s ease-out;
+  `;
+
+  notification.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 18px;">
+        ${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}
+      </span>
+      <span>${message}</span>
+    </div>
+  `;
+
+  document.body.appendChild(notification);
+
+  // Автоматическое скрытие через 4 секунды
+  setTimeout(() => {
+    notification.style.animation = 'slideUp 0.3s ease-in';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 300);
+  }, 4000);
+
+  // Добавляем CSS анимации
+  if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'notification-styles';
+    style.textContent = `
+      @keyframes slideDown {
+        from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+      @keyframes slideUp {
+        from { transform: translateX(-50%) translateY(0); opacity: 1; }
+        to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
 function showError(message) {
-  showNotification(message);
-  
+  showNotification(message, 'error');
+
   // Показываем сообщение об ошибке в UI
   const errorElement = document.getElementById('error-message');
   if (errorElement) {
@@ -258,7 +359,14 @@ function updateProfileUI() {
 function getInitials(firstName, lastName) {
   const first = firstName?.charAt(0)?.toUpperCase() || '';
   const last = lastName?.charAt(0)?.toUpperCase() || '';
-  return first + last || '?';
+  const initials = first + last;
+
+  // Если нет инициалов, используем первую букву имени
+  if (!initials && firstName) {
+    return firstName.charAt(0).toUpperCase();
+  }
+
+  return initials || '?';
 }
 
 /**
@@ -285,29 +393,50 @@ function generateGradient(userId) {
  */
 function toggleEditMode() {
   if (isLoading) {
-    showNotification('Дождитесь завершения загрузки');
+    showNotification('Дождитесь завершения загрузки', 'warning');
     return;
   }
 
   isEditMode = !isEditMode;
   const viewMode = document.getElementById('view-mode');
   const editMode = document.getElementById('edit-mode');
-  
+
   if (isEditMode) {
     // Переход в режим редактирования
-    viewMode.classList.add('hidden');
-    editMode.classList.add('active');
-    
+    console.log('✏️ Включаем режим редактирования');
+
     // Заполняем форму текущими данными
     document.getElementById('edit-phone').value = profileData.phone || '';
     document.getElementById('edit-business').value = profileData.businessName || '';
     document.getElementById('edit-address').value = profileData.address || '';
+
+    // Показываем форму редактирования
+    viewMode.style.display = 'none';
+    editMode.style.display = 'block';
+
+    // Добавляем классы для анимации
+    editMode.classList.add('fade-in');
+    setTimeout(() => editMode.classList.remove('fade-in'), 300);
+
+    // Фокус на первое поле
+    setTimeout(() => {
+      const firstInput = document.getElementById('edit-phone');
+      if (firstInput) firstInput.focus();
+    }, 100);
+
   } else {
     // Переход в режим просмотра
-    viewMode.classList.remove('hidden');
-    editMode.classList.remove('active');
+    console.log('👁️ Возвращаемся в режим просмотра');
+
+    // Показываем режим просмотра
+    editMode.style.display = 'none';
+    viewMode.style.display = 'block';
+
+    // Добавляем классы для анимации
+    viewMode.classList.add('fade-in');
+    setTimeout(() => viewMode.classList.remove('fade-in'), 300);
   }
-  
+
   console.log(`🔄 Режим редактирования: ${isEditMode ? 'включен' : 'выключен'}`);
 }
 
@@ -366,6 +495,36 @@ async function savePhoneToAPI(phone) {
 /**
  * Сохраняет изменения профиля
  */
+/**
+ * Валидирует данные формы
+ */
+function validateForm(phone, businessName, address) {
+  const errors = [];
+
+  // Валидация телефона (если указан)
+  if (phone) {
+    const phoneRegex = /^\+?[\d\s\-\(\)]{10,20}$/;
+    if (!phoneRegex.test(phone)) {
+      errors.push('Неверный формат номера телефона. Используйте формат: +7 (999) 123-45-67');
+    }
+  }
+
+  // Валидация названия бизнеса
+  if (businessName && businessName.length > 255) {
+    errors.push('Название бизнеса слишком длинное (максимум 255 символов)');
+  }
+
+  // Валидация адреса
+  if (address && address.length > 500) {
+    errors.push('Адрес слишком длинный (максимум 500 символов)');
+  }
+
+  return errors;
+}
+
+/**
+ * Сохраняет изменения профиля
+ */
 async function saveProfile() {
   if (isLoading) {
     showNotification('Операция уже выполняется');
@@ -375,6 +534,13 @@ async function saveProfile() {
   const phone = document.getElementById('edit-phone').value.trim();
   const businessName = document.getElementById('edit-business').value.trim();
   const address = document.getElementById('edit-address').value.trim();
+
+  // Валидация данных
+  const validationErrors = validateForm(phone, businessName, address);
+  if (validationErrors.length > 0) {
+    showNotification(validationErrors[0]); // Показываем первую ошибку
+    return;
+  }
 
   const updateData = {
     phone: phone || null,
@@ -441,35 +607,43 @@ function initProfilePage() {
 
   console.log('✅ Telegram WebApp обнаружен, инициализация продолжается...');
 
+  // Инициализируем состояние - начинаем с режима просмотра
+  isEditMode = false;
+  const viewMode = document.getElementById('view-mode');
+  const editMode = document.getElementById('edit-mode');
+
+  if (viewMode) viewMode.style.display = 'block';
+  if (editMode) editMode.style.display = 'none';
+
   // Загружаем данные профиля
   loadProfileData();
-  
+
   // Настраиваем обработчики событий
   const editButton = document.getElementById('edit-profile-btn');
   const saveButton = document.getElementById('save-profile-btn');
   const cancelButton = document.getElementById('cancel-edit-btn');
-  
+
   if (editButton) {
     editButton.addEventListener('click', (e) => {
       e.preventDefault();
       toggleEditMode();
     });
   }
-  
+
   if (saveButton) {
     saveButton.addEventListener('click', async (e) => {
       e.preventDefault();
       await saveProfile();
     });
   }
-  
+
   if (cancelButton) {
     cancelButton.addEventListener('click', (e) => {
       e.preventDefault();
       toggleEditMode();
     });
   }
-  
+
   console.log('✅ Страница профиля инициализирована');
 }
 
