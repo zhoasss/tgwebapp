@@ -4,9 +4,14 @@
 :root {
   --bg-body: #ffffff;
   --bg-card: #f8f9fa;
+  --bg-secondary: rgba(0, 0, 0, 0.05);
+  --bg-hover: rgba(0, 0, 0, 0.05);
   --border-color: #e0e0e0;
   --text-primary: #333333;
   --text-secondary: #666666;
+  --accent-color: #4CAF50;
+  --accent-hover: #45a049;
+  --error-color: #f44336;
   --footer-bg: #ffffff;
   --button-hover-bg: #e6f0ff;
   --button-active-bg: #e6f0ff;
@@ -23,9 +28,14 @@
 .theme-dark {
   --bg-body: #121212;
   --bg-card: #1e1e1e;
+  --bg-secondary: rgba(255, 255, 255, 0.05);
+  --bg-hover: rgba(255, 255, 255, 0.05);
   --border-color: #333333;
   --text-primary: #ffffff;
   --text-secondary: #bbbbbb;
+  --accent-color: #4da6ff;
+  --accent-hover: #338fff;
+  --error-color: #ff6b6b;
   --footer-bg: #1e1e1e;
   --button-hover-bg: #2a2a2a;
   --button-active-bg: #2a2a2a;
@@ -43,9 +53,14 @@
   :not(.theme-light) {
     --bg-body: #121212;
     --bg-card: #1e1e1e;
+    --bg-secondary: rgba(255, 255, 255, 0.05);
+    --bg-hover: rgba(255, 255, 255, 0.05);
     --border-color: #333333;
     --text-primary: #ffffff;
     --text-secondary: #bbbbbb;
+    --accent-color: #4da6ff;
+    --accent-hover: #338fff;
+    --error-color: #ff6b6b;
     --footer-bg: #1e1e1e;
     --button-hover-bg: #2a2a2a;
     --button-active-bg: #2a2a2a;

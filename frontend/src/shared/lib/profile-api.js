@@ -4,9 +4,7 @@
  */
 
 import { getInitData } from './telegram.js';
-
-// URL API сервера (пустая строка = относительный путь, nginx проксирует /api/*)
-const API_BASE_URL = '';
+import { API_BASE_URL } from '../config/api.js';
 
 /**
  * Выполняет запрос к API
