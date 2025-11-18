@@ -3,77 +3,43 @@
  * Слой Shared - переиспользуемый код
  */
 
-import { getAuthHeader, isAuthenticated } from './auth-api.js';
-import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
+import { getInitData } from './telegram.js';
+
+// URL API сервера
+const API_BASE_URL = 'http://localhost:8000';
 
 /**
- * Выполняет запрос к API с retry логикой
+ * Выполняет запрос к API
  */
-async function apiRequest(endpoint, options = {}, maxRetries = 2) {
-  console.log('🔍 API Request - Auth check:', {
-    isAuthenticated: isAuthenticated(),
-    endpoint: endpoint
-  });
-
-  if (!isAuthenticated()) {
-    throw new Error('Пользователь не авторизован');
+async function apiRequest(endpoint, options = {}) {
+  const initData = getInitData();
+  
+  if (!initData) {
+    throw new Error('Telegram WebApp не инициализирован');
   }
 
   const url = `${API_BASE_URL}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': getAuthHeader(),
+    'X-Init-Data': initData,
     ...options.headers,
   };
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`🌐 API ${options.method || 'GET'} ${endpoint} (попытка ${attempt}/${maxRetries})`);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: 'Ошибка сервера' }));
-
-        // Для 401 ошибки не повторяем попытку
-        if (response.status === 401) {
-          throw new Error(errorData.detail || 'Ошибка авторизации');
-        }
-
-        // Для других ошибок повторяем, если не последняя попытка
-        if (attempt === maxRetries) {
-          throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-        }
-
-        console.warn(`⚠️ API ошибка ${response.status}, повторяем через 1с...`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      const data = await response.json();
-      console.log(`✅ API ${endpoint} успешен`);
-      return data;
-
-    } catch (error) {
-      console.error(`❌ API Request Error (попытка ${attempt}/${maxRetries}):`, error);
-
-      // Не повторяем для авторизационных ошибок
-      if (error.message.includes('авторизации') || error.message.includes('валидации')) {
-        throw error;
-      }
-
-      // Если последняя попытка или сетевая ошибка
-      if (attempt === maxRetries || error.name === 'TypeError') {
-        throw error;
-      }
-
-      // Ждем перед следующей попыткой
-      console.log(`⏳ Повторяем API запрос через 1с...`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Ошибка сервера' }));
+      throw new Error(error.detail || `HTTP error! status: ${response.status}`);
     }
+
+    return await response.json();
+  } catch (error) {
+    console.error('API Request Error:', error);
+    throw error;
   }
 }
 
@@ -82,7 +48,7 @@ async function apiRequest(endpoint, options = {}, maxRetries = 2) {
  */
 export async function getProfile() {
   try {
-    return await apiRequest(API_ENDPOINTS.PROFILE);
+    return await apiRequest('/api/profile/');
   } catch (error) {
     console.error('❌ Ошибка получения профиля:', error);
     throw error;
@@ -94,26 +60,13 @@ export async function getProfile() {
  */
 export async function updateProfile(data) {
   try {
-    return await apiRequest(API_ENDPOINTS.PROFILE, {
+    return await apiRequest('/api/profile/', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   } catch (error) {
     console.error('❌ Ошибка обновления профиля:', error);
     throw error;
-  }
-}
-
-/**
- * Проверка здоровья API
- */
-export async function checkHealth() {
-  try {
-    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.HEALTH}`);
-    return response.ok;
-  } catch (error) {
-    console.error('❌ API недоступен:', error);
-    return false;
   }
 }
 
