@@ -235,3 +235,5 @@ async def update_profile(
     logging.info(f"✅ Профиль обновлен для пользователя {user_id}")
     return user.to_dict()
 
+# Экспорт роутеров
+__all__ = ["auth_router", "profile_router"]
