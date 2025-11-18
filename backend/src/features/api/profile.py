@@ -66,6 +66,33 @@ async def get_profile(
     logging.info(f"📤 Отправка профиля: {profile_data.get('first_name')} {profile_data.get('last_name')}")
     return profile_data
 
+@router.get("/token-check")
+async def check_token(
+    telegram_user: dict = Depends(get_telegram_user)
+):
+    """
+    Проверка валидности токена авторизации
+
+    Headers:
+        X-Init-Data: initData от Telegram WebApp
+
+    Returns:
+        Информация о токене и пользователе
+    """
+    logging.info("🔍 Запрос проверки токена")
+
+    return {
+        "status": "valid",
+        "message": "Токен авторизации валиден",
+        "user": {
+            "id": telegram_user.get('id'),
+            "username": telegram_user.get('username'),
+            "first_name": telegram_user.get('first_name'),
+            "last_name": telegram_user.get('last_name')
+        },
+        "auth_link": f"https://t.me/bot?start"
+    }
+
 @router.put("/")
 async def update_profile(
     data: ProfileUpdate,

@@ -111,19 +111,36 @@ async def get_telegram_user(
     Returns:
         dict: Данные пользователя
     """
-    logging.debug(f"🔐 Получен X-Init-Data заголовок (длина: {len(x_init_data) if x_init_data else 0})")
+    # Проверяем наличие токена
+    if not x_init_data or x_init_data.strip() == "":
+        logging.error("❌ Отсутствует X-Init-Data заголовок")
+        raise HTTPException(status_code=401, detail="Отсутствует токен авторизации (X-Init-Data)")
+
+    logging.info(f"🔐 Получен токен авторизации (длина: {len(x_init_data)} символов)")
+    logging.debug(f"🔍 Токен: {x_init_data[:50]}..." if len(x_init_data) > 50 else f"🔍 Токен: {x_init_data}")
 
     if not bot_token:
         # В production нужно получать из config
         from ..config.env_loader import load_config
         config = load_config()
         bot_token = config['bot_token']
+        logging.debug("⚙️ Бот токен загружен из конфигурации")
 
-    user_data = validate_telegram_init_data(x_init_data, bot_token)
+    # Валидируем токен
+    logging.info("🔒 Начинаем валидацию токена...")
+    try:
+        user_data = validate_telegram_init_data(x_init_data, bot_token)
+        logging.info("✅ Токен успешно валидирован")
+    except Exception as e:
+        logging.error(f"❌ Ошибка валидации токена: {str(e)}")
+        raise
 
     username = user_data.get('username', 'unknown')
     user_id = user_data.get('id', 'unknown')
-    logging.info(f"✅ Авторизация успешна: @{username} (ID: {user_id})")
+    first_name = user_data.get('first_name', 'unknown')
+
+    logging.info(f"👤 Пользователь авторизован: @{username} ({first_name}, ID: {user_id})")
+    logging.info(f"🔗 Авторизация через ссылку: https://t.me/{config.get('bot_username', 'bot')}?start")
 
     return user_data
 

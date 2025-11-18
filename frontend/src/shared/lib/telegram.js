@@ -208,7 +208,20 @@ export function getInitData() {
  */
 export function getTelegramUser() {
   const tg = getTelegramWebApp();
-  return tg?.initDataUnsafe?.user || null;
+  const user = tg?.initDataUnsafe?.user || null;
+
+  if (user) {
+    console.log('👤 Получены данные пользователя:', {
+      id: user.id,
+      username: user.username,
+      first_name: user.first_name,
+      auth_date: user.auth_date
+    });
+  } else {
+    console.warn('⚠️ Данные пользователя не найдены в Telegram WebApp');
+  }
+
+  return user;
 }
 
 /**

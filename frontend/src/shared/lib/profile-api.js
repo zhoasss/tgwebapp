@@ -20,12 +20,20 @@ async function apiRequest(endpoint, options = {}) {
 
   const url = `${API_BASE_URL}${endpoint}`;
   console.log(`🌐 API запрос: ${window.location.protocol}//${window.location.host}${url}`);
+  console.log(`🔑 Отправка токена авторизации (длина: ${initData.length} символов)`);
 
   const headers = {
     'Content-Type': 'application/json',
     'X-Init-Data': initData,
     ...options.headers,
   };
+
+  // Логируем заголовки (без полного токена для безопасности)
+  console.log('📋 Заголовки запроса:', {
+    'Content-Type': headers['Content-Type'],
+    'X-Init-Data': initData.substring(0, 50) + '...',
+    'Other headers': Object.keys(headers).filter(h => h !== 'X-Init-Data')
+  });
 
   try {
     const response = await fetch(url, {
