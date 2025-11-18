@@ -22,7 +22,7 @@ class ServiceCreate(BaseModel):
     description: Optional[str] = Field(None, description="Описание услуги")
     price: float = Field(..., gt=0, description="Цена услуги")
     duration_minutes: int = Field(..., gt=0, le=1440, description="Продолжительность в минутах")
-    color: str = Field("#4CAF50", regex=r'^#[0-9A-Fa-f]{6}$', description="Цвет для UI (hex)")
+    color: str = Field("#4CAF50", pattern=r'^#[0-9A-Fa-f]{6}$', description="Цвет для UI (hex)")
 
 class ServiceUpdate(BaseModel):
     """Схема обновления услуги"""
@@ -30,7 +30,7 @@ class ServiceUpdate(BaseModel):
     description: Optional[str] = Field(None, description="Описание услуги")
     price: Optional[float] = Field(None, gt=0, description="Цена услуги")
     duration_minutes: Optional[int] = Field(None, gt=0, le=1440, description="Продолжительность в минутах")
-    color: Optional[str] = Field(None, regex=r'^#[0-9A-Fa-f]{6}$', description="Цвет для UI (hex)")
+    color: Optional[str] = Field(None, pattern=r'^#[0-9A-Fa-f]{6}$', description="Цвет для UI (hex)")
     is_active: Optional[bool] = Field(None, description="Активна ли услуга")
 
 @router.get("/")

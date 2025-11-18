@@ -1,25 +1,19 @@
 import logging
 import asyncio
 from telegram.ext import Application
-from src.shared.config.env_loader import load_config
+from src.shared.config.env_loader import config
 from src.shared.logger.setup import setup_logging
 from src.shared.database.connection import init_database
 from src.features.start_command.handler import register_start_handler
 
 async def run_bot():
     """Запускает бота"""
-    # Настройка логирования с ротацией
-    from pathlib import Path
-    data_dir = Path("/app/data")
-    data_dir.mkdir(exist_ok=True)
-    setup_logging(log_file=str(data_dir / 'bot.log'))
+    # Настройка логирования
+    setup_logging(log_file=str(config.data_dir / 'bot.log'))
 
     logging.info("🤖 Инициализация Telegram бота...")
-
-    # Загрузка конфигурации
-    config = load_config()
     logging.info("⚙️ Конфигурация загружена")
-    logging.info(f"🌐 Web App URL: {config['web_app_url']}")
+    logging.info(f"🌐 Web App URL: {config.web_app_url}")
 
     # Инициализация базы данных
     try:
@@ -31,10 +25,10 @@ async def run_bot():
 
     # Создание приложения
     logging.info("🔧 Создание Telegram приложения...")
-    application = Application.builder().token(config['bot_token']).build()
+    application = Application.builder().token(config.bot_token).build()
 
     # Сохраняем web_app_url в bot_data для использования в обработчиках
-    application.bot_data['web_app_url'] = config['web_app_url']
+    application.bot_data['web_app_url'] = config.web_app_url
 
     # Регистрация обработчиков
     register_start_handler(application)

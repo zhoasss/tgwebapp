@@ -49,8 +49,10 @@ WORKDIR /app
 # Copy application code with proper ownership
 COPY --chown=appuser:appuser . .
 
-# Create data directory
-RUN mkdir -p /app/data && chown -R appuser:appuser /app/data
+# Create data directory with proper permissions
+RUN mkdir -p /app/data && \
+    chown -R appuser:appuser /app/data && \
+    chmod -R 755 /app/data
 
 # Switch to non-root user
 USER appuser
