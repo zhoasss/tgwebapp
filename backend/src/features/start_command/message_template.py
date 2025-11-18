@@ -1,4 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, KeyboardButton, ReplyKeyboardMarkup
+import logging
 
 def create_welcome_message(user) -> str:
     """Создает текст приветственного сообщения"""
@@ -25,7 +26,7 @@ def create_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
                 web_app=WebAppInfo(url=web_app_url)
             )]
         ]
-        print(f"✅ Используем Web App кнопку для HTTPS URL: {web_app_url}")
+        logging.info(f"✅ Используем Web App кнопку для HTTPS URL: {web_app_url}")
     else:
         # HTTP - используем обычную ссылку (Telegram не позволяет Web App для HTTP)
         keyboard = [
@@ -34,8 +35,8 @@ def create_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
                 url=web_app_url
             )]
         ]
-        print(f"⚠️ Используем обычную ссылку для HTTP URL: {web_app_url}")
-        print("💡 Для Web App в Telegram настройте HTTPS!")
+        logging.warning(f"⚠️ Используем обычную ссылку для HTTP URL: {web_app_url}")
+        logging.warning("💡 Для Web App в Telegram настройте HTTPS!")
     return InlineKeyboardMarkup(keyboard)
 
 def create_contact_keyboard() -> ReplyKeyboardMarkup:

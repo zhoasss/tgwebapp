@@ -22,10 +22,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def register_start_handler(application: Application):
     """Регистрирует обработчик команды /start"""
-    from src.shared.config.env_loader import load_config
+    from src.shared.config.env_loader import config
     
-    config = load_config()
-    application.bot_data['web_app_url'] = config['web_app_url']
+    application.bot_data['web_app_url'] = config.web_app_url
     
     application.add_handler(CommandHandler("start", start))
 

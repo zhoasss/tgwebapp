@@ -5,8 +5,9 @@
 
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from dotenv import load_dotenv
+from urllib.parse import quote_plus
 import logging
 
 logger = logging.getLogger(__name__)
@@ -49,10 +50,10 @@ class Config:
         self.reload: bool = self._get_env_bool("RELOAD", self.is_development)
 
         # Настройки CORS
-        self.cors_origins: list = self._get_cors_origins()
+        self.cors_origins: List[str] = self._get_cors_origins()
         self.cors_allow_credentials: bool = True
-        self.cors_allow_methods: list = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
-        self.cors_allow_headers: list = ["Content-Type", "X-Init-Data", "Authorization", "Accept"]
+        self.cors_allow_methods: List[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+        self.cors_allow_headers: List[str] = ["Content-Type", "X-Init-Data", "Authorization", "Accept"]
 
         # Настройки логирования
         self.log_level: str = self._get_env("LOG_LEVEL", "INFO")
@@ -123,7 +124,7 @@ class Config:
             logger.warning(f"⚠️ Неверное значение для {key}: {value}, использую по умолчанию: {default}")
             return default
 
-    def _get_cors_origins(self) -> list:
+    def _get_cors_origins(self) -> List[str]:
         """Получает список разрешенных origins для CORS"""
         origins_str = os.getenv("CORS_ORIGINS", "")
         if origins_str:
@@ -148,7 +149,7 @@ class Config:
     def _get_default_database_url(self) -> str:
         """Получает URL базы данных по умолчанию"""
         db_path = self.data_dir / "database.db"
-        return f"sqlite+aiosqlite:///{db_path}"
+        return f"sqlite+aiosqlite:///{quote_plus(str(db_path))}"
 
     def to_dict(self) -> Dict[str, Any]:
         """Преобразует конфигурацию в словарь (без чувствительных данных)"""

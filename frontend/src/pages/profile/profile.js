@@ -148,7 +148,6 @@ async function loadProfileData() {
     } catch (apiError) {
       console.warn(`${platform} ⚠️ Сервер недоступен, работаем только с Telegram данными:`, apiError.message);
       console.log(`${platform} ✅ Приложение работает в автономном режиме`);
-      // Продолжаем работать с данными из Telegram - UI уже отображено выше
     }
 
   } catch (error) {
@@ -179,32 +178,19 @@ function showLoading(show) {
 /**
  * Показывает сообщение об ошибке
  */
-/**
- * Показывает уведомление с типом
- */
-function showNotification(message, type = 'info') {
-  const tg = window.Telegram?.WebApp;
+function showError(message) {
+  showNotification(message, 'error');
 
-  // Пытаемся использовать Telegram popup
-  if (tg && typeof tg.showPopup === 'function') {
-    try {
-      tg.showPopup({
-        title: type === 'error' ? 'Ошибка' : type === 'success' ? 'Успех' : 'Уведомление',
-        message: message,
-        buttons: [{ text: 'OK', type: 'ok' }]
-      });
-      return;
-    } catch (e) {
-      console.warn('Telegram popup failed, using fallback');
-    }
+  // Показываем сообщение об ошибке в UI
+  const errorElement = document.getElementById('error-message');
+  if (errorElement) {
+    errorElement.textContent = message;
+    errorElement.style.display = 'block';
   }
-
-  // Fallback - кастомное уведомление
-  showCustomNotification(message, type);
 }
 
 /**
- * Показывает кастомное уведомление
+ * Показывает кастомное уведомление (для fallback)
  */
 function showCustomNotification(message, type = 'info') {
   // Удаляем предыдущее уведомление
@@ -277,17 +263,6 @@ function showCustomNotification(message, type = 'info') {
       }
     `;
     document.head.appendChild(style);
-  }
-}
-
-function showError(message) {
-  showNotification(message, 'error');
-
-  // Показываем сообщение об ошибке в UI
-  const errorElement = document.getElementById('error-message');
-  if (errorElement) {
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
   }
 }
 
@@ -449,7 +424,7 @@ function requestPhoneNumber() {
   const tg = window.Telegram?.WebApp;
   
   if (!tg) {
-    showNotification('Telegram WebApp недоступен');
+    showNotification('Telegram WebApp недоступен', 'error');
     return;
   }
   
@@ -471,7 +446,7 @@ function requestPhoneNumber() {
   } else {
     // Fallback для старых версий - показываем форму редактирования
     console.warn('⚠️ Метод requestContact недоступен в этой версии Telegram');
-    showNotification('Пожалуйста, введите номер телефона вручную');
+    showNotification('Пожалуйста, введите номер телефона вручную', 'warning');
     toggleEditMode();
   }
 }
@@ -484,17 +459,14 @@ async function savePhoneToAPI(phone) {
     const updatedProfile = await updateProfile({ phone });
     profileData.phone = updatedProfile.phone || '';
     updateProfileUI();
-    showNotification('Номер телефона сохранен!');
+    showNotification('Номер телефона сохранен!', 'success');
     console.log('✅ Номер телефона сохранен:', phone);
   } catch (error) {
     console.error('❌ Ошибка сохранения номера:', error);
-    showNotification('Не удалось сохранить номер телефона');
+    showNotification('Не удалось сохранить номер телефона', 'error');
   }
 }
 
-/**
- * Сохраняет изменения профиля
- */
 /**
  * Валидирует данные формы
  */
@@ -527,7 +499,7 @@ function validateForm(phone, businessName, address) {
  */
 async function saveProfile() {
   if (isLoading) {
-    showNotification('Операция уже выполняется');
+    showNotification('Операция уже выполняется', 'warning');
     return;
   }
 
@@ -538,7 +510,20 @@ async function saveProfile() {
   // Валидация данных
   const validationErrors = validateForm(phone, businessName, address);
   if (validationErrors.length > 0) {
-    showNotification(validationErrors[0]); // Показываем первую ошибку
+    showNotification(validationErrors[0], 'error');
+    return;
+  }
+
+  // Проверяем, есть ли хотя бы одно изменение
+  const hasChanges = (
+    phone !== profileData.phone ||
+    businessName !== profileData.businessName ||
+    address !== profileData.address
+  );
+
+  if (!hasChanges) {
+    showNotification('Нет изменений для сохранения', 'info');
+    toggleEditMode();
     return;
   }
 
@@ -579,7 +564,6 @@ async function saveProfile() {
   } catch (apiError) {
     console.warn(`${platform} ⚠️ Сервер недоступен, данные сохранены только локально:`, apiError.message);
     console.log(`${platform} ✅ Приложение работает в автономном режиме - данные сохранены локально`);
-    // Продолжаем - данные уже сохранены локально
   }
 
   // Обновляем UI и выходим из режима редактирования
@@ -587,7 +571,7 @@ async function saveProfile() {
   toggleEditMode();
 
   // Показываем уведомление
-  showNotification('Профиль успешно обновлен!');
+  showNotification('Профиль успешно обновлен!', 'success');
 
   showLoading(false);
 }

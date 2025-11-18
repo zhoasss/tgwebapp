@@ -58,6 +58,9 @@ def main():
         asyncio.run(run_bot())
     except KeyboardInterrupt:
         logging.info("⏹️ Бот остановлен")
+    except Exception as e:
+        logging.error(f"❌ Неожиданная ошибка: {e}")
+        raise SystemExit(1)
 
 if __name__ == "__main__":
     main()

@@ -3,16 +3,16 @@ API endpoints для управления профилями пользоват�
 Слой Features - функциональность
 """
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, Field
 from typing import Optional
-import logging
 
 from ...shared.database.models import User
 from ...shared.database.connection import get_session
-from ...shared.auth.telegram_auth import get_telegram_user, authenticate_and_create_token
+from ...shared.auth.telegram_auth import get_telegram_user
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
@@ -31,7 +31,14 @@ async def get_profile(
     session: AsyncSession = Depends(get_session)
 ):
     """
-    Получить профиль пользователя (упрощенная версия для тестирования)
+    Получить профиль пользователя
+
+    Headers:
+        X-Init-Data: initData от Telegram WebApp
+        User-Agent: User-Agent браузера
+
+    Returns:
+        Данные профиля пользователя
     """
     telegram_id = telegram_user['id']
     username = telegram_user.get('username', 'unknown')
@@ -42,7 +49,7 @@ async def get_profile(
     ])
     platform = "📱 Mobile" if is_mobile else "💻 Desktop"
 
-    logging.info(f"📡 {platform} GET /api/profile/ - запрос профиля для @{username} (ID: {telegram_id})")
+    logging.info(f"📡 {platform} GET /profiles/ - запрос профиля для @{username} (ID: {telegram_id})")
 
     try:
         # Ищем пользователя в БД
@@ -73,64 +80,10 @@ async def get_profile(
         return profile_data
 
     except Exception as e:
-        logging.error(f"❌ Ошибка в get_profile: {e}")
-        # Возвращаем тестовый профиль для отладки
-        logging.info("🔧 Возвращаем тестовый профиль для отладки")
-        return {
-            "id": telegram_id,
-            "telegram_id": telegram_id,
-            "username": username,
-            "first_name": telegram_user.get('first_name', 'Тест'),
-            "last_name": telegram_user.get('last_name', ''),
-            "phone": None,
-            "business_name": None,
-            "address": None,
-            "created_at": "2025-01-01T00:00:00",
-            "updated_at": "2025-01-01T00:00:00",
-            "debug": True,
-            "error": str(e)
-        }
-    """
-    Получить профиль пользователя
+        logging.error(f"❌ Ошибка в get_profile: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ошибка получения профиля")
 
-    Headers:
-        X-Init-Data: initData от Telegram WebApp
-
-    Returns:
-        Данные профиля пользователя
-    """
-    telegram_id = telegram_user['id']
-    username = telegram_user.get('username', 'unknown')
-
-    logging.info(f"📡 GET /api/profile/ - запрос профиля для @{username} (ID: {telegram_id})")
-
-    # Ищем пользователя в БД
-    result = await session.execute(
-        select(User).where(User.telegram_id == telegram_id)
-    )
-    user = result.scalar_one_or_none()
-
-    # Если пользователя нет - создаем
-    if not user:
-        logging.info(f"✨ Создание нового профиля для @{username} (ID: {telegram_id})")
-        user = User(
-            telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name'),
-            username=username
-        )
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-        logging.info(f"✅ Новый профиль создан для @{username}")
-    else:
-        logging.info(f"📋 Найден существующий профиль @{username}")
-
-    profile_data = user.to_dict()
-    logging.info(f"📤 Отправка профиля: {profile_data.get('first_name')} {profile_data.get('last_name')}")
-    return profile_data
-
-@router.get("/token-check")
+@router.get("/check-token")
 async def check_token(
     x_init_data: str = Header(..., alias="X-Init-Data")
 ):
@@ -190,6 +143,7 @@ async def check_token(
             }
 
     except Exception as e:
+        logging.error(f"❌ Ошибка обработки токена: {e}")
         return {
             "status": "error",
             "message": f"Ошибка обработки токена: {str(e)}",
@@ -215,12 +169,9 @@ async def validate_token_only(
     try:
         # Импортируем функцию валидации
         from ...shared.auth.telegram_auth import validate_telegram_init_data
-        from ...shared.config.env_loader import load_config
+        from ...shared.config.env_loader import config
 
-        config = load_config()
-        bot_token = config['bot_token']
-
-        user_data = validate_telegram_init_data(x_init_data, bot_token)
+        user_data = validate_telegram_init_data(x_init_data, config.bot_token)
 
         return {
             "status": "valid",
@@ -248,6 +199,7 @@ async def debug_token(
 
     Headers:
         X-Init-Data: initData от Telegram WebApp
+        User-Agent: User-Agent браузера
 
     Returns:
         Полная информация о токене для отладки
@@ -268,8 +220,7 @@ async def debug_token(
         "has_user": 'user=' in x_init_data,
         "has_hash": 'hash=' in x_init_data,
         "has_query_id": 'query_id=' in x_init_data,
-        "contains_percent": '%' in x_init_data,
-        "server_time": "now"
+        "contains_percent": '%' in x_init_data
     }
 
 @router.put("/")
@@ -293,90 +244,72 @@ async def update_profile(
     telegram_id = telegram_user['id']
     username = telegram_user.get('username', 'unknown')
 
-    logging.info(f"📝 PUT /api/profile/ - обновление профиля @{username} (ID: {telegram_id})")
+    logging.info(f"📝 PUT /profiles/ - обновление профиля @{username} (ID: {telegram_id})")
     logging.info(f"📊 Данные для обновления: phone={data.phone}, business={data.business_name}, address={data.address}")
 
-    # Ищем пользователя
-    result = await session.execute(
-        select(User).where(User.telegram_id == telegram_id)
-    )
-    user = result.scalar_one_or_none()
-
-    if not user:
-        # Создаем пользователя, если не существует
-        logging.warning(f"⚠️ Пользователь @{username} не найден, создаем новый")
-        user = User(
-            telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name'),
-            username=username
-        )
-        session.add(user)
-
-    # Обновляем поля
-    changes = []
-    if data.phone is not None:
-        old_phone = user.phone
-        user.phone = data.phone
-        changes.append(f"phone: {old_phone} → {data.phone}")
-    if data.business_name is not None:
-        old_business = user.business_name
-        user.business_name = data.business_name
-        changes.append(f"business: {old_business} → {data.business_name}")
-    if data.address is not None:
-        old_address = user.address
-        user.address = data.address
-        changes.append(f"address: {old_address} → {data.address}")
-
-    await session.commit()
-    await session.refresh(user)
-
-    if changes:
-        logging.info(f"✅ Профиль @{username} обновлен: {', '.join(changes)}")
-    else:
-        logging.info(f"ℹ️ Профиль @{username} без изменений")
-
-    return user.to_dict()
-
-@router.post("/auth/token")
-async def create_auth_token(
-    telegram_user: dict = Depends(get_telegram_user),
-    session: AsyncSession = Depends(get_session)
-):
-    """
-    Создает JWT токен для аутентифицированного пользователя
-
-    Headers:
-        X-Init-Data: initData от Telegram WebApp
-
-    Returns:
-        JWT токен и данные пользователя
-    """
-    telegram_id = telegram_user['id']
-    logging.info(f"🔐 Создание JWT токена для пользователя {telegram_id}")
-
     try:
-        # Создаем токен через функцию аутентификации
-        access_token = await authenticate_and_create_token(telegram_user, session)
-
-        # Получаем обновленные данные пользователя
+        # Ищем пользователя
         result = await session.execute(
             select(User).where(User.telegram_id == telegram_id)
         )
         user = result.scalar_one_or_none()
 
-        return {
-            "access_token": access_token,
-            "token_type": "bearer",
-            "expires_in": 30 * 60,  # 30 минут в секундах
-            "user": user.to_dict() if user else None
-        }
+        if not user:
+            # Создаем пользователя, если не существует
+            logging.warning(f"⚠️ Пользователь @{username} не найден, создаем новый")
+            user = User(
+                telegram_id=telegram_id,
+                first_name=telegram_user.get('first_name', 'Пользователь'),
+                last_name=telegram_user.get('last_name', ''),
+                username=username
+            )
+            session.add(user)
+
+        # Отслеживаем изменения
+        changes = []
+        
+        if data.phone is not None:
+            old_phone = user.phone
+            user.phone = data.phone
+            changes.append(f"phone: {old_phone} → {data.phone}")
+            
+        if data.business_name is not None:
+            old_business = user.business_name
+            user.business_name = data.business_name
+            changes.append(f"business: {old_business} → {data.business_name}")
+            
+        if data.address is not None:
+            old_address = user.address
+            user.address = data.address
+            changes.append(f"address: {old_address} → {data.address}")
+            
+        if data.timezone is not None:
+            old_tz = getattr(user, 'timezone', None)
+            if hasattr(user, 'timezone'):
+                user.timezone = data.timezone
+                changes.append(f"timezone: {old_tz} → {data.timezone}")
+                
+        if data.currency is not None:
+            old_currency = getattr(user, 'currency', None)
+            if hasattr(user, 'currency'):
+                user.currency = data.currency
+                changes.append(f"currency: {old_currency} → {data.currency}")
+
+        await session.commit()
+        await session.refresh(user)
+
+        if changes:
+            logging.info(f"✅ Профиль @{username} обновлен: {', '.join(changes)}")
+        else:
+            logging.info(f"ℹ️ Профиль @{username} без изменений")
+
+        return user.to_dict()
 
     except Exception as e:
-        logging.error(f"❌ Ошибка создания токена: {e}")
-        raise HTTPException(status_code=500, detail="Ошибка создания токена аутентификации")
+        logging.error(f"❌ Ошибка обновления профиля: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ошибка обновления профиля")
 
-@router.get("/auth/me")
+@router.get("/me")
 async def get_current_user_info(
     telegram_user: dict = Depends(get_telegram_user),
     session: AsyncSession = Depends(get_session)
@@ -393,18 +326,33 @@ async def get_current_user_info(
     telegram_id = telegram_user['id']
     logging.info(f"👤 Запрос информации о пользователе {telegram_id}")
 
-    result = await session.execute(
-        select(User).where(User.telegram_id == telegram_id)
-    )
-    user = result.scalar_one_or_none()
+    try:
+        result = await session.execute(
+            select(User).where(User.telegram_id == telegram_id)
+        )
+        user = result.scalar_one_or_none()
 
-    if not user:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        if not user:
+            # Создаем пользователя, если не существует
+            logging.warning(f"⚠️ Пользователь {telegram_id} не найден, создаем новый")
+            user = User(
+                telegram_id=telegram_id,
+                first_name=telegram_user.get('first_name', 'Пользователь'),
+                last_name=telegram_user.get('last_name', ''),
+                username=telegram_user.get('username', '')
+            )
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
 
-    return {
-        "user": user.to_dict(),
-        "is_authenticated": True
-    }
+        return {
+            "user": user.to_dict(),
+            "is_authenticated": True
+        }
+
+    except Exception as e:
+        logging.error(f"❌ Ошибка получения информации о пользователе: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ошибка получения информации о пользователе")
 
 # Экспорт роутеров
 __all__ = ["router"]
