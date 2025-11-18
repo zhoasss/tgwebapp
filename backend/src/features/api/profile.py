@@ -18,7 +18,7 @@ from fastapi import HTTPException, status
 import hashlib
 import secrets
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 class RegisterRequest(BaseModel):
     """Схема для регистрации пользователя"""
@@ -36,7 +36,7 @@ class AuthResponse(BaseModel):
     username: str
     token: str
 
-@router.post("/register", response_model=AuthResponse)
+@auth_router.post("/register", response_model=AuthResponse)
 async def register_user(request: RegisterRequest, session: AsyncSession = Depends(get_session)):
     """Регистрация нового пользователя"""
     logging.info(f"📝 Регистрация пользователя: {request.username}")
@@ -78,7 +78,7 @@ async def register_user(request: RegisterRequest, session: AsyncSession = Depend
         token=user.token
     )
 
-@router.post("/login", response_model=AuthResponse)
+@auth_router.post("/login", response_model=AuthResponse)
 async def login_user(request: LoginRequest, session: AsyncSession = Depends(get_session)):
     """Вход пользователя"""
     logging.info(f"🔐 Попытка входа: {request.username}")
@@ -115,8 +115,8 @@ async def login_user(request: LoginRequest, session: AsyncSession = Depends(get_
         token=user.token
     )
 
-# Возвращаемся к profile роутеру
-router = APIRouter(prefix="/api/profile", tags=["profile"])
+# Profile роутер
+profile_router = APIRouter(prefix="/api/profile", tags=["profile"])
 
 class ProfileUpdate(BaseModel):
     """Схема для обновления профиля с валидацией"""
@@ -158,7 +158,7 @@ class ProfileUpdate(BaseModel):
         
         return v
 
-@router.get("/")
+@profile_router.get("/")
 async def get_profile(
     current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
@@ -189,7 +189,7 @@ async def get_profile(
     logging.info(f"✅ Профиль получен для пользователя {user_id}")
     return user.to_dict()
 
-@router.put("/")
+@profile_router.put("/")
 async def update_profile(
     data: ProfileUpdate,
     current_user: dict = Depends(get_current_user),
