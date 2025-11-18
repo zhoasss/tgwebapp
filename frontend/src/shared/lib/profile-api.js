@@ -11,13 +11,16 @@ import { API_BASE_URL } from '../config/api.js';
  */
 async function apiRequest(endpoint, options = {}) {
   const initData = getInitData();
-  
+
   if (!initData) {
     throw new Error('Telegram WebApp не инициализирован');
   }
 
-  const url = `${API_BASE_URL}${endpoint}`;
-  console.log(`🌐 API запрос: ${window.location.protocol}//${window.location.host}${url}`);
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  console.log(`🌐 API запрос:`);
+  console.log(`   Endpoint: ${endpoint}`);
+  console.log(`   API_BASE_URL: ${API_BASE_URL}`);
+  console.log(`   Full URL: ${url}`);
   console.log(`🔑 Отправка токена авторизации (длина: ${initData.length} символов)`);
 
   const headers = {
@@ -116,6 +119,7 @@ export async function updateProfile(data) {
 export async function getAppointments(status = null, dateFrom = null, dateTo = null, limit = 50, offset = 0) {
   try {
     console.log('📅 Получение списка записей...');
+    console.log('🌐 API_BASE_URL:', API_BASE_URL);
 
     const params = new URLSearchParams();
     if (status) params.append('status', status);
@@ -125,7 +129,11 @@ export async function getAppointments(status = null, dateFrom = null, dateTo = n
     if (offset !== 0) params.append('offset', offset.toString());
 
     const queryString = params.toString();
-    const url = `${API_BASE_URL}/api/appointments/${queryString ? '?' + queryString : ''}`;
+    const endpoint = `/api/appointments/${queryString ? '?' + queryString : ''}`;
+    const url = `${API_BASE_URL}${endpoint}`;
+
+    console.log('🔗 Final URL:', url);
+    console.log('📍 Endpoint:', endpoint);
 
     return await apiRequest(url);
   } catch (error) {

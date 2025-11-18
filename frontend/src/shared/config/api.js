@@ -9,15 +9,28 @@
  * @returns {string} Base URL для API
  */
 export function getApiBaseUrl() {
+  // Определяем текущий hostname
+  const hostname = window.location.hostname;
+  console.log('🌐 Current hostname:', hostname);
+
   // Проверяем, находимся ли мы на production домене
-  const isProduction = window.location.hostname === 'booking-cab.ru' ||
-                      window.location.hostname === 'www.booking-cab.ru';
+  const isProduction = hostname === 'booking-cab.ru' ||
+                      hostname === 'www.booking-cab.ru' ||
+                      hostname.includes('booking-cab.ru');
 
-  // Для production используем HTTPS, для разработки - текущий протокол
-  const protocol = isProduction ? 'https:' : window.location.protocol;
-  const hostname = isProduction ? 'booking-cab.ru' : window.location.hostname;
+  console.log('🏭 Is production:', isProduction);
 
-  return `${protocol}//${hostname}`;
+  if (isProduction) {
+    // Для production всегда используем HTTPS и фиксированный домен
+    const apiUrl = 'https://booking-cab.ru';
+    console.log('🎯 Production API URL:', apiUrl);
+    return apiUrl;
+  } else {
+    // Для разработки используем текущий протокол и hostname
+    const apiUrl = `${window.location.protocol}//${hostname}`;
+    console.log('🛠️ Development API URL:', apiUrl);
+    return apiUrl;
+  }
 }
 
 /**
