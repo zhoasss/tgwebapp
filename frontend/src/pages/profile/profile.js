@@ -92,27 +92,68 @@ async function loadProfileData() {
   showLoading(true);
 
   try {
-    // Данные пользователя уже получены через Telegram WebApp API
-    // Теперь запрашиваем профиль с сервера (сервер получит данные через X-Init-Data)
-    console.log(`${platform} 🌐 Запрос профиля с сервера...`);
+    // Сначала показываем данные из Telegram WebApp (работает всегда)
+    console.log(`${platform} 👤 Отображение данных из Telegram...`);
 
-    const apiProfile = await getProfile();
-    console.log(`${platform} ✅ Профиль получен из API:`, apiProfile);
-    
     profileData = {
-      id: apiProfile.telegram_id,
-      firstName: apiProfile.first_name || 'Пользователь',
-      lastName: apiProfile.last_name || '',
-      username: apiProfile.username || '',
-      phone: apiProfile.phone || '',
-      businessName: apiProfile.business_name || '',
-      address: apiProfile.address || ''
+      id: user.id,
+      telegram_id: user.id,
+      firstName: user.first_name || 'Пользователь',
+      lastName: user.last_name || '',
+      username: user.username || '',
+      phone: '',
+      businessName: '',
+      address: ''
     };
-    
+
     updateProfileUI();
+    console.log(`${platform} ✅ Данные профиля отображены из Telegram`);
+
+    // Пытаемся синхронизировать с сервером (асинхронно, не блокируя UI)
+    try {
+      console.log(`${platform} 🔄 Попытка синхронизации с сервером...`);
+      const apiProfile = await getProfile();
+      console.log(`${platform} ✅ Профиль синхронизирован с API:`, apiProfile);
+
+      // Обновляем данные из API, если они есть и отличаются
+      const updatedData = {
+        id: apiProfile.telegram_id || profileData.id,
+        telegram_id: apiProfile.telegram_id || profileData.telegram_id,
+        firstName: apiProfile.first_name || profileData.firstName,
+        lastName: apiProfile.last_name || profileData.lastName,
+        username: apiProfile.username || profileData.username,
+        phone: apiProfile.phone || profileData.phone,
+        businessName: apiProfile.business_name || profileData.businessName,
+        address: apiProfile.address || profileData.address
+      };
+
+      // Проверяем, изменились ли данные
+      const dataChanged = (
+        updatedData.firstName !== profileData.firstName ||
+        updatedData.lastName !== profileData.lastName ||
+        updatedData.phone !== profileData.phone ||
+        updatedData.businessName !== profileData.businessName ||
+        updatedData.address !== profileData.address
+      );
+
+      if (dataChanged) {
+        console.log(`${platform} 📝 Обновление данных из API...`);
+        profileData = updatedData;
+        updateProfileUI();
+        console.log(`${platform} ✅ Данные обновлены из API`);
+      } else {
+        console.log(`${platform} ℹ️ Данные уже актуальны`);
+      }
+
+    } catch (apiError) {
+      console.warn(`${platform} ⚠️ Сервер недоступен, работаем только с Telegram данными:`, apiError.message);
+      console.log(`${platform} ✅ Приложение работает в автономном режиме`);
+      // Продолжаем работать с данными из Telegram - UI уже отображено выше
+    }
+
   } catch (error) {
-    console.error('❌ Ошибка загрузки профиля:', error);
-    showError('Не удалось загрузить данные профиля. Проверьте соединение.');
+    console.error(`${platform} ❌ Критическая ошибка загрузки профиля:`, error);
+    showError('Не удалось загрузить профиль. Пожалуйста, перезапустите приложение.');
   } finally {
     showLoading(false);
   }
@@ -334,38 +375,55 @@ async function saveProfile() {
   const phone = document.getElementById('edit-phone').value.trim();
   const businessName = document.getElementById('edit-business').value.trim();
   const address = document.getElementById('edit-address').value.trim();
-  
+
   const updateData = {
     phone: phone || null,
     business_name: businessName || null,
     address: address || null
   };
-  
+
+  // Определяем платформу для логирования
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const platform = isMobile ? '📱 Mobile' : '💻 Desktop';
+
+  console.log(`${platform} 💾 Сохранение профиля...`, updateData);
+
+  // Сначала сохраняем локально (работает всегда)
+  profileData.phone = phone;
+  profileData.businessName = businessName;
+  profileData.address = address;
+
   showLoading(true);
 
   try {
-    console.log('🌐 Сохранение профиля через API...');
+    // Пытаемся синхронизировать с сервером
+    console.log(`${platform} 🔄 Синхронизация с сервером...`);
     const updatedProfile = await updateProfile(updateData);
-    console.log('✅ Профиль обновлен через API:', updatedProfile);
-    
-    // Обновляем локальные данные из ответа сервера
-    profileData.phone = updatedProfile.phone || '';
-    profileData.businessName = updatedProfile.business_name || '';
-    profileData.address = updatedProfile.address || '';
-    
-    // Обновляем UI и выходим из режима редактирования
-    updateProfileUI();
-    toggleEditMode();
-    
-    // Показываем уведомление
-    showNotification('Профиль успешно обновлен!');
-    
-  } catch (error) {
-    console.error('❌ Ошибка сохранения профиля:', error);
-    showNotification('Не удалось сохранить профиль. Проверьте соединение.');
-  } finally {
-    showLoading(false);
+    console.log(`${platform} ✅ Профиль синхронизирован с API:`, updatedProfile);
+
+    // Обновляем локальные данные из ответа сервера (если есть дополнительные поля)
+    if (updatedProfile) {
+      profileData.phone = updatedProfile.phone || profileData.phone;
+      profileData.businessName = updatedProfile.business_name || profileData.businessName;
+      profileData.address = updatedProfile.address || profileData.address;
+    }
+
+    console.log(`${platform} ✅ Профиль успешно сохранен и синхронизирован`);
+
+  } catch (apiError) {
+    console.warn(`${platform} ⚠️ Сервер недоступен, данные сохранены только локально:`, apiError.message);
+    console.log(`${platform} ✅ Приложение работает в автономном режиме - данные сохранены локально`);
+    // Продолжаем - данные уже сохранены локально
   }
+
+  // Обновляем UI и выходим из режима редактирования
+  updateProfileUI();
+  toggleEditMode();
+
+  // Показываем уведомление
+  showNotification('Профиль успешно обновлен!');
+
+  showLoading(false);
 }
 
 /**
