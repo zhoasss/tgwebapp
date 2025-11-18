@@ -1,5 +1,6 @@
 """
-FastAPI сервер для работы с WebApp
+FastAPI сервер для системы управления записями
+Модульный API с разделением на фичи
 """
 
 import logging
@@ -9,13 +10,20 @@ from contextlib import asynccontextmanager
 
 from src.shared.database.connection import init_database
 from src.shared.logger.setup import setup_logging
-from src.features.api.profile import router
+from src.shared.errors.handlers import register_error_handlers
+from src.shared.config.env_loader import config
+from src.features.api.profiles import router as profile_router
+from src.features.api.services import router as services_router
+from src.features.api.clients import router as clients_router
+from src.features.api.appointments import router as appointments_router
+from src.features.api.schedule import router as schedule_router
 
 # Настройка логирования с ротацией
-from pathlib import Path
-data_dir = Path("/app/data")
-data_dir.mkdir(exist_ok=True)
-setup_logging(log_file=str(data_dir / 'api.log'))
+setup_logging(
+    log_file=config.log_file or str(config.data_dir / 'api.log'),
+    max_bytes=config.log_max_bytes,
+    backup_count=config.log_backup_count
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,7 +34,6 @@ async def lifespan(app: FastAPI):
     await init_database()
     logging.info("✅ База данных инициализирована")
     logging.info("🎯 API сервер готов к работе")
-    logging.info(f"📍 Доступные эндпоинты: {list(app.routes)}")
 
     yield
 
@@ -35,91 +42,93 @@ async def lifespan(app: FastAPI):
 
 # Создание приложения
 app = FastAPI(
-    title="Личный кабинет API",
-    description="API для Telegram Mini App",
-    version="1.0.0",
-    lifespan=lifespan
+    title=config.app_title,
+    description=config.app_description,
+    version=config.app_version,
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    debug=config.debug
 )
 
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://zhoasss.github.io",
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:8080",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8080",
-        "https://booking-cab.ru",
-        # Telegram Web App origins
-        "https://web.telegram.org",
-        "https://telegram.me",
-        "https://t.me",
-        "https://telegram.org"
-    ],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "X-Init-Data", "Authorization"],
+    allow_origins=config.cors_origins,
+    allow_credentials=config.cors_allow_credentials,
+    allow_methods=config.cors_allow_methods,
+    allow_headers=config.cors_allow_headers,
 )
 
+# Регистрация обработчиков ошибок
+register_error_handlers(app)
+
 # Подключение роутеров
-app.include_router(router)
+app.include_router(profile_router, prefix="/api", tags=["profiles"])
+app.include_router(services_router, prefix="/api", tags=["services"])
+app.include_router(clients_router, prefix="/api", tags=["clients"])
+app.include_router(appointments_router, prefix="/api", tags=["appointments"])
+app.include_router(schedule_router, prefix="/api", tags=["schedule"])
 
 @app.get("/")
 async def root():
-    """Корневой endpoint"""
-    logging.info("📡 Запрос к корневому эндпоинту /")
+    """Корневой endpoint с информацией о API"""
     return {
-        "message": "API сервер работает",
-        "version": "1.0.0",
+        "message": f"{config.app_title} работает",
+        "version": config.app_version,
         "status": "healthy",
-        "endpoints": [
-            "/api/profile/ (GET, PUT) - требуется X-Init-Data заголовок",
-            "/api/profile/token-check - проверка токена",
-            "/api/profile/debug-token - отладка токена",
-            "/api/test - тест API с CORS",
-            "/api/test-no-auth - тест без авторизации",
-            "/health - проверка здоровья"
-        ]
+        "environment": config.environment,
+        "documentation": {
+            "swagger": "/api/docs",
+            "redoc": "/api/redoc"
+        },
+        "modules": [
+            "profiles - управление профилями пользователей",
+            "services - управление услугами",
+            "clients - управление клиентами",
+            "appointments - управление записями",
+            "schedule - управление графиком работы"
+        ],
+        "config": config.to_dict()
     }
 
 @app.get("/health")
 async def health_check():
     """Проверка здоровья сервера"""
-    logging.debug("💓 Health check запрос")
-    return {"status": "ok", "timestamp": "now", "service": "api"}
+    return {
+        "status": "ok",
+        "service": "api",
+        "version": config.app_version,
+        "environment": config.environment
+    }
 
 @app.get("/api/test")
 async def api_test():
     """Тестовый endpoint для проверки API доступности"""
-    logging.info("🧪 API test endpoint called")
     return {
         "status": "ok",
         "message": "API доступен",
-        "cors_test": "CORS должен работать",
-        "timestamp": "now"
+        "cors_test": "CORS работает",
+        "version": "2.0.0"
     }
 
 @app.get("/api/test-no-auth")
 async def test_no_auth():
     """Тестовый endpoint без авторизации"""
-    logging.info("🧪 Test endpoint без авторизации")
     return {
         "status": "ok",
         "message": "API работает без авторизации",
-        "timestamp": "now"
+        "version": "2.0.0"
     }
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "api_server:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        host=config.host,
+        port=config.port,
+        reload=config.reload,
+        log_level=config.log_level.lower()
     )
 

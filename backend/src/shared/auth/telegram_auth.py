@@ -1,5 +1,5 @@
 """
-Аутентификация через Telegram WebApp
+Аутентификация через Telegram WebApp и JWT токены
 Слой Shared - общие компоненты
 """
 
@@ -7,12 +7,44 @@ import hashlib
 import hmac
 import json
 from urllib.parse import parse_qs, unquote
-from fastapi import HTTPException, Header
+from fastapi import HTTPException, Header, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import logging
+import jwt
+from datetime import datetime, timedelta
+from typing import Optional
 
 from ..database.models import User
+from ..config.env_loader import config, get_jwt_settings
+
+# JWT настройки из конфигурации
+jwt_config = get_jwt_settings()
+JWT_SECRET_KEY = jwt_config["secret_key"]
+JWT_ALGORITHM = jwt_config["algorithm"]
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES = jwt_config["access_token_expire_minutes"]
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """Создает JWT access token"""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    to_encode.update({"exp": expire, "type": "access"})
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    return encoded_jwt
+
+def verify_token(token: str) -> Optional[dict]:
+    """Проверяет JWT token"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
 
 def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
     """
@@ -211,6 +243,102 @@ async def get_telegram_user(
             "debug": True,
             "error": str(e)
         }
+
+async def get_current_user_via_jwt(
+    authorization: str = Header(..., alias="Authorization"),
+    session: AsyncSession = None
+) -> Optional[dict]:
+    """
+    Dependency для получения данных пользователя по JWT токену
+
+    Args:
+        authorization: JWT токен авторизации (Bearer token)
+        session: Сессия базы данных
+
+    Returns:
+        dict: Данные пользователя или None если токен невалиден
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+
+    token = authorization.replace("Bearer ", "")
+    payload = verify_token(token)
+
+    if not payload or payload.get("type") != "access":
+        return None
+
+    # Если передана сессия, проверяем пользователя в БД
+    if session:
+        from ..database.connection import get_session
+        if session is None:
+            async with get_session() as db_session:
+                result = await db_session.execute(
+                    select(User).where(User.id == payload.get("user_id"))
+                )
+                user = result.scalar_one_or_none()
+        else:
+            result = await session.execute(
+                select(User).where(User.id == payload.get("user_id"))
+            )
+            user = result.scalar_one_or_none()
+
+        if not user:
+            return None
+
+        return user.to_dict()
+
+    return payload
+
+async def authenticate_and_create_token(
+    telegram_user: dict,
+    session: AsyncSession
+) -> str:
+    """
+    Аутентифицирует пользователя через Telegram и создает JWT токен
+
+    Args:
+        telegram_user: Данные пользователя из Telegram
+        session: Сессия базы данных
+
+    Returns:
+        str: JWT токен
+    """
+    telegram_id = telegram_user['id']
+
+    # Ищем пользователя в БД
+    result = await session.execute(
+        select(User).where(User.telegram_id == telegram_id)
+    )
+    user = result.scalar_one_or_none()
+
+    # Если пользователя нет, создаем
+    if not user:
+        logging.info(f"✨ Создание нового пользователя через токен: @{telegram_user.get('username', 'unknown')} (ID: {telegram_id})")
+        user = User(
+            telegram_id=telegram_id,
+            first_name=telegram_user.get('first_name', 'Пользователь'),
+            last_name=telegram_user.get('last_name', ''),
+            username=telegram_user.get('username', '')
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+
+    # Создаем JWT токен
+    token_data = {
+        "user_id": user.id,
+        "telegram_id": user.telegram_id,
+        "username": user.username
+    }
+
+    access_token = create_access_token(token_data)
+    logging.info(f"🔑 Создан JWT токен для пользователя {user.username}")
+
+    # Сохраняем токен в БД (опционально, для инвалидации)
+    user.token = access_token
+    await session.commit()
+
+    return access_token
 
 async def get_current_user(
     authorization: str = Header(..., alias="Authorization")

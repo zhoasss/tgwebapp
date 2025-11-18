@@ -9,18 +9,16 @@ import logging
 
 from .models import Base
 
-# Получаем путь к директории для размещения БД
-data_dir = Path("/app/data")
-data_dir.mkdir(exist_ok=True)
-database_path = data_dir / "database.db"
+# Импортируем конфигурацию
+from ..config.env_loader import get_database_url, config
 
-# URL для подключения к SQLite
-DATABASE_URL = f"sqlite+aiosqlite:///{database_path}"
+# URL для подключения к базе данных
+DATABASE_URL = get_database_url()
 
 # Создание асинхронного движка
 engine = create_async_engine(
     DATABASE_URL,
-    echo=False,  # Установите True для отладки SQL запросов
+    echo=config.db_echo,  # Используем настройку из конфигурации
     future=True
 )
 
@@ -37,7 +35,7 @@ async def init_database():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logging.info("✅ База данных инициализирована")
-        logging.info(f"📁 Путь к БД: {database_path}")
+        logging.info(f"📁 Настройки БД: URL={DATABASE_URL}")
     except Exception as e:
         logging.error(f"❌ Ошибка инициализации БД: {e}")
         raise

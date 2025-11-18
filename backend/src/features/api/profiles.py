@@ -1,25 +1,28 @@
 """
-API endpoints для профиля пользователя
+API endpoints для управления профилями пользователей
 Слой Features - функциональность
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 import logging
 
 from ...shared.database.models import User
 from ...shared.database.connection import get_session
-from ...shared.auth.telegram_auth import get_telegram_user
+from ...shared.auth.telegram_auth import get_telegram_user, authenticate_and_create_token
 
-router = APIRouter(prefix="/api/profile", tags=["profile"])
+router = APIRouter(prefix="/profiles", tags=["profiles"])
 
 class ProfileUpdate(BaseModel):
     """Схема для обновления профиля"""
-    phone: str | None = None
-    business_name: str | None = None
-    address: str | None = None
+    phone: Optional[str] = Field(None, max_length=50, description="Номер телефона")
+    business_name: Optional[str] = Field(None, max_length=255, description="Название бизнеса")
+    address: Optional[str] = Field(None, description="Адрес")
+    timezone: Optional[str] = Field(None, description="Часовой пояс")
+    currency: Optional[str] = Field(None, max_length=10, description="Валюта")
 
 @router.get("/")
 async def get_profile(
@@ -334,6 +337,74 @@ async def update_profile(
         logging.info(f"ℹ️ Профиль @{username} без изменений")
 
     return user.to_dict()
+
+@router.post("/auth/token")
+async def create_auth_token(
+    telegram_user: dict = Depends(get_telegram_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Создает JWT токен для аутентифицированного пользователя
+
+    Headers:
+        X-Init-Data: initData от Telegram WebApp
+
+    Returns:
+        JWT токен и данные пользователя
+    """
+    telegram_id = telegram_user['id']
+    logging.info(f"🔐 Создание JWT токена для пользователя {telegram_id}")
+
+    try:
+        # Создаем токен через функцию аутентификации
+        access_token = await authenticate_and_create_token(telegram_user, session)
+
+        # Получаем обновленные данные пользователя
+        result = await session.execute(
+            select(User).where(User.telegram_id == telegram_id)
+        )
+        user = result.scalar_one_or_none()
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": 30 * 60,  # 30 минут в секундах
+            "user": user.to_dict() if user else None
+        }
+
+    except Exception as e:
+        logging.error(f"❌ Ошибка создания токена: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка создания токена аутентификации")
+
+@router.get("/auth/me")
+async def get_current_user_info(
+    telegram_user: dict = Depends(get_telegram_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Получить информацию о текущем аутентифицированном пользователе
+
+    Headers:
+        X-Init-Data: initData от Telegram WebApp
+
+    Returns:
+        Данные текущего пользователя
+    """
+    telegram_id = telegram_user['id']
+    logging.info(f"👤 Запрос информации о пользователе {telegram_id}")
+
+    result = await session.execute(
+        select(User).where(User.telegram_id == telegram_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+
+    return {
+        "user": user.to_dict(),
+        "is_authenticated": True
+    }
 
 # Экспорт роутеров
 __all__ = ["router"]
