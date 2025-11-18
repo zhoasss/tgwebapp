@@ -3,7 +3,7 @@ API endpoints для профиля пользователя
 Слой Features - функциональность
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
@@ -111,7 +111,7 @@ async def validate_token_only(
     try:
         # Импортируем функцию валидации
         from ...shared.auth.telegram_auth import validate_telegram_init_data
-        from ..shared.config.env_loader import load_config
+        from ...shared.config.env_loader import load_config
 
         config = load_config()
         bot_token = config['bot_token']
