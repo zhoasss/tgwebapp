@@ -53,6 +53,8 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
         received_hash = parsed_data.get('hash', [None])[0]
         if not received_hash:
             logging.error("❌ Hash отсутствует в init_data")
+            logging.error(f"❌ Доступные поля: {list(parsed_data.keys())}")
+            logging.error(f"❌ Raw decoded data: {decoded_init_data}")
             raise HTTPException(status_code=401, detail="Hash отсутствует в init_data")
 
         logging.info(f"🔒 Получен hash: {received_hash[:10]}...")
@@ -124,7 +126,14 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
         logging.error(f"❌ Тип ошибки: {type(e).__name__}")
         import traceback
         logging.error(f"❌ Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=401, detail="Ошибка валидации init_data")
+
+        # Для отладки возвращаем более подробную информацию
+        if "hash" in str(e).lower():
+            raise HTTPException(status_code=401, detail="Неверный формат токена авторизации (отсутствует hash)")
+        elif "json" in str(e).lower():
+            raise HTTPException(status_code=401, detail="Неверный формат токена авторизации (проблема с JSON)")
+        else:
+            raise HTTPException(status_code=401, detail=f"Ошибка валидации токена: {str(e)}")
 
 async def get_telegram_user(
     x_init_data: str = Header(..., alias="X-Init-Data"),
@@ -145,8 +154,22 @@ async def get_telegram_user(
         logging.error("❌ Отсутствует X-Init-Data заголовок")
         raise HTTPException(status_code=401, detail="Отсутствует токен авторизации (X-Init-Data)")
 
+    # Проверяем минимальную длину токена
+    if len(x_init_data) < 50:
+        logging.error(f"❌ Токен слишком короткий (длина: {len(x_init_data)})")
+        raise HTTPException(status_code=401, detail="Токен авторизации слишком короткий")
+
     logging.info(f"🔐 Получен токен авторизации (длина: {len(x_init_data)} символов)")
-    logging.debug(f"🔍 Токен: {x_init_data[:50]}..." if len(x_init_data) > 50 else f"🔍 Токен: {x_init_data}")
+    logging.debug(f"🔍 Токен: {x_init_data[:100]}..." if len(x_init_data) > 100 else f"🔍 Токен: {x_init_data}")
+
+    # Проверяем, что токен содержит необходимые поля
+    if 'user=' not in x_init_data:
+        logging.error("❌ Токен не содержит данные пользователя")
+        raise HTTPException(status_code=401, detail="Токен не содержит данные пользователя")
+
+    if 'hash=' not in x_init_data:
+        logging.error("❌ Токен не содержит hash для валидации")
+        raise HTTPException(status_code=401, detail="Токен не содержит hash для валидации")
 
     if not bot_token:
         # В production нужно получать из config

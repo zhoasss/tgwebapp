@@ -107,6 +107,7 @@ async def validate_token_only(
         Результат валидации
     """
     logging.info("🔍 Запрос валидации токена (без БД)")
+    logging.info(f"📋 Получен токен для анализа: {x_init_data[:200]}..." if len(x_init_data) > 200 else f"📋 Получен токен: {x_init_data}")
 
     try:
         # Импортируем функцию валидации
@@ -129,8 +130,35 @@ async def validate_token_only(
         return {
             "status": "invalid",
             "message": str(e),
-            "error_type": type(e).__name__
+            "error_type": type(e).__name__,
+            "token_length": len(x_init_data),
+            "token_preview": x_init_data[:100] + "..." if len(x_init_data) > 100 else x_init_data
         }
+
+@router.get("/debug-token")
+async def debug_token(
+    x_init_data: str = Header(..., alias="X-Init-Data")
+):
+    """
+    Отладка токена - показывает полную информацию без валидации
+
+    Headers:
+        X-Init-Data: initData от Telegram WebApp
+
+    Returns:
+        Полная информация о токене для отладки
+    """
+    logging.info("🐛 Запрос отладки токена")
+
+    return {
+        "token_length": len(x_init_data),
+        "token_full": x_init_data,
+        "has_user": 'user=' in x_init_data,
+        "has_hash": 'hash=' in x_init_data,
+        "has_query_id": 'query_id=' in x_init_data,
+        "contains_percent": '%' in x_init_data,
+        "server_time": "now"
+    }
 
 @router.put("/")
 async def update_profile(
