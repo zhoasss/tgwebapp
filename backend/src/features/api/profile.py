@@ -93,6 +93,45 @@ async def check_token(
         "auth_link": f"https://t.me/bot?start"
     }
 
+@router.get("/validate-token")
+async def validate_token_only(
+    x_init_data: str = Header(..., alias="X-Init-Data")
+):
+    """
+    Только валидация токена без работы с БД
+
+    Headers:
+        X-Init-Data: initData от Telegram WebApp
+
+    Returns:
+        Результат валидации
+    """
+    logging.info("🔍 Запрос валидации токена (без БД)")
+
+    try:
+        # Импортируем функцию валидации
+        from ...shared.auth.telegram_auth import validate_telegram_init_data
+        from ..shared.config.env_loader import load_config
+
+        config = load_config()
+        bot_token = config['bot_token']
+
+        user_data = validate_telegram_init_data(x_init_data, bot_token)
+
+        return {
+            "status": "valid",
+            "message": "Токен успешно валидирован",
+            "user": user_data
+        }
+
+    except Exception as e:
+        logging.error(f"❌ Ошибка валидации токена: {e}")
+        return {
+            "status": "invalid",
+            "message": str(e),
+            "error_type": type(e).__name__
+        }
+
 @router.put("/")
 async def update_profile(
     data: ProfileUpdate,

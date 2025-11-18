@@ -6,7 +6,7 @@
 import hashlib
 import hmac
 import json
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, unquote
 from fastapi import HTTPException, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -29,15 +29,25 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
         HTTPException: Если данные невалидны
     """
     logging.info(f"🔐 Начинаем валидацию init_data (длина: {len(init_data) if init_data else 0})")
+    logging.info(f"🤖 Bot token: {bot_token[:10] if bot_token else 'None'}...")
+
+    if not bot_token:
+        logging.error("❌ Bot token не задан")
+        raise HTTPException(status_code=500, detail="Серверная ошибка: токен бота не настроен")
 
     if not init_data:
         logging.error("❌ Init data отсутствует")
         raise HTTPException(status_code=401, detail="Init data отсутствует")
 
     try:
+        # URL-decode init_data перед парсингом
+        decoded_init_data = unquote(init_data)
+        logging.info(f"🔍 Decoded init_data (первые 100 символов): {decoded_init_data[:100]}...")
+
         # Парсим init_data
-        parsed_data = parse_qs(init_data)
+        parsed_data = parse_qs(decoded_init_data)
         logging.info(f"📋 Распарсенные параметры: {list(parsed_data.keys())}")
+        logging.debug(f"📋 Все параметры: {parsed_data}")
 
         # Извлекаем hash
         received_hash = parsed_data.get('hash', [None])[0]
@@ -83,18 +93,37 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
         # Парсим данные пользователя
         user_data = parsed_data.get('user', [None])[0]
         if user_data:
-            user = json.loads(user_data)
-            logging.info(f"✅ Валидация init_data успешна для пользователя: {user.get('id', 'unknown')}")
-            return user
+            logging.info(f"👤 Raw user data (первые 100 символов): {user_data[:100]}...")
+            try:
+                # Если user_data - это URL-encoded строка, декодируем её
+                if '%' in user_data:
+                    user_data = unquote(user_data)
+                    logging.info(f"👤 Decoded user data (первые 100 символов): {user_data[:100]}...")
+
+                user = json.loads(user_data)
+                logging.info(f"✅ Успешно распарсены данные пользователя: {user.get('username', 'unknown')} (ID: {user.get('id', 'unknown')})")
+                return user
+            except json.JSONDecodeError as e:
+                logging.error(f"❌ Ошибка парсинга JSON пользователя: {e}")
+                logging.error(f"❌ Raw user data: {user_data}")
+                raise HTTPException(status_code=401, detail="Ошибка парсинга данных пользователя")
         else:
             logging.error("❌ Данные пользователя отсутствуют в init_data")
             raise HTTPException(status_code=401, detail="Данные пользователя отсутствуют")
 
     except json.JSONDecodeError as e:
         logging.error(f"❌ Ошибка парсинга JSON данных пользователя: {e}")
+        logging.error(f"❌ User data: {user_data}")
         raise HTTPException(status_code=401, detail="Ошибка парсинга данных пользователя")
+    except UnicodeDecodeError as e:
+        logging.error(f"❌ Ошибка декодирования URL: {e}")
+        logging.error(f"❌ Raw init_data: {init_data[:200]}...")
+        raise HTTPException(status_code=401, detail="Ошибка декодирования данных")
     except Exception as e:
         logging.error(f"❌ Ошибка валидации init_data: {e}")
+        logging.error(f"❌ Тип ошибки: {type(e).__name__}")
+        import traceback
+        logging.error(f"❌ Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=401, detail="Ошибка валидации init_data")
 
 async def get_telegram_user(
