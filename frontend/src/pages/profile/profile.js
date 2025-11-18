@@ -4,14 +4,14 @@
  */
 
 import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
-import { getProfile, updateProfile, testApiConnection } from '../../shared/lib/profile-api.js';
+import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
 
 let isEditMode = false;
 let profileData = {};
 let isLoading = false;
 
 /**
- * Загружает данные профиля из API
+ * Загружает данные профиля из Telegram WebApp и API
  */
 async function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
@@ -92,20 +92,12 @@ async function loadProfileData() {
   showLoading(true);
 
   try {
-    // Сначала тестируем подключение к API
-    console.log('🔍 Тестирование подключения к API...');
-    try {
-      await testApiConnection();
-      console.log('✅ API доступен');
-    } catch (testError) {
-      console.error('❌ API недоступен:', testError);
-      showError('Сервер API недоступен. Проверьте подключение.');
-      return;
-    }
+    // Данные пользователя уже получены через Telegram WebApp API
+    // Теперь запрашиваем профиль с сервера (сервер получит данные через X-Init-Data)
+    console.log(`${platform} 🌐 Запрос профиля с сервера...`);
 
-    console.log('🌐 Загрузка профиля из API...');
     const apiProfile = await getProfile();
-    console.log('✅ Профиль получен из API:', apiProfile);
+    console.log(`${platform} ✅ Профиль получен из API:`, apiProfile);
     
     profileData = {
       id: apiProfile.telegram_id,
