@@ -105,6 +105,17 @@ async def health_check():
         "environment": config.environment
     }
 
+@app.get("/api/debug")
+async def debug_endpoint():
+    """Debug endpoint для тестирования API без авторизации"""
+    return {
+        "status": "ok",
+        "message": "API debug endpoint работает",
+        "timestamp": "2025-01-01T12:00:00Z",
+        "server": "FastAPI",
+        "version": config.app_version
+    }
+
 @app.get("/api/test")
 async def api_test():
     """Тестовый endpoint для проверки API доступности"""

@@ -96,27 +96,18 @@ diagnose: ## Complete diagnosis of all services
 	@docker compose ps
 	@echo ""
 	@echo "2. Environment Variables:"
-	@docker compose exec backend env | grep -E "(BOT_TOKEN|WEB_APP_URL|ENVIRONMENT)" | head -10 || echo "Variables not accessible"
+	@docker compose exec backend env | grep -E "(BOT_TOKEN|WEB_APP_URL)" || echo "Variables not accessible"
 	@echo ""
 	@echo "3. API Health Check:"
 	@curl -f http://localhost/api/test 2>/dev/null && echo "✅ API accessible" || echo "❌ API not accessible"
 	@echo ""
-	@echo "4. API Routes Check:"
-	@docker compose exec backend python -c "
-	try:
-	    from src.api_server import app
-	    routes = [f'{list(route.methods)[0]} {route.path}' for route in app.routes if hasattr(route, 'methods') and hasattr(route, 'path')]
-	    print('API Routes:')
-	    for route in sorted(routes):
-	        print(f'  {route}')
-	except Exception as e:
-	    print(f'❌ Error loading routes: {e}')
-	" 2>/dev/null || echo "Cannot check routes"
+	@echo "4. Direct Backend Check:"
+	@docker compose exec backend curl -f http://localhost:8000/api/debug 2>/dev/null && echo "✅ Backend API accessible" || echo "❌ Backend API not accessible"
 	@echo ""
-	@echo "5. Database Check:"
+	@echo "5. Nginx Proxy Check:"
+	@curl -f http://localhost/api/debug 2>/dev/null && echo "✅ Nginx proxy works" || echo "❌ Nginx proxy failed"
+	@echo ""
+	@echo "6. Database Check:"
 	@docker compose exec backend ls -la /app/data/ || echo "Data directory not accessible"
-	@echo ""
-	@echo "6. Network Check:"
-	@docker compose exec backend python -c "import socket; s=socket.socket(); s.connect(('db', 0)); print('✅ Network OK')" 2>/dev/null || echo "❌ Network issues"
 	@echo ""
 	@echo "=== DIAGNOSIS COMPLETE ==="
