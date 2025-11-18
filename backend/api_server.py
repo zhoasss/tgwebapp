@@ -77,6 +77,10 @@ async def root():
         "status": "healthy",
         "endpoints": [
             "/api/profile/ (GET, PUT) - требуется X-Init-Data заголовок",
+            "/api/profile/token-check - проверка токена",
+            "/api/profile/debug-token - отладка токена",
+            "/api/test - тест API с CORS",
+            "/api/test-no-auth - тест без авторизации",
             "/health - проверка здоровья"
         ]
     }
@@ -95,6 +99,16 @@ async def api_test():
         "status": "ok",
         "message": "API доступен",
         "cors_test": "CORS должен работать",
+        "timestamp": "now"
+    }
+
+@app.get("/api/test-no-auth")
+async def test_no_auth():
+    """Тестовый endpoint без авторизации"""
+    logging.info("🧪 Test endpoint без авторизации")
+    return {
+        "status": "ok",
+        "message": "API работает без авторизации",
         "timestamp": "now"
     }
 
