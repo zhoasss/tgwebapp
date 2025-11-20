@@ -139,7 +139,7 @@ function showLoading(show) {
   if (loadingElement) {
     loadingElement.style.display = show ? 'flex' : 'none';
   }
-  
+
   // Блокируем кнопку редактирования во время загрузки
   const editButton = document.getElementById('edit-profile-btn');
   if (editButton) {
@@ -242,22 +242,22 @@ function showCustomNotification(message, type = 'info') {
  * Обновляет UI профиля
  */
 function updateProfileUI() {
-  const fullName = profileData.lastName 
-    ? `${profileData.firstName} ${profileData.lastName}` 
+  const fullName = profileData.lastName
+    ? `${profileData.firstName} ${profileData.lastName}`
     : profileData.firstName;
-  
-  const username = profileData.username 
-    ? `@${profileData.username}` 
+
+  const username = profileData.username
+    ? `@${profileData.username}`
     : 'Нет username';
-  
+
   // Обновляем заголовок
   document.getElementById('profile-name').textContent = fullName;
   document.getElementById('profile-username').textContent = username;
-  
+
   // Обновляем детали
   document.getElementById('detail-firstname').textContent = profileData.firstName;
   document.getElementById('detail-lastname').textContent = profileData.lastName || 'Не указана';
-  
+
   // Для телефона добавляем кнопку запроса, если его нет
   const phoneElement = document.getElementById('detail-phone');
   if (profileData.phone) {
@@ -276,7 +276,7 @@ function updateProfileUI() {
         cursor: pointer;
       ">Запросить</button>
     `;
-    
+
     // Добавляем обработчик для кнопки запроса телефона
     setTimeout(() => {
       const requestBtn = document.getElementById('request-phone-btn');
@@ -285,14 +285,14 @@ function updateProfileUI() {
       }
     }, 100);
   }
-  
+
   document.getElementById('detail-business').textContent = profileData.businessName || 'Не указано';
   document.getElementById('detail-address').textContent = profileData.address || 'Не указан';
-  
+
   // Обновляем аватар
   const initials = getInitials(profileData.firstName, profileData.lastName);
   document.getElementById('avatar-initials').textContent = initials;
-  
+
   if (profileData.id) {
     const avatarCircle = document.getElementById('avatar');
     const gradient = generateGradient(profileData.id);
@@ -330,7 +330,7 @@ function generateGradient(userId) {
     'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
     'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
   ];
-  
+
   const index = userId % gradients.length;
   return gradients[index];
 }
@@ -392,22 +392,22 @@ function toggleEditMode() {
  */
 function requestPhoneNumber() {
   console.log('📞 Запрос номера телефона...');
-  
+
   const tg = window.Telegram?.WebApp;
-  
+
   if (!tg) {
     showNotification('Telegram WebApp недоступен', 'error');
     return;
   }
-  
+
   // Проверяем, поддерживается ли метод requestContact (доступен с версии 6.9)
   if (typeof tg.requestContact === 'function') {
     tg.requestContact((status, data) => {
       console.log('📞 Результат запроса контакта:', status, data);
-      
+
       if (status && data?.responseUnsafe?.contact?.phone_number) {
         const phone = data.responseUnsafe.contact.phone_number;
-        
+
         // Автоматически сохраняем номер через API
         profileData.phone = phone;
         savePhoneToAPI(phone);
@@ -521,13 +521,22 @@ async function saveProfile() {
 
   showLoading(true);
 
+  // Создаем промис для минимальной задержки анимации (1.5 сек)
+  // Это обеспечивает плавный UX, чтобы лоадер не моргал слишком быстро
+  const animationDelay = new Promise(resolve => setTimeout(resolve, 1500));
+
   try {
-    // Пытаемся синхронизировать с сервером
+    // Пытаемся синхронизировать с сервером параллельно с анимацией
     console.log(`${platform} 🔄 Синхронизация с сервером...`);
-    const updatedProfile = await updateProfile(updateData);
+
+    const [updatedProfile] = await Promise.all([
+      updateProfile(updateData),
+      animationDelay
+    ]);
+
     console.log(`${platform} ✅ Профиль синхронизирован с API:`, updatedProfile);
 
-    // Обновляем локальные данные из ответа сервера (если есть дополнительные поля)
+    // Обновляем локальные данные из ответа сервера
     if (updatedProfile) {
       profileData.phone = updatedProfile.phone || profileData.phone;
       profileData.businessName = updatedProfile.business_name || profileData.businessName;
@@ -539,22 +548,19 @@ async function saveProfile() {
   } catch (apiError) {
     console.warn(`${platform} ⚠️ Сервер недоступен, данные сохранены только локально:`, apiError.message);
     console.log(`${platform} ✅ Приложение работает в автономном режиме - данные сохранены локально`);
+
+    // Даже при ошибке дожидаемся окончания анимации для плавности
+    await animationDelay;
   }
 
   // Обновляем UI
   updateProfileUI();
 
-  // Показываем уведомление об успехе
-  showNotification('Профиль успешно обновлен!', 'success');
-  console.log('✅ Уведомление показано, ожидаем переключения режима...');
+  // Скрываем лоадер и переключаем режим (без уведомлений)
+  showLoading(false);
+  toggleEditMode();
 
-  // Небольшая задержка перед переключением режима, чтобы пользователь увидел уведомление
-  setTimeout(() => {
-    console.log('🔄 Переключаемся обратно в режим просмотра...');
-    toggleEditMode(); // Возвращаемся в режим просмотра
-    showLoading(false);
-    console.log('✅ Сохранение профиля завершено');
-  }, 1500);
+  console.log('✅ Сохранение профиля завершено');
 }
 
 /**
