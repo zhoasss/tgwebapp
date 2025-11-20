@@ -42,7 +42,7 @@ export const API_BASE_URL = getApiBaseUrl();
  * Endpoints API
  */
 export const API_ENDPOINTS = {
-  PROFILE: '/api/',
+  PROFILE: '/api/profiles/',
   APPOINTMENTS: '/api/appointments/',
   SERVICES: '/api/services/',
   CLIENTS: '/api/clients/',
