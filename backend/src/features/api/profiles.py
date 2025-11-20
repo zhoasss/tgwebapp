@@ -14,7 +14,7 @@ from ...shared.database.models import User
 from ...shared.database.connection import get_session
 from ...shared.auth.jwt_auth import get_current_user
 
-router = APIRouter(prefix="/profiles", tags=["profiles"])
+router = APIRouter(tags=["profiles"])
 
 class ProfileUpdate(BaseModel):
     """Схема для обновления профиля"""

@@ -70,7 +70,8 @@ register_error_handlers(app)
 
 # Подключение роутеров
 app.include_router(auth_router, prefix="/api", tags=["auth"])
-app.include_router(profile_router, prefix="/api", tags=["profiles"])
+app.include_router(profile_router, prefix="/api/profiles", tags=["profiles"])
+app.include_router(profile_router, prefix="/api/profile", tags=["profiles"]) # Alias for backward compatibility
 app.include_router(services_router, prefix="/api", tags=["services"])
 app.include_router(clients_router, prefix="/api", tags=["clients"])
 app.include_router(appointments_router, prefix="/api", tags=["appointments"])
