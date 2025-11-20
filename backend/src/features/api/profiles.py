@@ -12,7 +12,7 @@ from typing import Optional
 
 from ...shared.database.models import User
 from ...shared.database.connection import get_session
-from ...shared.auth.telegram_auth import get_telegram_user
+from ...shared.auth.jwt_auth import get_current_user
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
@@ -26,53 +26,30 @@ class ProfileUpdate(BaseModel):
 
 @router.get("/")
 async def get_profile(
-    telegram_user: dict = Depends(get_telegram_user),
-    user_agent: str = Header(..., alias="User-Agent"),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Получить профиль пользователя
 
-    Headers:
-        X-Init-Data: initData от Telegram WebApp
-        User-Agent: User-Agent браузера
-
     Returns:
         Данные профиля пользователя
     """
-    telegram_id = telegram_user['id']
-    username = telegram_user.get('username', 'unknown')
+    user_id = current_user['id']
+    username = current_user.get('username', 'unknown')
 
-    # Определяем платформу
-    is_mobile = any(keyword in user_agent.lower() for keyword in [
-        'android', 'iphone', 'ipad', 'ipod', 'mobile', 'webos', 'blackberry'
-    ])
-    platform = "📱 Mobile" if is_mobile else "💻 Desktop"
-
-    logging.info(f"📡 {platform} GET /profiles/ - запрос профиля для @{username} (ID: {telegram_id})")
+    logging.info(f"📡 GET /profiles/ - запрос профиля для @{username} (ID: {user_id})")
 
     try:
-        # Ищем пользователя в БД
+        # Ищем пользователя в БД (он уже должен существовать после аутентификации)
         result = await session.execute(
-            select(User).where(User.telegram_id == telegram_id)
+            select(User).where(User.id == user_id)
         )
         user = result.scalar_one_or_none()
 
-        # Если пользователя нет - создаем
         if not user:
-            logging.info(f"✨ Создание нового профиля для @{username} (ID: {telegram_id})")
-            user = User(
-                telegram_id=telegram_id,
-                first_name=telegram_user.get('first_name', 'Пользователь'),
-                last_name=telegram_user.get('last_name', ''),
-                username=username
-            )
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
-            logging.info(f"✅ Новый профиль создан для @{username}")
-        else:
-            logging.info(f"📋 Найден существующий профиль @{username}")
+            logging.error(f"❌ Пользователь {user_id} не найден в БД")
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
 
         profile_data = user.to_dict()
         logging.info(f"📤 Отправка профиля: {profile_data.get('first_name')} {profile_data.get('last_name')}")
@@ -226,14 +203,11 @@ async def debug_token(
 @router.put("/")
 async def update_profile(
     data: ProfileUpdate,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Обновить профиль пользователя
-
-    Headers:
-        X-Init-Data: initData от Telegram WebApp
 
     Body:
         ProfileUpdate: Данные для обновления
@@ -241,29 +215,22 @@ async def update_profile(
     Returns:
         Обновленные данные профиля
     """
-    telegram_id = telegram_user['id']
-    username = telegram_user.get('username', 'unknown')
+    user_id = current_user['id']
+    username = current_user.get('username', 'unknown')
 
-    logging.info(f"📝 PUT /profiles/ - обновление профиля @{username} (ID: {telegram_id})")
+    logging.info(f"📝 PUT /profiles/ - обновление профиля @{username} (ID: {user_id})")
     logging.info(f"📊 Данные для обновления: phone={data.phone}, business={data.business_name}, address={data.address}")
 
     try:
-        # Ищем пользователя
+        # Ищем пользователя (он должен существовать)
         result = await session.execute(
-            select(User).where(User.telegram_id == telegram_id)
+            select(User).where(User.id == user_id)
         )
         user = result.scalar_one_or_none()
 
         if not user:
-            # Создаем пользователя, если не существует
-            logging.warning(f"⚠️ Пользователь @{username} не найден, создаем новый")
-            user = User(
-                telegram_id=telegram_id,
-                first_name=telegram_user.get('first_name', 'Пользователь'),
-                last_name=telegram_user.get('last_name', ''),
-                username=username
-            )
-            session.add(user)
+            logging.error(f"❌ Пользователь {user_id} не найден в БД")
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
 
         # Отслеживаем изменения
         changes = []
@@ -311,42 +278,22 @@ async def update_profile(
 
 @router.get("/me")
 async def get_current_user_info(
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Получить информацию о текущем аутентифицированном пользователе
 
-    Headers:
-        X-Init-Data: initData от Telegram WebApp
-
     Returns:
         Данные текущего пользователя
     """
-    telegram_id = telegram_user['id']
-    logging.info(f"👤 Запрос информации о пользователе {telegram_id}")
+    user_id = current_user['id']
+    logging.info(f"👤 Запрос информации о пользователе {user_id}")
 
     try:
-        result = await session.execute(
-            select(User).where(User.telegram_id == telegram_id)
-        )
-        user = result.scalar_one_or_none()
-
-        if not user:
-            # Создаем пользователя, если не существует
-            logging.warning(f"⚠️ Пользователь {telegram_id} не найден, создаем новый")
-            user = User(
-                telegram_id=telegram_id,
-                first_name=telegram_user.get('first_name', 'Пользователь'),
-                last_name=telegram_user.get('last_name', ''),
-                username=telegram_user.get('username', '')
-            )
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
-
+        # Пользователь уже найден через JWT, просто возвращаем данные
         return {
-            "user": user.to_dict(),
+            "user": current_user,
             "is_authenticated": True
         }
 

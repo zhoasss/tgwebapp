@@ -3,121 +3,59 @@
  * Слой Pages - страницы приложения
  */
 
-import { getTelegramUser, showNotification } from '../../shared/lib/telegram.js';
+import { showNotification } from '../../shared/lib/telegram.js';
 import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
+import jwtAuthManager from '../../shared/lib/jwt-auth.js';
 
 let isEditMode = false;
 let profileData = {};
 let isLoading = false;
 
 /**
- * Загружает данные профиля из Telegram WebApp и API
+ * Загружает данные профиля через JWT аутентификацию
  */
 async function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
-
-  // Определяем платформу
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const platform = isMobile ? '📱 Mobile' : '💻 Desktop';
-  console.log(`${platform} - UserAgent: ${navigator.userAgent.substring(0, 100)}...`);
-
-  // Ждем инициализации Telegram WebApp
-  if (!window.Telegram?.WebApp) {
-    console.log('⏳ Ожидание загрузки Telegram WebApp...');
-    await new Promise(resolve => {
-      const checkTg = () => {
-        if (window.Telegram?.WebApp) {
-          resolve();
-        } else {
-          setTimeout(checkTg, 100);
-        }
-      };
-      checkTg();
-    });
-  }
-
-  const tg = window.Telegram.WebApp;
-  console.log('🔍 Telegram WebApp версия:', tg?.version);
-  console.log('🔍 Платформа Telegram:', tg?.platform);
-  console.log('🔍 Тема:', tg?.colorScheme);
-  console.log('🔍 Viewport:', `${window.innerWidth}x${window.innerHeight}`);
-
-  console.log('🔍 initData длина:', tg?.initData?.length || 0);
-  console.log('🔍 initDataUnsafe:', !!tg?.initDataUnsafe);
-
-  if (tg?.initData) {
-    console.log('🔍 initData preview:', tg.initData.substring(0, 100) + '...');
-  }
-
-  // Ждем, пока initData будет доступна
-  // На мобильных устройствах может потребоваться больше времени
-  const maxAttempts = isMobile ? 100 : 50;  // Удваиваем время ожидания для мобильных
-  let attempts = 0;
-
-  while (!window.Telegram?.WebApp?.initData && attempts < maxAttempts) {
-    console.log(`${platform} ⏳ Ожидание initData... (попытка ${attempts + 1}/${maxAttempts})`);
-    await new Promise(resolve => setTimeout(resolve, 100));
-    attempts++;
-  }
-
-  if (!window.Telegram?.WebApp?.initData) {
-    console.error('❌ initData не доступна после ожидания');
-    showError('Не удалось получить авторизационные данные от Telegram. Пожалуйста, перезапустите приложение через бота.');
-    return;
-  }
-
-  console.log('✅ initData получена, извлекаем данные пользователя...');
-
-  const user = getTelegramUser();
-  console.log(`${platform} 👤 Данные пользователя из Telegram:`, user);
-
-  if (!user) {
-    console.error(`${platform} ❌ Не удалось получить данные пользователя из Telegram`);
-    console.error(`${platform} ❌ initData доступна:`, !!tg?.initData);
-    console.error(`${platform} ❌ initDataUnsafe доступна:`, !!tg?.initDataUnsafe);
-
-    // Для мобильных устройств пробуем альтернативный подход
-    if (isMobile && tg?.initDataUnsafe?.user) {
-      console.log(`${platform} 🔄 Попытка использовать initDataUnsafe.user для мобильного`);
-      // Здесь можно добавить специальную логику для мобильных
-    }
-
-    showError('Не удалось авторизоваться через Telegram. Пожалуйста, перезапустите приложение через бота.');
-    return;
-  }
-
-  console.log(`${platform} ✅ Пользователь авторизован:`, user.username || user.first_name);
 
   // Показываем индикатор загрузки
   showLoading(true);
 
   try {
-    // Сначала показываем данные из Telegram WebApp (работает всегда)
-    console.log(`${platform} 👤 Отображение данных из Telegram...`);
+    // Инициализируем JWT аутентификацию
+    console.log('🔐 Инициализация JWT аутентификации...');
+    const authSuccess = await jwtAuthManager.init();
 
+    if (!authSuccess) {
+      throw new Error('Не удалось выполнить аутентификацию');
+    }
+
+    const user = jwtAuthManager.getCurrentUser();
+    console.log('👤 Данные пользователя из JWT:', user);
+
+    // Сначала показываем базовые данные пользователя
     profileData = {
       id: user.id,
-      telegram_id: user.id,
+      telegram_id: user.telegram_id,
       firstName: user.first_name || 'Пользователь',
       lastName: user.last_name || '',
       username: user.username || '',
-      phone: '',
-      businessName: '',
-      address: ''
+      phone: user.phone || '',
+      businessName: user.business_name || '',
+      address: user.address || ''
     };
 
     updateProfileUI();
-    console.log(`${platform} ✅ Данные профиля отображены из Telegram`);
+    console.log('✅ Базовые данные профиля отображены');
 
-    // Пытаемся синхронизировать с сервером (асинхронно, не блокируя UI)
+    // Пытаемся получить полные данные с сервера
     try {
-      console.log(`${platform} 🔄 Попытка синхронизации с сервером...`);
+      console.log('🔄 Загрузка полных данных профиля с сервера...');
       const apiProfile = await getProfile();
-      console.log(`${platform} ✅ Профиль синхронизирован с API:`, apiProfile);
+      console.log('✅ Профиль загружен с API:', apiProfile);
 
-      // Обновляем данные из API, если они есть и отличаются
-      const updatedData = {
-        id: apiProfile.telegram_id || profileData.id,
+      // Обновляем данные из API
+      profileData = {
+        id: apiProfile.id || profileData.id,
         telegram_id: apiProfile.telegram_id || profileData.telegram_id,
         firstName: apiProfile.first_name || profileData.firstName,
         lastName: apiProfile.last_name || profileData.lastName,
@@ -127,31 +65,16 @@ async function loadProfileData() {
         address: apiProfile.address || profileData.address
       };
 
-      // Проверяем, изменились ли данные
-      const dataChanged = (
-        updatedData.firstName !== profileData.firstName ||
-        updatedData.lastName !== profileData.lastName ||
-        updatedData.phone !== profileData.phone ||
-        updatedData.businessName !== profileData.businessName ||
-        updatedData.address !== profileData.address
-      );
-
-      if (dataChanged) {
-        console.log(`${platform} 📝 Обновление данных из API...`);
-        profileData = updatedData;
-        updateProfileUI();
-        console.log(`${platform} ✅ Данные обновлены из API`);
-      } else {
-        console.log(`${platform} ℹ️ Данные уже актуальны`);
-      }
+      updateProfileUI();
+      console.log('✅ Данные профиля обновлены из API');
 
     } catch (apiError) {
-      console.warn(`${platform} ⚠️ Сервер недоступен, работаем только с Telegram данными:`, apiError.message);
-      console.log(`${platform} ✅ Приложение работает в автономном режиме`);
+      console.warn('⚠️ Не удалось загрузить данные с сервера, используем базовые:', apiError.message);
+      console.log('✅ Приложение работает с базовыми данными пользователя');
     }
 
   } catch (error) {
-    console.error(`${platform} ❌ Критическая ошибка загрузки профиля:`, error);
+    console.error('❌ Критическая ошибка загрузки профиля:', error);
     showError('Не удалось загрузить профиль. Пожалуйста, перезапустите приложение.');
   } finally {
     showLoading(false);

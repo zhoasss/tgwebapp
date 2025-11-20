@@ -13,7 +13,7 @@ import logging
 
 from ...shared.database.models import WorkingHours, User
 from ...shared.database.connection import get_session
-from ...shared.auth.telegram_auth import get_telegram_user
+from ...shared.auth.jwt_auth import get_current_user
 
 router = APIRouter(prefix="/schedule", tags=["schedule"])
 
@@ -32,7 +32,7 @@ class WorkingHoursBulkUpdate(BaseModel):
 
 @router.get("/")
 async def get_working_hours(
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -44,7 +44,7 @@ async def get_working_hours(
     Returns:
         График работы по дням недели
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📡 GET /api/schedule/ - запрос графика для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -58,9 +58,9 @@ async def get_working_hours(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -84,7 +84,7 @@ async def get_working_hours(
 @router.put("/")
 async def update_working_hours_bulk(
     schedule_data: WorkingHoursBulkUpdate,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -99,7 +99,7 @@ async def update_working_hours_bulk(
     Returns:
         Обновленный график работы
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📝 PUT /api/schedule/ - обновление графика для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -113,9 +113,9 @@ async def update_working_hours_bulk(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -181,7 +181,7 @@ async def update_working_hours_bulk(
 @router.get("/availability")
 async def get_availability(
     date: str,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -196,7 +196,7 @@ async def get_availability(
     Returns:
         Доступные временные слоты
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📡 GET /api/schedule/availability - запрос доступности на {date}")
 
     try:
@@ -219,9 +219,9 @@ async def get_availability(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()

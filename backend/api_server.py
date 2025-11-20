@@ -17,6 +17,7 @@ from src.features.api.services import router as services_router
 from src.features.api.clients import router as clients_router
 from src.features.api.appointments import router as appointments_router
 from src.features.api.schedule import router as schedule_router
+from src.features.api.auth import router as auth_router
 
 # Настройка логирования с ротацией
 setup_logging(
@@ -68,6 +69,7 @@ app.add_middleware(
 register_error_handlers(app)
 
 # Подключение роутеров
+app.include_router(auth_router, prefix="/api", tags=["auth"])
 app.include_router(profile_router, prefix="/api", tags=["profiles"])
 app.include_router(services_router, prefix="/api", tags=["services"])
 app.include_router(clients_router, prefix="/api", tags=["clients"])

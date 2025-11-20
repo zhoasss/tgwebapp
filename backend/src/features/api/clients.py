@@ -12,7 +12,7 @@ import logging
 
 from ...shared.database.models import Client, User
 from ...shared.database.connection import get_session
-from ...shared.auth.telegram_auth import get_telegram_user
+from ...shared.auth.jwt_auth import get_current_user
 
 router = APIRouter(prefix="/clients", tags=["clients"])
 
@@ -34,7 +34,7 @@ class ClientUpdate(BaseModel):
 
 @router.get("/")
 async def get_clients(
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
     search: Optional[str] = None,
     limit: int = 50,
@@ -54,7 +54,7 @@ async def get_clients(
     Returns:
         Список клиентов пользователя
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📡 GET /api/clients/ - запрос клиентов для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -68,9 +68,9 @@ async def get_clients(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -116,7 +116,7 @@ async def get_clients(
 @router.post("/")
 async def create_client(
     client_data: ClientCreate,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -131,7 +131,7 @@ async def create_client(
     Returns:
         Созданный клиент
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📝 POST /api/clients/ - создание клиента для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -145,9 +145,9 @@ async def create_client(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -174,7 +174,7 @@ async def create_client(
 @router.get("/{client_id}")
 async def get_client(
     client_id: int,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -189,7 +189,7 @@ async def get_client(
     Returns:
         Данные клиента
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📡 GET /api/clients/{client_id} - запрос клиента {client_id}")
 
     # Находим пользователя
@@ -203,9 +203,9 @@ async def get_client(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -230,7 +230,7 @@ async def get_client(
 async def update_client(
     client_id: int,
     client_data: ClientUpdate,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -248,7 +248,7 @@ async def update_client(
     Returns:
         Обновленный клиент
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📝 PUT /api/clients/{client_id} - обновление клиента {client_id}")
 
     # Находим пользователя
@@ -262,9 +262,9 @@ async def update_client(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -297,7 +297,7 @@ async def update_client(
 @router.delete("/{client_id}")
 async def delete_client(
     client_id: int,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -312,7 +312,7 @@ async def delete_client(
     Returns:
         Сообщение об успешном удалении
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"🗑️ DELETE /api/clients/{client_id} - удаление клиента {client_id}")
 
     # Находим пользователя
@@ -326,9 +326,9 @@ async def delete_client(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()

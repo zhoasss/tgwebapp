@@ -119,13 +119,12 @@ export function validateInitData() {
 }
 
 /**
- * Выход из приложения (закрытие)
+ * Выход из приложения
  */
-export function logout() {
+export async function logout() {
   console.log('👋 Выход из приложения');
-  const tg = getTelegramWebApp();
-  if (tg && typeof tg.close === 'function') {
-    tg.close();
-  }
+  // Импортируем JWT менеджер для выполнения выхода
+  const jwtAuthManager = (await import('./jwt-auth.js')).default;
+  await jwtAuthManager.logout();
 }
 

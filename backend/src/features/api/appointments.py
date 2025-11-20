@@ -13,7 +13,7 @@ import logging
 
 from ...shared.database.models import Appointment, User, Service, Client, AppointmentStatus
 from ...shared.database.connection import get_session
-from ...shared.auth.telegram_auth import get_telegram_user
+from ...shared.auth.jwt_auth import get_current_user
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -40,7 +40,7 @@ class AppointmentUpdate(BaseModel):
 
 @router.get("/")
 async def get_appointments(
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
     status: Optional[str] = None,
     date_from: Optional[date] = None,
@@ -64,7 +64,7 @@ async def get_appointments(
     Returns:
         Список записей пользователя
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📡 GET /api/appointments/ - запрос записей для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -78,9 +78,9 @@ async def get_appointments(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -131,7 +131,7 @@ async def get_appointments(
 @router.post("/")
 async def create_appointment(
     appointment_data: AppointmentCreate,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -146,7 +146,7 @@ async def create_appointment(
     Returns:
         Созданная запись
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📝 POST /api/appointments/ - создание записи для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -160,9 +160,9 @@ async def create_appointment(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -221,7 +221,7 @@ async def create_appointment(
 @router.get("/{appointment_id}")
 async def get_appointment(
     appointment_id: int,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -236,7 +236,7 @@ async def get_appointment(
     Returns:
         Данные записи
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📡 GET /api/appointments/{appointment_id} - запрос записи {appointment_id}")
 
     # Находим пользователя
@@ -250,9 +250,9 @@ async def get_appointment(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -277,7 +277,7 @@ async def get_appointment(
 async def update_appointment(
     appointment_id: int,
     appointment_data: AppointmentUpdate,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -295,7 +295,7 @@ async def update_appointment(
     Returns:
         Обновленная запись
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"📝 PUT /api/appointments/{appointment_id} - обновление записи {appointment_id}")
 
     # Находим пользователя
@@ -309,9 +309,9 @@ async def update_appointment(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()
@@ -375,7 +375,7 @@ async def update_appointment(
 @router.delete("/{appointment_id}")
 async def delete_appointment(
     appointment_id: int,
-    telegram_user: dict = Depends(get_telegram_user),
+    current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
 ):
     """
@@ -390,7 +390,7 @@ async def delete_appointment(
     Returns:
         Сообщение об успешном удалении
     """
-    telegram_id = telegram_user['id']
+    user_id = current_user['id']
     logging.info(f"🗑️ DELETE /api/appointments/{appointment_id} - удаление записи {appointment_id}")
 
     # Находим пользователя
@@ -404,9 +404,9 @@ async def delete_appointment(
         logging.info(f"✨ Создание нового пользователя для Telegram ID: {telegram_id}")
         user = User(
             telegram_id=telegram_id,
-            first_name=telegram_user.get('first_name', 'Пользователь'),
-            last_name=telegram_user.get('last_name', ''),
-            username=telegram_user.get('username', '')
+            first_name=current_user.get('first_name', 'Пользователь'),
+            last_name=current_user.get('last_name', ''),
+            username=current_user.get('username', '')
         )
         session.add(user)
         await session.commit()

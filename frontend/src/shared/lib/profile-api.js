@@ -3,44 +3,33 @@
  * Слой Shared - переиспользуемый код
  */
 
-import { getInitData } from './telegram.js';
+import jwtAuthManager from './jwt-auth.js';
 import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
 
 /**
  * Выполняет запрос к API
  */
 async function apiRequest(endpoint, options = {}) {
-  const initData = getInitData();
-
-  if (!initData) {
-    throw new Error('Telegram WebApp не инициализирован');
-  }
-
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   console.log(`🌐 API запрос:`);
   console.log(`   Endpoint: ${endpoint}`);
   console.log(`   API_BASE_URL: ${API_BASE_URL}`);
   console.log(`   Full URL: ${url}`);
-  console.log(`🔑 Отправка токена авторизации (длина: ${initData.length} символов)`);
 
   const headers = {
     'Content-Type': 'application/json',
-    'X-Init-Data': initData,
     ...options.headers,
   };
 
-  // Логируем заголовки (без полного токена для безопасности)
-  console.log('📋 Заголовки запроса:', {
-    'Content-Type': headers['Content-Type'],
-    'X-Init-Data': initData.substring(0, 50) + '...',
-    'Other headers': Object.keys(headers).filter(h => h !== 'X-Init-Data')
-  });
+  // Логируем заголовки
+  console.log('📋 Заголовки запроса:', headers);
 
   try {
     console.log('📡 Выполнение fetch запроса...');
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include', // Важно для отправки/получения cookies
     });
 
     console.log(`📥 Ответ получен: ${response.status} ${response.statusText}`);
@@ -50,6 +39,23 @@ async function apiRequest(endpoint, options = {}) {
       console.error(`❌ HTTP ошибка: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
       console.error('❌ Тело ошибки:', errorText);
+
+      // Если получили 401, пробуем обновить токены
+      if (response.status === 401) {
+        console.log('🔄 Попытка обновления токенов при 401 ошибке...');
+        try {
+          const jwtAuthManager = (await import('./jwt-auth.js')).default;
+          const refreshSuccess = await jwtAuthManager.refreshTokens();
+
+          if (refreshSuccess) {
+            console.log('✅ Токены обновлены, повторяем запрос...');
+            // Повторяем запрос с новыми токенами
+            return await apiRequest(endpoint, options);
+          }
+        } catch (refreshError) {
+          console.error('❌ Ошибка обновления токенов:', refreshError);
+        }
+      }
 
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       try {

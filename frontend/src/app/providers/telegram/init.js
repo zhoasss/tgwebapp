@@ -41,5 +41,21 @@
   console.log('📱 Версия:', tg.version);
   console.log('🎨 Тема:', tg.colorScheme);
   console.log('👤 Пользователь:', tg.initDataUnsafe?.user);
+
+  // Инициализируем JWT аутентификацию
+  import('./../../../shared/lib/jwt-auth.js').then(({ default: jwtAuthManager }) => {
+    jwtAuthManager.init().then(success => {
+      if (success) {
+        console.log('🔐 JWT аутентификация инициализирована успешно');
+      } else {
+        console.error('❌ Ошибка инициализации JWT аутентификации');
+      }
+    }).catch(error => {
+      console.error('❌ Критическая ошибка инициализации JWT:', error);
+    });
+  }).catch(error => {
+    console.error('❌ Ошибка импорта JWT модуля:', error);
+  });
+
 })();
 
