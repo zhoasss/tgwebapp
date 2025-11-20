@@ -28,7 +28,9 @@ body {
 main {
   flex: 1;
   padding: 20px;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 120px; /* Отступ для клавиатуры и футера */
 }
 
 /* Анимация загрузки */
