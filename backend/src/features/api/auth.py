@@ -4,7 +4,7 @@ API endpoints для аутентификации
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Header, Response
+from fastapi import APIRouter, Depends, HTTPException, Header, Response, Cookie
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
