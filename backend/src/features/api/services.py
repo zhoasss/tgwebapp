@@ -48,6 +48,7 @@ async def get_services(
         Список услуг пользователя
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/services/ - запрос услуг для пользователя {user_id}")
 
     # Находим пользователя
@@ -100,6 +101,7 @@ async def create_service(
         Созданная услуга
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📝 POST /api/services/ - создание услуги для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -158,6 +160,7 @@ async def get_service(
         Данные услуги
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/services/{service_id} - запрос услуги {service_id}")
 
     # Находим пользователя
@@ -217,6 +220,7 @@ async def update_service(
         Обновленная услуга
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📝 PUT /api/services/{service_id} - обновление услуги {service_id}")
 
     # Находим пользователя
@@ -281,6 +285,7 @@ async def delete_service(
         Сообщение об успешном удалении
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"🗑️ DELETE /api/services/{service_id} - удаление услуги {service_id}")
 
     # Находим пользователя

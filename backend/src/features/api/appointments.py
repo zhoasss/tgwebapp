@@ -65,6 +65,7 @@ async def get_appointments(
         Список записей пользователя
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/appointments/ - запрос записей для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -147,6 +148,7 @@ async def create_appointment(
         Созданная запись
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📝 POST /api/appointments/ - создание записи для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -237,6 +239,7 @@ async def get_appointment(
         Данные записи
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/appointments/{appointment_id} - запрос записи {appointment_id}")
 
     # Находим пользователя
@@ -296,6 +299,7 @@ async def update_appointment(
         Обновленная запись
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📝 PUT /api/appointments/{appointment_id} - обновление записи {appointment_id}")
 
     # Находим пользователя
@@ -391,6 +395,7 @@ async def delete_appointment(
         Сообщение об успешном удалении
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"🗑️ DELETE /api/appointments/{appointment_id} - удаление записи {appointment_id}")
 
     # Находим пользователя

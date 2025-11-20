@@ -55,6 +55,7 @@ async def get_clients(
         Список клиентов пользователя
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/clients/ - запрос клиентов для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -132,6 +133,7 @@ async def create_client(
         Созданный клиент
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📝 POST /api/clients/ - создание клиента для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -190,6 +192,7 @@ async def get_client(
         Данные клиента
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/clients/{client_id} - запрос клиента {client_id}")
 
     # Находим пользователя
@@ -249,6 +252,7 @@ async def update_client(
         Обновленный клиент
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📝 PUT /api/clients/{client_id} - обновление клиента {client_id}")
 
     # Находим пользователя
@@ -313,6 +317,7 @@ async def delete_client(
         Сообщение об успешном удалении
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"🗑️ DELETE /api/clients/{client_id} - удаление клиента {client_id}")
 
     # Находим пользователя

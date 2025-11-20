@@ -5,10 +5,10 @@ API endpoints для управления графиком работы
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from datetime import time, datetime, timedelta
+from sqlalchemy import select, func
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from datetime import time
 import logging
 
 from ...shared.database.models import WorkingHours, User
@@ -45,6 +45,7 @@ async def get_working_hours(
         График работы по дням недели
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/schedule/ - запрос графика для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -100,6 +101,7 @@ async def update_working_hours_bulk(
         Обновленный график работы
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📝 PUT /api/schedule/ - обновление графика для пользователя {telegram_id}")
 
     # Находим пользователя
@@ -197,10 +199,10 @@ async def get_availability(
         Доступные временные слоты
     """
     user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
     logging.info(f"📡 GET /api/schedule/availability - запрос доступности на {date}")
 
     try:
-        from datetime import datetime, timedelta
         check_date = datetime.strptime(date, '%Y-%m-%d').date()
     except ValueError:
         raise HTTPException(status_code=400, detail="Неверный формат даты. Используйте YYYY-MM-DD")
@@ -245,7 +247,6 @@ async def get_availability(
         }
 
     # Получаем существующие записи на эту дату
-    from sqlalchemy import func
     result = await session.execute(
         select(Appointment).where(
             Appointment.user_id == user.id,
