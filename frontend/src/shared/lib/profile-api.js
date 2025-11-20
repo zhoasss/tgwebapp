@@ -40,23 +40,43 @@ async function apiRequest(endpoint, options = {}) {
       const errorText = await response.text();
       console.error('❌ Тело ошибки:', errorText);
 
-      // Если получили 401, пробуем обновить токены (только один раз, чтобы избежать бесконечного цикла)
-      if (response.status === 401 && !options._retry) {
-        console.log('🔄 Попытка обновления токенов при 401 ошибке...');
-        try {
-          const jwtAuthManager = (await import('./jwt-auth.js')).default;
-          const refreshSuccess = await jwtAuthManager.refreshTokens();
+      // Если получили 401 и это не первая попытка, пробуем обновить токен
+      if (response.status === 401 && retryCount === 0) {
+        console.log('⚠️ Получен 401, пытаемся обновить токен...');
 
-          if (refreshSuccess) {
-            console.log('✅ Токены обновлены, повторяем запрос...');
-            // Повторяем запрос с новыми токенами (помечаем как повторную попытку)
-            return await apiRequest(endpoint, { ...options, _retry: true });
-          } else {
-            console.log('❌ Не удалось обновить токены, возвращаем ошибку');
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (refreshToken) {
+          try {
+            // Пробуем обновить токен
+            const refreshResponse = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${refreshToken}` // Отправляем refresh токен
+              }
+            });
+
+            if (refreshResponse.ok) {
+              const data = await refreshResponse.json();
+              localStorage.setItem('access_token', data.access_token);
+              if (data.refresh_token) {
+                localStorage.setItem('refresh_token', data.refresh_token);
+              }
+              console.log('✅ Токен обновлён, повторяем запрос');
+              // Повторяем оригинальный запрос с новым токеном
+              return apiRequest(endpoint, options, retryCount + 1);
+            } else {
+              console.error(`❌ Ошибка обновления токена: ${refreshResponse.status} ${refreshResponse.statusText}`);
+              const refreshErrorText = await refreshResponse.text();
+              console.error('❌ Тело ошибки обновления токена:', refreshErrorText);
+            }
+          } catch (refreshError) {
+            console.error('❌ Ошибка при запросе обновления токена:', refreshError);
           }
-        } catch (refreshError) {
-          console.error('❌ Ошибка обновления токенов:', refreshError);
         }
+
+        console.error('❌ Не удалось обновить токен или refresh токен отсутствует');
+        throw new Error('Требуется повторная авторизация');
       }
 
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;

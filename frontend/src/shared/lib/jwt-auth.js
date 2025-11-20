@@ -174,7 +174,6 @@ class JWTAutManager {
 
       const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
         method: 'POST',
-        credentials: 'include', // Важно для получения cookies
         headers: {
           'Content-Type': 'application/json',
           'X-Init-Data': initData,
@@ -187,14 +186,24 @@ class JWTAutManager {
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      const success = await response.json();
-      console.log('✅ Вход выполнен успешно:', success);
+      const data = await response.json();
+      console.log('✅ Вход выполнен успешно, получены токены');
 
-      if (success) {
-        this.isAuthenticated = true;
-        // После успешного входа нужно получить данные пользователя
-        await this._loadCurrentUser();
+      // Сохраняем токены в localStorage (работает на всех устройствах, включая Safari в iframe)
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+        console.log('💾 access_token сохранён в localStorage');
       }
+
+      if (data.refresh_token) {
+        localStorage.setItem('refresh_token', data.refresh_token);
+        console.log('💾 refresh_token сохранён в localStorage');
+      }
+
+      this.isAuthenticated = true;
+
+      // После успешного входа нужно получить данные пользователя
+      await this._loadCurrentUser();
 
       return true;
 
@@ -211,12 +220,12 @@ class JWTAutManager {
    */
   async logout() {
     try {
-      console.log('👋 Выполнение выхода...');
+      console.log('🚪 Выход из системы...');
 
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      // Очищаем токены из localStorage
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      console.log('🗑️ Токены удалены из localStorage');
 
       this.isAuthenticated = false;
       this.user = null;
@@ -227,11 +236,10 @@ class JWTAutManager {
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.close();
       }
+      return true;
 
     } catch (error) {
       console.error('❌ Ошибка выхода:', error);
-      // Даже при ошибке сбрасываем локальное состояние
-      this.isAuthenticated = false;
       this.user = null;
     }
   }
