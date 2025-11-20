@@ -26,7 +26,31 @@ async function loadProfileData() {
     const authSuccess = await jwtAuthManager.init();
 
     if (!authSuccess) {
-      throw new Error('Не удалось выполнить аутентификацию');
+      console.warn('⚠️ Аутентификация не выполнена, показываем гостевой режим');
+
+      // Показываем базовые данные из Telegram WebApp
+      const tg = window.Telegram?.WebApp;
+      if (tg?.initDataUnsafe?.user) {
+        const tgUser = tg.initDataUnsafe.user;
+
+        profileData = {
+          id: tgUser.id,
+          telegram_id: tgUser.id,
+          firstName: tgUser.first_name || 'Пользователь',
+          lastName: tgUser.last_name || '',
+          username: tgUser.username || '',
+          phone: '',
+          businessName: '',
+          address: ''
+        };
+
+        updateProfileUI();
+        console.log('ℹ️ Отображены данные из Telegram WebApp (гостевой режим)');
+      } else {
+        throw new Error('Не удалось получить данные пользователя из Telegram');
+      }
+
+      return;
     }
 
     const user = jwtAuthManager.getCurrentUser();
@@ -74,8 +98,28 @@ async function loadProfileData() {
     }
 
   } catch (error) {
-    console.error('❌ Критическая ошибка загрузки профиля:', error);
-    showError('Не удалось загрузить профиль. Пожалуйста, перезапустите приложение.');
+    console.error('❌ Ошибка загрузки профиля:', error);
+
+    // Не закрываем приложение автоматически, показываем сообщение об ошибке
+    showError('Не удалось загрузить профиль. Проверьте подключение к интернету и попробуйте обновить страницу.');
+
+    // Показываем базовую информацию о пользователе из Telegram, если доступна
+    const tg = window.Telegram?.WebApp;
+    if (tg?.initDataUnsafe?.user) {
+      const tgUser = tg.initDataUnsafe.user;
+      profileData = {
+        id: tgUser.id,
+        telegram_id: tgUser.id,
+        firstName: tgUser.first_name || 'Пользователь',
+        lastName: tgUser.last_name || '',
+        username: tgUser.username || '',
+        phone: '',
+        businessName: '',
+        address: ''
+      };
+      updateProfileUI();
+      console.log('ℹ️ Показаны базовые данные при ошибке загрузки');
+    }
   } finally {
     showLoading(false);
   }

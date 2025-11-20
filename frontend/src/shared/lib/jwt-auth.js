@@ -41,36 +41,57 @@ class JWTAutManager {
       if (hasTokens) {
         console.log('✅ Найдены токены в cookies, проверяем валидность...');
 
-        // Проверяем статус аутентификации через API
-        const statusResponse = await this._checkAuthStatus();
+        try {
+          // Проверяем статус аутентификации через API
+          const statusResponse = await this._checkAuthStatus();
 
-        if (statusResponse.is_authenticated) {
-          this.isAuthenticated = true;
-          this.user = statusResponse.user;
-          console.log('✅ Аутентификация подтверждена:', this.user.username);
-          return true;
+          if (statusResponse.is_authenticated) {
+            this.isAuthenticated = true;
+            this.user = statusResponse.user;
+            console.log('✅ Аутентификация подтверждена:', this.user.username);
+            return true;
+          }
+        } catch (statusError) {
+          console.warn('⚠️ Не удалось проверить статус токенов, очищаем cookies:', statusError.message);
+          // Очищаем невалидные токены
+          this._clearAuthCookies();
         }
       }
 
-      console.log('🔄 Токены отсутствуют или невалидны, выполняем вход...');
+      console.log('🔄 Выполняем аутентификацию через Telegram...');
 
-      // Выполняем вход через initData
-      const loginSuccess = await this.login();
+      try {
+        // Выполняем вход через initData
+        const loginSuccess = await this.login();
 
-      if (loginSuccess) {
-        console.log('✅ Вход выполнен успешно');
-        return true;
-      } else {
-        console.log('❌ Вход не удался');
+        if (loginSuccess) {
+          console.log('✅ Вход выполнен успешно');
+          return true;
+        } else {
+          console.log('❌ Вход не удался, но приложение продолжит работать');
+          return false;
+        }
+      } catch (loginError) {
+        console.error('❌ Ошибка входа:', loginError.message);
+        console.log('ℹ️ Приложение будет работать в ограниченном режиме');
         return false;
       }
 
     } catch (error) {
-      console.error('❌ Ошибка инициализации JWT аутентификации:', error);
+      console.error('❌ Критическая ошибка инициализации JWT:', error.message);
+      console.log('ℹ️ Приложение продолжит работать без аутентификации');
       this.isAuthenticated = false;
       this.user = null;
       return false;
     }
+  }
+
+  /**
+   * Очистка cookies с токенами
+   */
+  _clearAuthCookies() {
+    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;';
+    document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;';
   }
 
   /**
