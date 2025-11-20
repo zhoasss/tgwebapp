@@ -11,7 +11,7 @@ import { API_BASE_URL, API_ENDPOINTS } from '../config/api.js';
  */
 async function apiRequest(endpoint, options = {}) {
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
-  console.log(`🌐 API запрос:`)
+  console.log(`🌐 API запрос:`);
   console.log(`   Endpoint: ${endpoint}`);
   console.log(`   API_BASE_URL: ${API_BASE_URL}`);
   console.log(`   Full URL: ${url}`);
