@@ -42,6 +42,30 @@
   console.log('🎨 Тема:', tg.colorScheme);
   console.log('👤 Пользователь:', tg.initDataUnsafe?.user);
 
+  // Обработка видимости клавиатуры для мобильных устройств
+  // Скрываем футер при фокусе на полях ввода, чтобы освободить место
+  const handleFocus = (e) => {
+    const target = e.target;
+    const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+    if (isInput) {
+      document.body.classList.add('keyboard-visible');
+    }
+  };
+
+  const handleBlur = (e) => {
+    // Небольшая задержка, чтобы проверить, не перешел ли фокус на другой инпут
+    setTimeout(() => {
+      if (!document.activeElement ||
+        (document.activeElement.tagName !== 'INPUT' &&
+          document.activeElement.tagName !== 'TEXTAREA')) {
+        document.body.classList.remove('keyboard-visible');
+      }
+    }, 100);
+  };
+
+  document.addEventListener('focusin', handleFocus);
+  document.addEventListener('focusout', handleBlur);
+
   // Инициализируем JWT аутентификацию (асинхронно, не блокирует приложение)
   import('./../../../shared/lib/jwt-auth.js').then(({ default: jwtAuthManager }) => {
     jwtAuthManager.init().then(success => {

@@ -57,3 +57,7 @@
   background-color: var(--button-hover-bg);
 }
 
+/* Скрываем футер при открытой клавиатуре (класс добавляется через JS) */
+body.keyboard-visible .footer {
+  display: none;
+}
