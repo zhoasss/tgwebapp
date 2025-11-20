@@ -55,14 +55,14 @@ async def signin(
         logging.info(f"{platform} ✅ Созданы токены для пользователя {user.get('username', 'unknown')}")
 
         # Опции для установки cookies
-        # Для cross-origin запросов (GitHub Pages -> booking-cab.ru) нужен samesite=none
-        secure_flag = True  # Всегда True для samesite=none
-        same_site = "none"  # Разрешаем cross-origin cookies
+        # Frontend и backend на одном домене (booking-cab.ru), используем lax
+        secure_flag = True  # Всегда True для HTTPS
+        same_site = "lax"  # Разрешаем same-site cookies
 
         cookies_options = {
             "httponly": True,  # Доступно только через HTTP (JS не может прочитать)
-            "secure": secure_flag,  # Обязательно для samesite=none
-            "samesite": same_site,  # Разрешаем cross-site cookies
+            "secure": secure_flag,  # Только по HTTPS
+            "samesite": same_site,  # Защита от CSRF
             "path": "/",  # Доступно во всем домене
         }
 
@@ -141,7 +141,7 @@ async def refresh_token(
 
         # Устанавливаем новые cookies с теми же настройками что и при signin
         secure_flag = True
-        same_site = "none"
+        same_site = "lax"
 
         response.set_cookie(
             key="access_token",

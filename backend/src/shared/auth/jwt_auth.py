@@ -69,18 +69,26 @@ async def get_current_user(
     1. HTTP-only cookies (рекомендуемый способ)
     2. Authorization header (для отладки)
     """
+    # Логирование для отладки
+    logging.info(f"🔍 get_current_user: access_token from cookie: {access_token[:20] if access_token else 'None'}...")
+    logging.info(f"🔍 get_current_user: refresh_token from cookie: {refresh_token[:20] if refresh_token else 'None'}...")
+    logging.info(f"🔍 get_current_user: credentials from header: {credentials.credentials[:20] if credentials else 'None'}...")
+    
     token = None
 
     # Сначала пытаемся получить токен из cookies
     if access_token:
         token = access_token
         token_source = "cookies"
+        logging.info("✅ Токен получен из cookies")
     # Если токен в cookies отсутствует, пробуем Authorization header
     elif credentials:
         token = credentials.credentials
         token_source = "header"
+        logging.info("✅ Токен получен из Authorization header")
 
     if not token:
+        logging.error("❌ Токен отсутствует и в cookies, и в header")
         raise HTTPException(status_code=401, detail="Отсутствует токен авторизации")
 
     try:
