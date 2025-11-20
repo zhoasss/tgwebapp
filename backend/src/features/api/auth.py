@@ -97,14 +97,14 @@ async def login(
 @router.post("/refresh")
 async def refresh_token(
     response: Response,
-    refresh_token: str = Header(..., alias="X-Refresh-Token"),
+    refresh_token: str = Cookie(None, alias="refresh_token"),
     session: AsyncSession = Depends(get_session)
 ):
     """
     Обновление access токена с помощью refresh токена
 
-    Headers:
-        X-Refresh-Token: Refresh токен
+    Cookies:
+        refresh_token: Refresh токен
 
     Returns:
         Новые токены в http-only cookies
