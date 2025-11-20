@@ -90,8 +90,12 @@ async def signin(
 
         logging.info(f"{platform} 🍪 Установлены http-only cookies для пользователя {user.get('username', 'unknown')}")
 
-        # Возвращаем только успех (как в примере)
-        return True
+        # Возвращаем токены в ответе для поддержки localStorage (Safari блокирует cookies в iframe)
+        return {
+            "access_token": token_response["access_token"],
+            "refresh_token": token_response["refresh_token"],
+            "token_type": "bearer"
+        }
 
     except HTTPException as e:
         logging.error(f"{platform} ❌ Ошибка аутентификации: {e.detail}")
