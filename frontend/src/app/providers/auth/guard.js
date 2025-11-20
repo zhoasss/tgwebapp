@@ -23,6 +23,9 @@ window.appState = { ...initialState };
 // Event для уведомления об изменениях состояния
 const stateChangeEvent = new CustomEvent('appStateChanged');
 
+// Флаг для предотвращения множественных инициализаций
+let isInitializing = false;
+
 /**
  * Обновляет состояние приложения и уведомляет подписчиков
  */
@@ -350,7 +353,7 @@ function sleep(ms) {
 function showLoadingOverlay(message = 'Загрузка...') {
   // Проверяем, нет ли уже overlay
   let overlay = document.getElementById('auth-loading-overlay');
-  
+
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'auth-loading-overlay';
@@ -367,13 +370,13 @@ function showLoadingOverlay(message = 'Загрузка...') {
       justify-content: center;
       padding: 20px;
     `;
-    
+
     const content = document.createElement('div');
     content.style.cssText = `
       text-align: center;
       max-width: 400px;
     `;
-    
+
     content.innerHTML = `
       <div style="display: inline-block; width: 48px; height: 48px; border: 4px solid var(--accent-color, #3390ec); border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
       <p id="loading-message" style="color: var(--text-primary, #333); font-size: 16px; font-weight: 500; margin: 0;"></p>
@@ -383,11 +386,11 @@ function showLoadingOverlay(message = 'Загрузка...') {
         }
       </style>
     `;
-    
+
     overlay.appendChild(content);
     document.body.appendChild(overlay);
   }
-  
+
   // Обновляем сообщение
   const messageEl = document.getElementById('loading-message');
   if (messageEl) {
@@ -439,13 +442,13 @@ function showUnauthorizedError(message) {
     justify-content: center;
     padding: 20px;
   `;
-  
+
   const content = document.createElement('div');
   content.style.cssText = `
     text-align: center;
     max-width: 400px;
   `;
-  
+
   content.innerHTML = `
     <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
     <h2 style="color: var(--text-primary, #333); margin-bottom: 16px;">Доступ запрещен</h2>
@@ -456,7 +459,7 @@ function showUnauthorizedError(message) {
       Откройте бота в Telegram и нажмите "Открыть кабинет"
     </p>
   `;
-  
+
   overlay.appendChild(content);
   document.body.appendChild(overlay);
 }
@@ -466,18 +469,18 @@ function showUnauthorizedError(message) {
  */
 function blockAppAccess() {
   console.log('🚫 Доступ к приложению заблокирован');
-  
+
   // Скрываем основной контент
   const app = document.getElementById('app');
   if (app) {
     app.style.display = 'none';
   }
-  
+
   // Показываем ошибку
   showUnauthorizedError(
     'Для использования приложения необходимо открыть его через Telegram бота.'
   );
-  
+
   // Закрываем приложение через 5 секунд
   setTimeout(() => {
     const tg = getTelegramWebApp();
