@@ -73,6 +73,13 @@ async def signin(
             max_age=config.jwt_access_token_expire_minutes * 60,  # в секундах
             **cookies_options
         )
+        
+        logging.info(f"{platform} 🍪 Установка access_token cookie:")
+        logging.info(f"   - httponly: {cookies_options['httponly']}")
+        logging.info(f"   - secure: {cookies_options['secure']}")
+        logging.info(f"   - samesite: {cookies_options['samesite']}")
+        logging.info(f"   - path: {cookies_options['path']}")
+        logging.info(f"   - max_age: {config.jwt_access_token_expire_minutes * 60}s")
 
         response.set_cookie(
             key="refresh_token",
