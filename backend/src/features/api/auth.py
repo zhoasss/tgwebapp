@@ -55,14 +55,14 @@ async def signin(
         logging.info(f"{platform} ✅ Созданы токены для пользователя {user.get('username', 'unknown')}")
 
         # Опции для установки cookies
-        # Frontend и backend на одном домене (booking-cab.ru), используем lax
-        secure_flag = True  # Всегда True для HTTPS
-        same_site = "lax"  # Разрешаем same-site cookies
+        # Telegram WebApp загружается в iframe, поэтому нужен samesite=none
+        secure_flag = True  # Обязательно для samesite=none
+        same_site = "none"  # Разрешаем cookies в iframe (Telegram WebApp)
 
         cookies_options = {
             "httponly": True,  # Доступно только через HTTP (JS не может прочитать)
-            "secure": secure_flag,  # Только по HTTPS
-            "samesite": same_site,  # Защита от CSRF
+            "secure": secure_flag,  # Обязательно для samesite=none
+            "samesite": same_site,  # Разрешаем cookies в cross-site iframe
             "path": "/",  # Доступно во всем домене
         }
 
@@ -148,7 +148,7 @@ async def refresh_token(
 
         # Устанавливаем новые cookies с теми же настройками что и при signin
         secure_flag = True
-        same_site = "lax"
+        same_site = "none"  # Для Telegram WebApp iframe
 
         response.set_cookie(
             key="access_token",
