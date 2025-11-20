@@ -40,8 +40,8 @@ async function apiRequest(endpoint, options = {}) {
       const errorText = await response.text();
       console.error('❌ Тело ошибки:', errorText);
 
-      // Если получили 401, пробуем обновить токены
-      if (response.status === 401) {
+      // Если получили 401, пробуем обновить токены (только один раз, чтобы избежать бесконечного цикла)
+      if (response.status === 401 && !options._retry) {
         console.log('🔄 Попытка обновления токенов при 401 ошибке...');
         try {
           const jwtAuthManager = (await import('./jwt-auth.js')).default;
@@ -49,8 +49,10 @@ async function apiRequest(endpoint, options = {}) {
 
           if (refreshSuccess) {
             console.log('✅ Токены обновлены, повторяем запрос...');
-            // Повторяем запрос с новыми токенами
-            return await apiRequest(endpoint, options);
+            // Повторяем запрос с новыми токенами (помечаем как повторную попытку)
+            return await apiRequest(endpoint, { ...options, _retry: true });
+          } else {
+            console.log('❌ Не удалось обновить токены, возвращаем ошибку');
           }
         } catch (refreshError) {
           console.error('❌ Ошибка обновления токенов:', refreshError);
@@ -70,6 +72,24 @@ async function apiRequest(endpoint, options = {}) {
 
     const responseData = await response.json();
     console.log('✅ Успешный ответ API:', responseData);
+
+    // Проверяем, обновились ли токены на сервере (автоматически при истечении access токена)
+    if (responseData.token_refreshed && responseData.new_access_token && responseData.new_refresh_token) {
+      console.log('🔄 Сервер автоматически обновил токены, устанавливаем новые cookies');
+
+      // Устанавливаем новые cookies (копируем логику из jwt-auth.js)
+      const secure = window.location.protocol === 'https:';
+      const sameSite = secure ? 'strict' : 'lax';
+
+      // Access token (30 минут)
+      document.cookie = `access_token=${responseData.new_access_token}; path=/; secure=${secure}; samesite=${sameSite}; max-age=${30 * 60}`;
+
+      // Refresh token (30 дней)
+      document.cookie = `refresh_token=${responseData.new_refresh_token}; path=/; secure=${secure}; samesite=${sameSite}; max-age=${30 * 24 * 60 * 60}`;
+
+      console.log('✅ Новые токены установлены в cookies');
+    }
+
     return responseData;
 
   } catch (error) {

@@ -77,6 +77,11 @@ async function loadProfileData() {
       const apiProfile = await getProfile();
       console.log('✅ Профиль загружен с API:', apiProfile);
 
+      // Если токены были обновлены, уведомляем пользователя
+      if (apiProfile.token_refreshed) {
+        console.log('🔄 Токены были автоматически обновлены при загрузке профиля');
+      }
+
       // Обновляем данные из API
       profileData = {
         id: apiProfile.id || profileData.id,
