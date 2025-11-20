@@ -107,7 +107,7 @@ class JWTAutManager {
    */
   async _checkAuthStatus() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/protected`, {
         method: 'GET',
         credentials: 'include', // Важно для отправки cookies
         headers: {
@@ -116,7 +116,12 @@ class JWTAutManager {
       });
 
       if (response.ok) {
-        return await response.json();
+        const isAuthenticated = await response.json();
+        if (isAuthenticated) {
+          // Если авторизован, загружаем данные пользователя
+          await this._loadCurrentUser();
+          return { is_authenticated: true };
+        }
       } else if (response.status === 401) {
         console.log('⚠️ Токены истекли или невалидны');
         return { is_authenticated: false };
@@ -126,6 +131,31 @@ class JWTAutManager {
     } catch (error) {
       console.error('❌ Ошибка проверки статуса аутентификации:', error);
       return { is_authenticated: false };
+    }
+  }
+
+  /**
+   * Загрузка данных текущего пользователя
+   */
+  async _loadCurrentUser() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.user = data.user;
+        console.log('👤 Данные пользователя загружены:', this.user);
+      } else {
+        console.warn('⚠️ Не удалось загрузить данные пользователя');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка загрузки данных пользователя:', error);
     }
   }
 
@@ -142,7 +172,7 @@ class JWTAutManager {
 
       console.log('📡 Выполнение входа через initData...');
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
         method: 'POST',
         credentials: 'include', // Важно для получения cookies
         headers: {
@@ -157,11 +187,14 @@ class JWTAutManager {
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      const data = await response.json();
-      console.log('✅ Вход выполнен успешно:', data);
+      const success = await response.json();
+      console.log('✅ Вход выполнен успешно:', success);
 
-      this.isAuthenticated = true;
-      this.user = data.user;
+      if (success) {
+        this.isAuthenticated = true;
+        // После успешного входа нужно получить данные пользователя
+        await this._loadCurrentUser();
+      }
 
       return true;
 

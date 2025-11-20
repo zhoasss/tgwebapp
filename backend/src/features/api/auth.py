@@ -15,8 +15,8 @@ from ...shared.config.env_loader import config
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/login")
-async def login(
+@router.post("/signin")
+async def signin(
     response: Response,
     x_init_data: str = Header(..., alias="X-Init-Data"),
     user_agent: str = Header(..., alias="User-Agent"),
@@ -30,7 +30,7 @@ async def login(
         User-Agent: User-Agent браузера
 
     Returns:
-        Данные пользователя и устанавливает токены в http-only cookies
+        Устанавливает токены в http-only cookies и возвращает успех
     """
     # Определяем платформу
     is_mobile = any(keyword in user_agent.lower() for keyword in [
@@ -54,38 +54,36 @@ async def login(
         token_response = create_token_response(user)
         logging.info(f"{platform} ✅ Созданы токены для пользователя {user.get('username', 'unknown')}")
 
-        # Устанавливаем http-only secure cookies
+        # Опции для установки cookies (как в примере)
         secure_flag = not config.is_development  # В разработке без secure для localhost
         same_site = "strict" if config.is_production else "lax"
 
+        cookies_options = {
+            "httponly": True,  # Доступно только через HTTP (JS не может прочитать)
+            "secure": secure_flag,  # Передается только по HTTPS (или без secure в dev)
+            "samesite": same_site,  # Защита от CSRF-атак
+            "path": "/",  # Доступно во всем домене
+        }
+
+        # Устанавливаем токены в cookies
         response.set_cookie(
             key="access_token",
             value=token_response["access_token"],
-            httponly=True,
-            secure=secure_flag,
-            samesite=same_site,
             max_age=config.jwt_access_token_expire_minutes * 60,  # в секундах
-            path="/"
+            **cookies_options
         )
 
         response.set_cookie(
             key="refresh_token",
             value=token_response["refresh_token"],
-            httponly=True,
-            secure=secure_flag,
-            samesite=same_site,
             max_age=30 * 24 * 60 * 60,  # 30 дней в секундах
-            path="/"
+            **cookies_options
         )
 
         logging.info(f"{platform} 🍪 Установлены http-only cookies для пользователя {user.get('username', 'unknown')}")
 
-        # Возвращаем данные пользователя (без токенов в JSON)
-        return {
-            "user": token_response["user"],
-            "message": "Аутентификация успешна",
-            "platform": platform.replace("📱 ", "").replace("💻 ", "")
-        }
+        # Возвращаем только успех (как в примере)
+        return True
 
     except HTTPException as e:
         logging.error(f"{platform} ❌ Ошибка аутентификации: {e.detail}")
@@ -192,6 +190,22 @@ async def logout(response: Response):
     logging.info("✅ Cookies очищены, пользователь вышел из системы")
 
     return {"message": "Выход выполнен успешно"}
+
+@router.get("/protected")
+async def protected(
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Эндпоинт для проверки авторизации
+
+    Returns:
+        True если пользователь авторизован
+    """
+    logging.info(f"🔒 Проверка авторизации для пользователя {current_user.get('username', 'unknown')}")
+
+    # Если мы дошли до этого места, значит пользователь авторизован
+    # (зависимость get_current_user уже проверила токены)
+    return True
 
 @router.get("/me")
 async def get_current_user_info(
