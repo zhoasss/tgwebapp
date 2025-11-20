@@ -54,14 +54,15 @@ async def signin(
         token_response = create_token_response(user)
         logging.info(f"{platform} ✅ Созданы токены для пользователя {user.get('username', 'unknown')}")
 
-        # Опции для установки cookies (как в примере)
-        secure_flag = not config.is_development  # В разработке без secure для localhost
-        same_site = "strict" if config.is_production else "lax"
+        # Опции для установки cookies
+        # Для cross-origin запросов (GitHub Pages -> booking-cab.ru) нужен samesite=none
+        secure_flag = True  # Всегда True для samesite=none
+        same_site = "none"  # Разрешаем cross-origin cookies
 
         cookies_options = {
             "httponly": True,  # Доступно только через HTTP (JS не может прочитать)
-            "secure": secure_flag,  # Передается только по HTTPS (или без secure в dev)
-            "samesite": same_site,  # Защита от CSRF-атак
+            "secure": secure_flag,  # Обязательно для samesite=none
+            "samesite": same_site,  # Разрешаем cross-site cookies
             "path": "/",  # Доступно во всем домене
         }
 
@@ -138,9 +139,9 @@ async def refresh_token(
         # Создаем новые токены
         token_response = create_token_response(user)
 
-        # Устанавливаем новые cookies
-        secure_flag = not config.is_development
-        same_site = "strict" if config.is_production else "lax"
+        # Устанавливаем новые cookies с теми же настройками что и при signin
+        secure_flag = True
+        same_site = "none"
 
         response.set_cookie(
             key="access_token",
