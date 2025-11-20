@@ -4,6 +4,7 @@ JWT аутентификация для системы управления за
 """
 
 import jwt
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, Depends, Cookie
