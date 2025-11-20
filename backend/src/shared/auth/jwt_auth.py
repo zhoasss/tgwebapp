@@ -114,7 +114,8 @@ async def get_current_user(
         if not user:
             raise HTTPException(status_code=401, detail="Пользователь не найден")
 
-        user_dict = dict(user)
+        # Преобразуем SQLAlchemy Row в dict
+        user_dict = dict(user._mapping)
         user_dict["token_source"] = token_source
 
         return user_dict
