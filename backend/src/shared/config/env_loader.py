@@ -149,7 +149,8 @@ class Config:
     def _get_default_database_url(self) -> str:
         """Получает URL базы данных по умолчанию"""
         db_path = self.data_dir / "database.db"
-        return f"sqlite+aiosqlite:///{quote_plus(str(db_path))}"
+        # Не используем quote_plus для пути SQLite, так как это ломает абсолютные пути
+        return f"sqlite+aiosqlite:///{db_path}"
 
     def to_dict(self) -> Dict[str, Any]:
         """Преобразует конфигурацию в словарь (без чувствительных данных)"""
