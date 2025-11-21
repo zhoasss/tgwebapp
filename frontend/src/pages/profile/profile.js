@@ -330,10 +330,10 @@ function generateGradient(userId) {
  * Переключает режим редактирования
  */
 function toggleEditMode() {
-  if (isLoading) {
-    showNotification('Дождитесь завершения загрузки', 'warning');
-    return;
-  }
+  // if (isLoading) {
+  //   showNotification('Дождитесь завершения загрузки', 'warning');
+  //   return;
+  // }
 
   isEditMode = !isEditMode;
   const viewMode = document.getElementById('view-mode');
