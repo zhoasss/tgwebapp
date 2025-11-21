@@ -478,21 +478,26 @@ async function saveProfile() {
     return;
   }
 
-  // Проверяем, есть ли хотя бы одно изменение
-  const hasChanges = (
+  // Проверяем, есть ли хотя  // Проверяем изменения
+  const hasChanges =
     phone !== profileData.phone ||
     businessName !== profileData.businessName ||
-    address !== profileData.address
-  );
+    address !== profileData.address;
 
-  if (!hasChanges) {
-    showNotification('Нет изменений для сохранения', 'info');
-    // Небольшая задержка перед возвратом в режим просмотра
-    setTimeout(() => {
-      toggleEditMode();
-    }, 1000);
-    return;
-  }
+  console.log('📝 Данные формы:', { phone, businessName, address });
+  console.log('💾 Данные профиля:', profileData);
+  console.log('🤔 Есть изменения?', hasChanges);
+
+  // ВРЕМЕННО ОТКЛЮЧАЕМ ПРОВЕРКУ ДЛЯ ОТЛАДКИ
+  // if (!hasChanges) {
+  //   console.log('ℹ️ Нет изменений для сохранения');
+  //   showNotification('Нет изменений для сохранения', 'info');
+  //   // Небольшая задержка перед возвратом в режим просмотра
+  //   setTimeout(() => {
+  //     toggleEditMode();
+  //   }, 1000);
+  //   return;
+  // }
 
   const updateData = {
     phone: phone || null,
@@ -601,7 +606,12 @@ function initProfilePage() {
   if (saveButton) {
     saveButton.addEventListener('click', async (e) => {
       e.preventDefault();
-      await saveProfile();
+      try {
+        await saveProfile();
+      } catch (error) {
+        console.error('❌ Ошибка при сохранении:', error);
+        showNotification(`Ошибка: ${error.message}`, 'error');
+      }
     });
   }
 
