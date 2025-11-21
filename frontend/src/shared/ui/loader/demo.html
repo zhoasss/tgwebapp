@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loader Demo</title>
+    <link rel="stylesheet" href="loader.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .demo-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: #3390ec;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2980d9;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f7ff;
+            border-left: 4px solid #3390ec;
+            border-radius: 4px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        code {
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <h1>🔄 Loader Component Demo</h1>
+
+        <p>Этот компонент показывает анимированный loader при загрузке страницы.</p>
+
+        <div class="controls">
+            <button onclick="showLoader()">Показать Loader</button>
+            <button onclick="hideLoader()">Скрыть Loader</button>
+            <button onclick="showLoaderWithDelay()">Показать на 2 сек</button>
+        </div>
+
+        <div class="info">
+            <strong>Как использовать:</strong><br>
+            1. Loader автоматически показывается при загрузке страницы<br>
+            2. Автоматически скрывается после события <code>window.load</code><br>
+            3. Можно управлять вручную через <code>pageLoader.show()</code> и <code>pageLoader.hide()</code>
+        </div>
+
+        <div class="info" style="margin-top: 15px; background: #fff3cd; border-left-color: #ffc107;">
+            <strong>Пример кода:</strong><br>
+            <code>import pageLoader from './loader.js';</code><br>
+            <code>pageLoader.show();</code><br>
+            <code>pageLoader.hideAfter(2000);</code>
+        </div>
+    </div>
+
+    <script type="module">
+        import pageLoader from './loader.js';
+
+        // Делаем функции доступными глобально для кнопок
+        window.showLoader = () => {
+            pageLoader.show();
+        };
+
+        window.hideLoader = () => {
+            pageLoader.hide();
+        };
+
+        window.showLoaderWithDelay = () => {
+            pageLoader.show();
+            pageLoader.hideAfter(2000);
+        };
+
+        // Для демо: скрываем loader сразу после загрузки
+        window.addEventListener('load', () => {
+            pageLoader.hideAfter(500);
+        });
+    </script>
+</body>
+
+</html>
