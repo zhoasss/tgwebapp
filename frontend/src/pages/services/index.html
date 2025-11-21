@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../../app/styles/variables.css">
   <link rel="stylesheet" href="../../app/styles/global.css">
   <link rel="stylesheet" href="../../app/styles/index.css">
+  <link rel="stylesheet" href="./services.css">
 
   <!-- Loader Styles -->
   <link rel="stylesheet" href="../../shared/ui/loader/loader.css?v=1.0.0">
@@ -25,11 +26,98 @@
   <!-- Main Content -->
   <main id="app">
     <div class="view-content">
-      <h1>✂️ Услуги</h1>
-      <p style="text-align: center; color: var(--text-secondary); margin-top: 40px;">
-        Здесь вы сможете управлять списком услуг.<br>
-        Функционал будет добавлен в следующих обновлениях.
-      </p>
+      <div class="page-header">
+        <h1>✂️ Услуги</h1>
+        <button id="add-service-btn" class="icon-btn primary">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Список услуг -->
+      <div id="services-list" class="services-list">
+        <!-- Услуги будут загружены через JS -->
+      </div>
+    </div>
+
+    <!-- Модальное окно создания/редактирования услуги -->
+    <div id="service-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modal-title">Новая услуга</h2>
+          <button id="close-modal-btn" class="close-btn">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="service-form">
+            <input type="hidden" id="service-id">
+
+            <div class="form-group">
+              <label for="service-name">Название</label>
+              <input type="text" id="service-name" class="form-input" placeholder="Например, Мужская стрижка" required>
+            </div>
+
+            <div class="form-group">
+              <label for="service-description">Описание (необязательно)</label>
+              <textarea id="service-description" class="form-input" placeholder="Краткое описание услуги"
+                rows="3"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="service-price">Цена (₽)</label>
+                <input type="number" id="service-price" class="form-input" placeholder="1000" min="0" required>
+              </div>
+              <div class="form-group">
+                <label for="service-duration">Длительность (мин)</label>
+                <input type="number" id="service-duration" class="form-input" placeholder="60" min="5" step="5"
+                  required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Цвет</label>
+              <div class="color-picker">
+                <label class="color-option">
+                  <input type="radio" name="service-color" value="#4CAF50" checked>
+                  <span class="color-swatch" style="background-color: #4CAF50;"></span>
+                </label>
+                <label class="color-option">
+                  <input type="radio" name="service-color" value="#2196F3">
+                  <span class="color-swatch" style="background-color: #2196F3;"></span>
+                </label>
+                <label class="color-option">
+                  <input type="radio" name="service-color" value="#9C27B0">
+                  <span class="color-swatch" style="background-color: #9C27B0;"></span>
+                </label>
+                <label class="color-option">
+                  <input type="radio" name="service-color" value="#FF9800">
+                  <span class="color-swatch" style="background-color: #FF9800;"></span>
+                </label>
+                <label class="color-option">
+                  <input type="radio" name="service-color" value="#F44336">
+                  <span class="color-swatch" style="background-color: #F44336;"></span>
+                </label>
+                <label class="color-option">
+                  <input type="radio" name="service-color" value="#607D8B">
+                  <span class="color-swatch" style="background-color: #607D8B;"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" id="delete-service-btn" class="btn danger hidden">Удалить</button>
+              <button type="submit" class="btn primary">Сохранить</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -64,11 +152,8 @@
   <!-- Navigation Script -->
   <script type="module" src="../../shared/lib/navigation.js?v=1.0.0"></script>
 
-  <script type="module">
-    import pageLoader from '../../shared/ui/loader/loader.js';
-    // Hide loader immediately for this simple page
-    pageLoader.hide();
-  </script>
+  <!-- Page Logic -->
+  <script type="module" src="./services.js"></script>
 </body>
 
 </html>
