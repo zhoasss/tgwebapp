@@ -3,6 +3,8 @@
  * Слой Pages - страницы приложения
  */
 
+import pageLoader from '../../shared/ui/loader/loader.js';
+
 // Маршруты для настроек
 const SETTINGS_ROUTES = {
   'Профиль': '../profile/index.html',
@@ -39,6 +41,9 @@ function initSettingsPage() {
   });
 
   console.log('✅ Страница настроек инициализирована');
+
+  // Скрываем лоадер, так как страница загружена
+  pageLoader.hide();
 }
 
 if (document.readyState === 'loading') {

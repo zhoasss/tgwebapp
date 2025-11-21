@@ -63,6 +63,12 @@
 
   <!-- Navigation Script -->
   <script type="module" src="../../shared/lib/navigation.js?v=1.0.0"></script>
+
+  <script type="module">
+    import pageLoader from '../../shared/ui/loader/loader.js';
+    // Hide loader immediately for this simple page
+    pageLoader.hide();
+  </script>
 </body>
 
 </html>

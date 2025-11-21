@@ -6,6 +6,7 @@ API endpoints для аутентификации
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Header, Response, Cookie
 from fastapi.responses import JSONResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...shared.database.connection import get_session
@@ -137,15 +138,15 @@ async def refresh_token(
         # Получаем пользователя из БД
         from ...shared.database.models import User
         result = await session.execute(
-            User.__table__.select().where(User.id == int(user_id))
+            select(User).where(User.id == int(user_id))
         )
-        user_row = result.first()
+        user_obj = result.scalar_one_or_none()
 
-        if not user_row:
+        if not user_obj:
             raise HTTPException(status_code=401, detail="Пользователь не найден")
 
         # Преобразуем в словарь
-        user = dict(user_row)
+        user = user_obj.to_dict()
 
         # Создаем новые токены
         token_response = create_token_response(user)
