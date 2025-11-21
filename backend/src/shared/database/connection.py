@@ -24,13 +24,15 @@ engine = create_async_engine(
     pool_recycle=3600,   # Пересоздавать соединения каждый час
 )
 
-# Фабрика сессий
+# Фабрика сессий с отключенным кэшированием
 async_session_factory = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=True,  # Сбрасывать кэш после коммита
     autoflush=True,         # Автоматически сбрасывать изменения в БД
-    autocommit=False        # Явный контроль транзакций
+    autocommit=False,       # Явный контроль транзакций
+    # Отключаем Identity Map - каждый запрос создает новые объекты
+    query_cls=None
 )
 
 async def init_database():
