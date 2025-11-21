@@ -215,8 +215,8 @@
     width: 100%;
     padding: 12px 16px;
     border-radius: 12px;
-    border: 1px solid var(--separator-color);
-    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    background: var(--bg-card);
     color: var(--text-primary);
     font-size: 16px;
     transition: border-color 0.2s ease;
@@ -238,6 +238,8 @@ textarea.form-input {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+    padding: 4px 0;
+    /* Add padding to prevent overflow */
 }
 
 .color-option {
@@ -262,9 +264,10 @@ textarea.form-input {
 }
 
 .color-option input:checked+.color-swatch {
-    transform: scale(1.1);
+    transform: scale(1.05);
+    /* Reduced from 1.1 to prevent overflow */
     border-color: var(--text-primary);
-    box-shadow: 0 0 0 2px var(--bg-secondary);
+    box-shadow: 0 0 0 2px var(--bg-body);
 }
 
 .modal-footer {
