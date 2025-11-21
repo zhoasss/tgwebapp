@@ -32,8 +32,19 @@ async_session_factory = async_sessionmaker(
 async def init_database():
     """Инициализация базы данных - создание всех таблиц"""
     try:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        # Используем синхронный движок для создания таблиц
+        # так как async движок не создает таблицы корректно
+        from sqlalchemy import create_engine
+        from urllib.parse import unquote_plus
+        
+        # Преобразуем async URL в sync URL
+        sync_url = DATABASE_URL.replace('sqlite+aiosqlite://', 'sqlite:///')
+        sync_url = unquote_plus(sync_url)
+        
+        sync_engine = create_engine(sync_url)
+        Base.metadata.create_all(sync_engine)
+        sync_engine.dispose()
+        
         logging.info("✅ База данных инициализирована")
         logging.info(f"📁 Настройки БД: URL={DATABASE_URL}")
     except Exception as e:
