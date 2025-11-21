@@ -136,6 +136,8 @@
     flex-direction: column;
     transform: translateY(0);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    /* Prevent any overflow from modal-content */
 }
 
 .modal.hidden .modal-content {
@@ -145,7 +147,11 @@
 .modal-body {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
+    /* Prevent horizontal overflow */
     padding-bottom: 20px;
+    padding-right: 4px;
+    /* Add small padding to prevent content touching edge */
 }
 
 @media (min-width: 768px) {
@@ -236,7 +242,8 @@ textarea.form-input {
 /* Color Picker */
 .color-picker {
     display: flex;
-    gap: 12px;
+    gap: 10px;
+    /* Reduced from 12px */
     flex-wrap: wrap;
     padding: 4px 0;
     /* Add padding to prevent overflow */
@@ -256,8 +263,10 @@ textarea.form-input {
 
 .color-swatch {
     display: block;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    /* Reduced from 40px */
+    height: 36px;
+    /* Reduced from 40px */
     border-radius: 50%;
     border: 2px solid transparent;
     transition: transform 0.2s ease;
