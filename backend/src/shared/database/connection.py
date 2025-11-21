@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from pathlib import Path
 import logging
 
-from .models import Base
+from .models import Base, User, Service, Client, Appointment, WorkingHours
 
 # Импортируем конфигурацию
 from ..config.env_loader import get_database_url, config
