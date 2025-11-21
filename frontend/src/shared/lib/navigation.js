@@ -8,20 +8,30 @@
  * @param {string} url - Target URL
  * @param {number} delay - Delay before navigation (ms)
  */
-export function navigateWithLoader(url, delay = 300) {
-    // Show loader immediately
-    const loaderHTML = `
-    <div class="loader-container" id="navigation-loader" style="z-index: 10000;">
-      <div class="loader"></div>
-    </div>
-  `;
+export function navigateWithLoader(url, delay = 100) {
+    // Try to use existing page loader if available
+    const existingLoader = document.getElementById('page-loader');
 
-    // Insert loader if it doesn't exist
-    if (!document.getElementById('navigation-loader')) {
-        document.body.insertAdjacentHTML('beforeend', loaderHTML);
+    if (existingLoader) {
+        // Show existing loader
+        existingLoader.classList.remove('hidden');
+    } else {
+        // Fallback: create temporary loader if page-loader doesn't exist yet
+        const loaderHTML = `
+        <div class="loader-container" id="navigation-loader">
+          <div class="loader"></div>
+        </div>
+      `;
+
+        if (!document.getElementById('navigation-loader')) {
+            document.body.insertAdjacentHTML('beforeend', loaderHTML);
+        }
     }
 
-    // Navigate after delay
+    // Mark that we're navigating (so next page knows loader is already visible)
+    sessionStorage.setItem('isNavigating', 'true');
+
+    // Navigate after short delay
     setTimeout(() => {
         window.location.href = url;
     }, delay);

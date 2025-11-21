@@ -12,9 +12,13 @@ class PageLoader {
     }
 
     init() {
+        // Check if we're coming from navigation (loader might already be visible)
+        const isNavigating = sessionStorage.getItem('isNavigating') === 'true';
+        sessionStorage.removeItem('isNavigating');
+
         // Create loader HTML structure
         const loaderHTML = `
-      <div class="loader-container" id="page-loader">
+      <div class="loader-container${isNavigating ? '' : ''}" id="page-loader">
         <div class="loader"></div>
       </div>
     `;
