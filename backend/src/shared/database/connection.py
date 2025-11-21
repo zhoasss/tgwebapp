@@ -62,6 +62,9 @@ async def get_session() -> AsyncSession:
     async with async_session_factory() as session:
         try:
             yield session
+            # Принудительно сбрасываем все изменения в БД
+            await session.flush()
+            # Коммитим транзакцию
             await session.commit()
             # Принудительно помечаем все объекты как устаревшие
             # Это гарантирует, что при следующем обращении данные будут перечитаны с диска
