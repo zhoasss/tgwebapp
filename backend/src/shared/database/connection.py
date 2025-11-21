@@ -19,14 +19,18 @@ DATABASE_URL = get_database_url()
 engine = create_async_engine(
     DATABASE_URL,
     echo=config.db_echo,  # Используем настройку из конфигурации
-    future=True
+    future=True,
+    pool_pre_ping=True,  # Проверять соединение перед использованием
+    pool_recycle=3600,   # Пересоздавать соединения каждый час
 )
 
 # Фабрика сессий
 async_session_factory = async_sessionmaker(
     engine,
     class_=AsyncSession,
-    expire_on_commit=False
+    expire_on_commit=True,  # Сбрасывать кэш после коммита
+    autoflush=True,         # Автоматически сбрасывать изменения в БД
+    autocommit=False        # Явный контроль транзакций
 )
 
 async def init_database():
