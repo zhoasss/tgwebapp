@@ -61,6 +61,9 @@ async def get_session() -> AsyncSession:
         try:
             yield session
             await session.commit()
+            # Принудительно помечаем все объекты как устаревшие
+            # Это гарантирует, что при следующем обращении данные будут перечитаны с диска
+            session.expire_all()
         except Exception:
             await session.rollback()
             raise
