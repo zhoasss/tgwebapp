@@ -478,7 +478,7 @@ async function saveProfile() {
     return;
   }
 
-  // Проверяем, есть ли хотя  // Проверяем изменения
+  // Проверяем изменения
   const hasChanges =
     phone !== profileData.phone ||
     businessName !== profileData.businessName ||
