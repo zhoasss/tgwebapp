@@ -43,7 +43,9 @@ function initSettingsPage() {
   console.log('✅ Страница настроек инициализирована');
 
   // Скрываем лоадер, так как страница загружена
-  pageLoader.hide();
+  // Используем forceHide, чтобы гарантированно скрыть лоадер, даже если счетчик сбился
+  console.log('⚙️ Force hiding loader on settings page');
+  pageLoader.forceHide();
 }
 
 if (document.readyState === 'loading') {

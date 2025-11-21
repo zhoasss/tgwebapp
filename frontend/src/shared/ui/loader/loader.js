@@ -63,6 +63,7 @@ class PageLoader {
      */
     show() {
         this.requestCount++;
+        console.log(`🔄 Loader show requested. Count: ${this.requestCount}`);
 
         if (this.loaderElement && this.loaderElement.classList.contains('hidden')) {
             this.loaderElement.classList.remove('hidden');
@@ -83,6 +84,7 @@ class PageLoader {
         if (this.requestCount > 0) {
             this.requestCount--;
         }
+        console.log(`✅ Loader hide requested. Count: ${this.requestCount}`);
 
         if (this.requestCount === 0) {
             this._scheduleHide();
@@ -123,6 +125,7 @@ class PageLoader {
 const pageLoader = new PageLoader();
 
 // Check if we're coming from navigation
+// Check if we're coming from navigation
 const isNavigating = sessionStorage.getItem('isNavigating') === 'true';
 sessionStorage.removeItem('isNavigating');
 
@@ -136,7 +139,7 @@ if (!isNavigating) {
     // This prevents infinite loader if page has no JS logic
     setTimeout(() => {
         if (pageLoader.requestCount > 0) {
-            console.warn('⚠️ Loader force hidden due to timeout (no data fetch detected)');
+            console.warn('⚠️ Loader force hidden due to timeout (initial load)');
             pageLoader.forceHide();
         }
     }, 3000);
@@ -144,6 +147,14 @@ if (!isNavigating) {
     // If navigating, the previous page should have set the loader visible
     // We just ensure it's visible and set the counter
     pageLoader.show();
+
+    // Fallback for navigation as well
+    setTimeout(() => {
+        if (pageLoader.requestCount > 0) {
+            console.warn('⚠️ Loader force hidden due to timeout (navigation)');
+            pageLoader.forceHide();
+        }
+    }, 3000);
 }
 
 // Export for use in modules
