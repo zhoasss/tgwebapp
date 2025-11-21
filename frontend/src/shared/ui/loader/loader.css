@@ -1,4 +1,6 @@
-/* Loader Styles */
+/* Loader Styles with Theme Support */
+
+/* Light Theme (Default) */
 .loader-container {
     position: fixed;
     top: 0;
@@ -12,6 +14,30 @@
     z-index: 9999;
     opacity: 1;
     transition: opacity 0.3s ease-out;
+
+    /* Theme colors - Light */
+    --loader-bg: rgba(255, 255, 255, 0.95);
+    --loader-color-1: #fff;
+    --loader-color-2: #666;
+    --loader-color-3: #aaa;
+}
+
+/* Dark Theme */
+@media (prefers-color-scheme: dark) {
+    .loader-container {
+        background: rgba(0, 0, 0, 0.95);
+
+        /* Theme colors - Dark */
+        --loader-bg: rgba(0, 0, 0, 0.95);
+        --loader-color-1: #1a1a1a;
+        --loader-color-2: #999;
+        --loader-color-3: #555;
+    }
+}
+
+/* Apply background from CSS variable */
+.loader-container {
+    background: var(--loader-bg);
 }
 
 .loader-container.hidden {
@@ -35,7 +61,9 @@
     clip-path: polygon(var(--_d) 0, 100% 0, 100% calc(100% - var(--_d)), calc(100% - var(--_d)) 100%, 0 100%, 0 var(--_d));
     background:
         conic-gradient(from -90deg at calc(100% - var(--_d)) var(--_d),
-            #fff 135deg, #666 0 270deg, #aaa 0);
+            var(--loader-color-1) 135deg,
+            var(--loader-color-2) 0 270deg,
+            var(--loader-color-3) 0);
     animation: l6 2s infinite;
 }
 
