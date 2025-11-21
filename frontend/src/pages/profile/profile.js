@@ -6,10 +6,12 @@
 import { showNotification } from '../../shared/lib/telegram.js';
 import { getProfile, updateProfile } from '../../shared/lib/profile-api.js';
 import jwtAuthManager from '../../shared/lib/jwt-auth.js';
+import pageLoader from '../../shared/ui/loader/loader.js';
 
 let isEditMode = false;
 let profileData = {};
-let isLoading = false;
+// isLoading is no longer needed as we use global loader
+// let isLoading = false;
 
 /**
  * Загружает данные профиля через JWT аутентификацию
@@ -17,8 +19,10 @@ let isLoading = false;
 async function loadProfileData() {
   console.log('📡 Загрузка данных профиля...');
 
-  // Показываем индикатор загрузки
-  showLoading(true);
+  // Показываем глобальный лоадер
+  // Это увеличивает счетчик запросов, предотвращая скрытие лоадера,
+  // если инициализация приложения завершится раньше загрузки профиля
+  pageLoader.show();
 
   try {
     // Инициализируем JWT аутентификацию
@@ -74,6 +78,8 @@ async function loadProfileData() {
     // Пытаемся получить полные данные с сервера
     try {
       console.log('🔄 Загрузка полных данных профиля с сервера...');
+      // getProfile использует apiClient, который тоже управляет лоадером
+      // но так как мы уже вызвали pageLoader.show(), лоадер гарантированно будет виден
       const apiProfile = await getProfile();
       console.log('✅ Профиль загружен с API:', apiProfile);
 
@@ -126,26 +132,11 @@ async function loadProfileData() {
       console.log('ℹ️ Показаны базовые данные при ошибке загрузки');
     }
   } finally {
-    showLoading(false);
+    // Скрываем глобальный лоадер (уменьшаем счетчик)
+    pageLoader.hide();
   }
 }
 
-/**
- * Показывает/скрывает индикатор загрузки
- */
-function showLoading(show) {
-  isLoading = show;
-  const loadingElement = document.getElementById('loading-indicator');
-  if (loadingElement) {
-    loadingElement.style.display = show ? 'flex' : 'none';
-  }
-
-  // Блокируем кнопку редактирования во время загрузки
-  const editButton = document.getElementById('edit-profile-btn');
-  if (editButton) {
-    editButton.disabled = show;
-  }
-}
 
 /**
  * Показывает сообщение об ошибке
@@ -469,11 +460,12 @@ function validateForm(phone, businessName, address) {
 /**
  * Сохраняет изменения профиля
  */
+/**
+ * Сохраняет изменения профиля
+ */
 async function saveProfile() {
-  if (isLoading) {
-    showNotification('Операция уже выполняется', 'warning');
-    return;
-  }
+  // Removed isLoading check as we rely on UI state (buttons disabled etc)
+  // or we could check pageLoader.requestCount but it's better to just disable the button
 
   const phone = document.getElementById('edit-phone').value.trim();
   const businessName = document.getElementById('edit-business').value.trim();
@@ -519,7 +511,8 @@ async function saveProfile() {
   profileData.businessName = businessName;
   profileData.address = address;
 
-  showLoading(true);
+  // Показываем глобальный лоадер
+  pageLoader.show();
 
   // Создаем промис для минимальной задержки анимации (1.5 сек)
   // Это обеспечивает плавный UX, чтобы лоадер не моргал слишком быстро
@@ -529,6 +522,8 @@ async function saveProfile() {
     // Пытаемся синхронизировать с сервером параллельно с анимацией
     console.log(`${platform} 🔄 Синхронизация с сервером...`);
 
+    // updateProfile использует apiClient, который тоже может вызвать show/hide
+    // но так как мы вызвали show() вручную, счетчик увеличится
     const [updatedProfile] = await Promise.all([
       updateProfile(updateData),
       animationDelay
@@ -551,13 +546,15 @@ async function saveProfile() {
 
     // Даже при ошибке дожидаемся окончания анимации для плавности
     await animationDelay;
+  } finally {
+    // Скрываем лоадер
+    pageLoader.hide();
   }
 
   // Обновляем UI
   updateProfileUI();
 
-  // Скрываем лоадер и переключаем режим (без уведомлений)
-  showLoading(false);
+  // Переключаем режим (без уведомлений)
   toggleEditMode();
 
   console.log('✅ Сохранение профиля завершено');

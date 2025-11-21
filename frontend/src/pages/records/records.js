@@ -5,10 +5,11 @@
 
 import { showNotification } from '../../shared/lib/telegram.js';
 import { getAppointments } from '../../shared/lib/profile-api.js';
+import pageLoader from '../../shared/ui/loader/loader.js';
 
 // Состояние страницы
 let records = [];
-let isLoading = false;
+// isLoading removed
 let currentStatus = null; // null = все, 'pending', 'confirmed', 'completed'
 
 /**
@@ -68,24 +69,6 @@ function getStatusText(status) {
     case 'cancelled': return 'Отменена';
     case 'completed': return 'Завершена';
     default: return 'Неизвестен';
-  }
-}
-
-/**
- * Показать состояние загрузки
- */
-function showLoading(show) {
-  isLoading = show;
-  const container = document.getElementById('records-list');
-  const loadingElement = document.getElementById('loading-indicator');
-
-  if (!container) return;
-
-  if (show) {
-    container.innerHTML = '<div class="loading-placeholder">Загрузка записей...</div>';
-    if (loadingElement) loadingElement.style.display = 'flex';
-  } else {
-    if (loadingElement) loadingElement.style.display = 'none';
   }
 }
 
@@ -172,7 +155,8 @@ async function loadRecords() {
     return;
   }
 
-  showLoading(true);
+  // Показываем глобальный лоадер
+  pageLoader.show();
 
   try {
     const response = await getAppointments(currentStatus, null, null, 50, 0);
@@ -206,7 +190,8 @@ async function loadRecords() {
       showError(`Не удалось загрузить записи: ${error.message || 'Неизвестная ошибка'}`);
     }
   } finally {
-    showLoading(false);
+    // Скрываем лоадер
+    pageLoader.hide();
   }
 }
 

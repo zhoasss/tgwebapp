@@ -77,10 +77,21 @@
     }).catch(error => {
       console.error('❌ Ошибка инициализации JWT:', error.message);
       console.log('ℹ️ Приложение продолжит работать в автономном режиме');
+    }).finally(() => {
+      // Скрываем лоадер после завершения инициализации (успешной или нет)
+      // Это уменьшит счетчик запросов, который был установлен в 1 при загрузке страницы
+      import('../../../shared/ui/loader/loader.js').then(({ default: pageLoader }) => {
+        pageLoader.hide();
+      });
     });
   }).catch(importError => {
     console.error('❌ Ошибка импорта JWT модуля:', importError.message);
     console.log('ℹ️ Приложение будет работать без JWT аутентификации');
+
+    // Скрываем лоадер даже при ошибке импорта
+    import('../../../shared/ui/loader/loader.js').then(({ default: pageLoader }) => {
+      pageLoader.hide();
+    });
   });
 
 })();
