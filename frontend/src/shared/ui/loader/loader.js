@@ -12,13 +12,9 @@ class PageLoader {
     }
 
     init() {
-        // Check if we're coming from navigation (loader might already be visible)
-        const isNavigating = sessionStorage.getItem('isNavigating') === 'true';
-        sessionStorage.removeItem('isNavigating');
-
-        // Create loader HTML structure
+        // Create loader HTML structure (hidden by default)
         const loaderHTML = `
-      <div class="loader-container${isNavigating ? '' : ''}" id="page-loader">
+      <div class="loader-container hidden" id="page-loader">
         <div class="loader"></div>
       </div>
     `;
@@ -27,14 +23,12 @@ class PageLoader {
         if (document.body) {
             document.body.insertAdjacentHTML('afterbegin', loaderHTML);
             this.loaderElement = document.getElementById('page-loader');
-            this.startTime = Date.now();
             this.detectTheme();
         } else {
             // If body is not ready, wait for DOMContentLoaded
             document.addEventListener('DOMContentLoaded', () => {
                 document.body.insertAdjacentHTML('afterbegin', loaderHTML);
                 this.loaderElement = document.getElementById('page-loader');
-                this.startTime = Date.now();
                 this.detectTheme();
             });
         }
@@ -96,8 +90,19 @@ class PageLoader {
 // Create global instance
 const pageLoader = new PageLoader();
 
+// Check if we're coming from navigation or it's initial page load
+const isNavigating = sessionStorage.getItem('isNavigating') === 'true';
+sessionStorage.removeItem('isNavigating');
+
+if (!isNavigating) {
+    // Initial page load - show loader
+    if (pageLoader.loaderElement) {
+        pageLoader.loaderElement.classList.remove('hidden');
+        pageLoader.startTime = Date.now();
+    }
+}
+
 // Auto-hide loader when page is fully loaded
-// Use random time between 1.5-2 seconds for natural feel
 window.addEventListener('load', () => {
     const randomDelay = Math.floor(Math.random() * 500) + 1500; // 1500-2000ms
     pageLoader.hideAfter(randomDelay);
