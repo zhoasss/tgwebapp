@@ -1,10 +1,10 @@
 /**
- * Schedule Page Logic (Calendar View)
- * @version 1.0.8
+ * Schedule Page Logic (Calendar View + Multi-select)
+ * @version 1.0.9
  */
 
 import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js?v=1.0.4';
-import pageLoader from '../../shared/ui/loader/loader.js?v=1.0.3';
+import pageLoader from '../../shared/ui/loader/loader.js?v=1.0.7';
 import { showNotification } from '../../shared/lib/telegram.js?v=1.0.3';
 
 // Константы
@@ -13,13 +13,9 @@ const MONTH_NAMES = [
     'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
 ];
 
-const DAYS_OF_WEEK_FULL = [
-    'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'
-];
-
 // Состояние
 let currentDate = new Date(); // Текущий отображаемый месяц
-let selectedDate = null;      // Выбранная дата
+let selectedDates = new Set(); // Set<string> (YYYY-MM-DD)
 let scheduleData = [];        // Данные графика (7 дней)
 
 // Инициализация
@@ -59,7 +55,7 @@ function initializeScheduleData(loadedData) {
         } else {
             fullSchedule.push({
                 day_of_week: i,
-                is_working_day: false, // По умолчанию дни нерабочие
+                is_working_day: false, // По умолчанию нерабочие
                 start_time: '09:00',
                 end_time: '18:00',
                 break_start: null,
@@ -93,12 +89,15 @@ function setupEventListeners() {
         renderCalendar(currentDate);
     });
 
+    // FAB
+    document.getElementById('configure-btn').addEventListener('click', openBottomSheet);
+
     // Закрытие Bottom Sheet
     document.getElementById('close-sheet-btn').addEventListener('click', closeBottomSheet);
     document.getElementById('bottom-sheet-overlay').addEventListener('click', closeBottomSheet);
 
     // Сохранение
-    document.getElementById('save-day-btn').addEventListener('click', handleSaveDay);
+    document.getElementById('save-day-btn').addEventListener('click', handleSaveDays);
 
     // Тогглы в Bottom Sheet
     document.getElementById('is-working-day').addEventListener('change', (e) => {
@@ -153,12 +152,14 @@ function renderCalendar(date) {
 
     for (let day = 1; day <= daysInMonth; day++) {
         const cellDate = new Date(year, month, day);
+        const dateStr = formatDateKey(cellDate);
         const dayOfWeek = (cellDate.getDay() + 6) % 7; // 0-Mon ... 6-Sun
         const dayConfig = scheduleData[dayOfWeek];
 
         const cell = document.createElement('div');
         cell.className = 'calendar-day';
         cell.textContent = day;
+        cell.dataset.date = dateStr;
 
         // Проверка на сегодня
         if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
@@ -172,50 +173,74 @@ function renderCalendar(date) {
             cell.appendChild(indicator);
         }
 
+        // Состояние выбора
+        if (selectedDates.has(dateStr)) {
+            cell.classList.add('selected');
+        }
+
         // Обработчик клика
-        cell.addEventListener('click', () => openBottomSheet(cellDate));
+        cell.addEventListener('click', () => toggleDateSelection(dateStr, cell));
 
         grid.appendChild(cell);
     }
 }
 
 /**
- * Открытие Bottom Sheet для выбранной даты
+ * Переключение выбора даты
  */
-function openBottomSheet(date) {
-    selectedDate = date;
-    const dayOfWeek = (date.getDay() + 6) % 7; // 0-Mon ... 6-Sun
-    const dayConfig = scheduleData[dayOfWeek];
+function toggleDateSelection(dateStr, cellElement) {
+    if (selectedDates.has(dateStr)) {
+        selectedDates.delete(dateStr);
+        cellElement.classList.remove('selected');
+    } else {
+        selectedDates.add(dateStr);
+        cellElement.classList.add('selected');
+    }
+
+    updateFabVisibility();
+}
+
+/**
+ * Обновление видимости FAB
+ */
+function updateFabVisibility() {
+    const fabContainer = document.getElementById('fab-container');
+    const fabText = document.getElementById('fab-text');
+    const count = selectedDates.size;
+
+    if (count > 0) {
+        fabText.textContent = `Настроить (${count})`;
+        fabContainer.classList.add('visible');
+    } else {
+        fabContainer.classList.remove('visible');
+    }
+}
+
+/**
+ * Открытие Bottom Sheet для выбранных дней
+ */
+function openBottomSheet() {
+    if (selectedDates.size === 0) return;
 
     // Заполняем заголовок
-    document.getElementById('sheet-day-title').textContent = DAYS_OF_WEEK_FULL[dayOfWeek];
-    document.getElementById('sheet-date-subtitle').textContent = date.toLocaleDateString('ru-RU', {
-        day: 'numeric',
-        month: 'long'
-    });
+    document.getElementById('sheet-day-title').textContent = 'Настройка графика';
+    document.getElementById('sheet-date-subtitle').textContent = `Выбрано дней: ${selectedDates.size}`;
 
-    // Заполняем форму данными
+    // Сброс формы к дефолтным значениям (или значениям первого выбранного дня)
+    // Для простоты берем дефолтные значения, так как это массовая настройка
     const isWorking = document.getElementById('is-working-day');
-    isWorking.checked = dayConfig.is_working_day;
-
-    // Триггерим событие change для обновления UI
+    isWorking.checked = true; // По умолчанию предлагаем сделать рабочими
     isWorking.dispatchEvent(new Event('change'));
 
-    document.getElementById('start-time').value = formatTime(dayConfig.start_time);
-    document.getElementById('end-time').value = formatTime(dayConfig.end_time);
+    document.getElementById('start-time').value = '09:00';
+    document.getElementById('end-time').value = '18:00';
 
     const hasBreak = document.getElementById('has-break');
-    hasBreak.checked = !!dayConfig.break_start;
+    hasBreak.checked = false;
     hasBreak.dispatchEvent(new Event('change'));
 
-    if (dayConfig.break_start) {
-        document.getElementById('break-start').value = formatTime(dayConfig.break_start);
-        document.getElementById('break-end').value = formatTime(dayConfig.break_end);
-    } else {
-        // Дефолтные значения
-        document.getElementById('break-start').value = '13:00';
-        document.getElementById('break-end').value = '14:00';
-    }
+    document.getElementById('break-start').value = '13:00';
+    document.getElementById('break-end').value = '14:00';
 
     // Показываем Sheet
     document.getElementById('bottom-sheet-overlay').classList.add('active');
@@ -228,55 +253,69 @@ function openBottomSheet(date) {
 function closeBottomSheet() {
     document.getElementById('bottom-sheet-overlay').classList.remove('active');
     document.getElementById('day-settings-sheet').classList.remove('active');
-    selectedDate = null;
 }
 
 /**
- * Сохранение настроек дня
+ * Сохранение настроек для выбранных дней
  */
-async function handleSaveDay() {
-    if (!selectedDate) return;
+async function handleSaveDays() {
+    if (selectedDates.size === 0) return;
 
     const btn = document.getElementById('save-day-btn');
     btn.textContent = 'Сохранение...';
     btn.disabled = true;
 
     try {
-        const dayOfWeek = (selectedDate.getDay() + 6) % 7;
+        // Собираем уникальные дни недели из выбранных дат
+        const uniqueDaysOfWeek = new Set();
+        selectedDates.forEach(dateStr => {
+            const date = new Date(dateStr);
+            const dayOfWeek = (date.getDay() + 6) % 7;
+            uniqueDaysOfWeek.add(dayOfWeek);
+        });
 
         // Собираем данные из формы
         const isWorking = document.getElementById('is-working-day').checked;
         const hasBreak = document.getElementById('has-break').checked;
 
-        const newData = {
-            ...scheduleData[dayOfWeek],
-            is_working_day: isWorking,
-            start_time: formatTimeFull(document.getElementById('start-time').value),
-            end_time: formatTimeFull(document.getElementById('end-time').value),
-            break_start: hasBreak ? formatTimeFull(document.getElementById('break-start').value) : null,
-            break_end: hasBreak ? formatTimeFull(document.getElementById('break-end').value) : null
-        };
+        const startTime = formatTimeFull(document.getElementById('start-time').value);
+        const endTime = formatTimeFull(document.getElementById('end-time').value);
+        const breakStart = hasBreak ? formatTimeFull(document.getElementById('break-start').value) : null;
+        const breakEnd = hasBreak ? formatTimeFull(document.getElementById('break-end').value) : null;
 
         // Валидация
         if (isWorking) {
-            if (newData.start_time >= newData.end_time) {
+            if (startTime >= endTime) {
                 throw new Error('Начало работы должно быть раньше конца');
             }
-            if (hasBreak && newData.break_start >= newData.break_end) {
+            if (hasBreak && breakStart >= breakEnd) {
                 throw new Error('Начало перерыва должно быть раньше конца');
             }
         }
 
-        // Обновляем локальный стейт
-        scheduleData[dayOfWeek] = newData;
+        // Обновляем локальный стейт для всех уникальных дней недели
+        uniqueDaysOfWeek.forEach(dayIndex => {
+            scheduleData[dayIndex] = {
+                ...scheduleData[dayIndex],
+                is_working_day: isWorking,
+                start_time: startTime,
+                end_time: endTime,
+                break_start: breakStart,
+                break_end: breakEnd
+            };
+        });
 
-        // Отправляем на сервер (весь массив)
+        // Отправляем на сервер
         await updateWorkingHoursBulk(scheduleData);
 
-        // Обновляем календарь (чтобы обновились индикаторы)
+        // Сбрасываем выбор
+        selectedDates.clear();
+        updateFabVisibility();
+        closeBottomSheet();
+
+        // Обновляем календарь
         renderCalendar(currentDate);
 
-        closeBottomSheet();
         showNotification('График обновлен', 'success');
 
     } catch (error) {
@@ -289,11 +328,13 @@ async function handleSaveDay() {
 }
 
 /**
- * Утилиты форматирования времени
+ * Утилиты
  */
-function formatTime(timeStr) {
-    if (!timeStr) return '';
-    return timeStr.substring(0, 5);
+function formatDateKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 function formatTimeFull(timeStr) {

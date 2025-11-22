@@ -38,6 +38,8 @@
     border-radius: 16px;
     padding: 16px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding-bottom: 80px;
+    /* Space for FAB */
 }
 
 .weekdays-row {
@@ -71,6 +73,7 @@
     color: var(--text-primary);
     position: relative;
     transition: all 0.2s ease;
+    border: 2px solid transparent;
 }
 
 .calendar-day:hover {
@@ -88,10 +91,12 @@
     color: var(--accent-color);
 }
 
+/* Selected State */
 .calendar-day.selected {
-    background: var(--accent-color) !important;
-    color: white !important;
-    box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.4);
+    background: rgba(var(--accent-color-rgb), 0.15);
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 600;
 }
 
 .work-indicator {
@@ -103,8 +108,37 @@
     bottom: 6px;
 }
 
-.calendar-day.selected .work-indicator {
-    background: white;
+/* FAB Button */
+.fab-container {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    z-index: 90;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab-container.visible {
+    transform: translateX(-50%) translateY(0);
+}
+
+.fab-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(var(--accent-color-rgb), 0.4);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.fab-icon {
+    font-size: 18px;
 }
 
 /* Bottom Sheet */
