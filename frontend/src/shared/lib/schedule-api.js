@@ -1,9 +1,10 @@
 /**
  * API клиент для работы с графиком работы
  * Слой Shared - переиспользуемый код
+ * @version 1.0.2
  */
 
-import apiClient from './api-client.js';
+import apiClient from './api-client.js?v=1.0.2';
 
 /**
  * Получить график работы пользователя
