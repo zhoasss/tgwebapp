@@ -1,6 +1,6 @@
 /**
  * Schedule Page Logic (Calendar View)
- * @version 1.0.6
+ * @version 1.0.8
  */
 
 import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js?v=1.0.4';
@@ -59,7 +59,7 @@ function initializeScheduleData(loadedData) {
         } else {
             fullSchedule.push({
                 day_of_week: i,
-                is_working_day: true,
+                is_working_day: false, // По умолчанию дни нерабочие
                 start_time: '09:00',
                 end_time: '18:00',
                 break_start: null,
