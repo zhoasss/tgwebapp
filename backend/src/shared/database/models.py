@@ -3,7 +3,7 @@
 Слой Shared - общие компоненты
 """
 
-from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Text, Float, Boolean, ForeignKey, Time, Enum
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Text, Float, Boolean, ForeignKey, Time, Enum, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
