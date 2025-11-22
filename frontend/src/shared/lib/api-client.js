@@ -19,9 +19,14 @@ class ApiClient {
         }
 
         try {
+            // Debug logging
+            console.log('🔍 API Request:', { endpoint, type: typeof endpoint, options });
+
             // Validate endpoint parameter
             if (!endpoint || typeof endpoint !== 'string') {
-                throw new Error(`Invalid endpoint: ${endpoint}. Expected a non-empty string.`);
+                const errorMsg = `Invalid endpoint: ${JSON.stringify(endpoint)}. Expected a non-empty string.`;
+                console.error('❌', errorMsg);
+                throw new Error(errorMsg);
             }
 
             const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
