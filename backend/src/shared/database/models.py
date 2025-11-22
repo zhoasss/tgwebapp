@@ -42,6 +42,7 @@ class User(Base):
     clients = relationship("Client", back_populates="user", cascade="all, delete-orphan")
     appointments = relationship("Appointment", back_populates="user", cascade="all, delete-orphan")
     working_hours = relationship("WorkingHours", back_populates="user", cascade="all, delete-orphan")
+    working_days = relationship("WorkingDay", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username}, business={self.business_name})>"
@@ -250,6 +251,47 @@ class WorkingHours(Base):
             'id': self.id,
             'user_id': self.user_id,
             'day_of_week': self.day_of_week,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
+            'is_working_day': self.is_working_day,
+            'break_start': self.break_start.isoformat() if self.break_start else None,
+            'break_end': self.break_end.isoformat() if self.break_end else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class WorkingDay(Base):
+    """Модель рабочего дня (конкретная дата)"""
+    __tablename__ = 'working_days'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+
+    date = Column(Date, nullable=False, index=True)  # YYYY-MM-DD
+
+    start_time = Column(Time, nullable=True)
+    end_time = Column(Time, nullable=True)
+    is_working_day = Column(Boolean, default=True, nullable=False)
+
+    break_start = Column(Time, nullable=True)
+    break_end = Column(Time, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Связи
+    user = relationship("User", back_populates="working_days")
+
+    def __repr__(self):
+        return f"<WorkingDay(date={self.date}, is_working={self.is_working_day})>"
+
+    def to_dict(self):
+        """Преобразование модели в словарь"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'date': self.date.isoformat() if self.date else None,
             'start_time': self.start_time.isoformat() if self.start_time else None,
             'end_time': self.end_time.isoformat() if self.end_time else None,
             'is_working_day': self.is_working_day,

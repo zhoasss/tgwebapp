@@ -5,13 +5,13 @@ API endpoints для управления графиком работы
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import time, datetime, timedelta
+from datetime import time, datetime, timedelta, date
 from sqlalchemy import select, func
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import logging
 
-from ...shared.database.models import WorkingHours, User
+from ...shared.database.models import WorkingHours, User, WorkingDay
 from ...shared.database.connection import get_session
 from ...shared.auth.jwt_auth import get_current_user
 
@@ -74,12 +74,19 @@ async def get_working_hours(
     )
     working_hours = result.scalars().all()
 
+    # Получаем конкретные рабочие дни
+    result = await session.execute(
+        select(WorkingDay).where(WorkingDay.user_id == user.id)
+    )
+    working_days = result.scalars().all()
+
     # Если график не настроен, возвращаем пустой
-    if not working_hours:
-        return {"working_hours": []}
+    if not working_hours and not working_days:
+        return {"working_hours": [], "working_days": []}
 
     return {
-        "working_hours": [wh.to_dict() for wh in working_hours]
+        "working_hours": [wh.to_dict() for wh in working_hours],
+        "working_days": [wd.to_dict() for wd in working_days]
     }
 
 @router.put("")
@@ -178,6 +185,84 @@ async def update_working_hours_bulk(
     return {
         "working_hours": [wh.to_dict() for wh in working_hours_objects],
         "message": "График работы успешно обновлен"
+    }
+
+class WorkingDayUpdate(BaseModel):
+    """Схема обновления конкретного дня"""
+    date: date = Field(..., description="Дата")
+    start_time: Optional[time] = Field(None, description="Время начала")
+    end_time: Optional[time] = Field(None, description="Время окончания")
+    is_working_day: bool = Field(True, description="Рабочий ли день")
+    break_start: Optional[time] = Field(None, description="Начало перерыва")
+    break_end: Optional[time] = Field(None, description="Конец перерыва")
+
+class WorkingDaysBulkUpdate(BaseModel):
+    """Схема массового обновления конкретных дней"""
+    working_days: List[WorkingDayUpdate] = Field(..., description="Список дней")
+
+@router.put("/days")
+async def update_working_days_bulk(
+    schedule_data: WorkingDaysBulkUpdate,
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Массово обновить конкретные рабочие дни (исключения)
+    """
+    user_id = current_user['id']
+    telegram_id = current_user['telegram_id']
+    logging.info(f"📝 PUT /api/schedule/days - обновление дней для пользователя {telegram_id}")
+
+    # Находим пользователя
+    result = await session.execute(select(User).where(User.telegram_id == telegram_id))
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        # Создаем пользователя если нет (хотя по идее должен быть)
+        user = User(telegram_id=telegram_id, first_name=current_user.get('first_name', 'User'))
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+
+    updated_days = []
+    
+    for day_data in schedule_data.working_days:
+        # Проверяем, есть ли уже запись на этот день
+        result = await session.execute(
+            select(WorkingDay).where(
+                WorkingDay.user_id == user.id,
+                WorkingDay.date == day_data.date
+            )
+        )
+        existing_day = result.scalar_one_or_none()
+
+        if existing_day:
+            # Обновляем
+            existing_day.is_working_day = day_data.is_working_day
+            existing_day.start_time = day_data.start_time
+            existing_day.end_time = day_data.end_time
+            existing_day.break_start = day_data.break_start
+            existing_day.break_end = day_data.break_end
+            updated_days.append(existing_day)
+        else:
+            # Создаем новый
+            new_day = WorkingDay(
+                user_id=user.id,
+                date=day_data.date,
+                is_working_day=day_data.is_working_day,
+                start_time=day_data.start_time,
+                end_time=day_data.end_time,
+                break_start=day_data.break_start,
+                break_end=day_data.break_end
+            )
+            session.add(new_day)
+            updated_days.append(new_day)
+
+    await session.commit()
+    
+    return {
+        "working_days": [d.to_dict() for d in updated_days],
+        "message": "Дни успешно обновлены"
     }
 
 @router.get("/availability")
