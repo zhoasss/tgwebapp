@@ -15,8 +15,8 @@ export function getApiBaseUrl() {
 
   // Проверяем, находимся ли мы на production домене
   const isProduction = hostname === 'booking-cab.ru' ||
-                      hostname === 'www.booking-cab.ru' ||
-                      hostname.includes('booking-cab.ru');
+    hostname === 'www.booking-cab.ru' ||
+    hostname.includes('booking-cab.ru');
 
   console.log('🏭 Is production:', isProduction);
 
@@ -52,7 +52,7 @@ export const API_ENDPOINTS = {
   APPOINTMENTS: '/api/appointments/',
   SERVICES: '/api/services/',
   CLIENTS: '/api/clients/',
-  SCHEDULE: '/api/schedule/',
+  SCHEDULE: '/api/schedule',
   HEALTH: '/health',
   DEBUG: '/api/debug',
   TEST: '/api/test',
