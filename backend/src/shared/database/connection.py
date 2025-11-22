@@ -28,7 +28,7 @@ engine = create_async_engine(
 async_session_factory = async_sessionmaker(
     engine,
     class_=AsyncSession,
-    expire_on_commit=True,  # Сбрасывать кэш после коммита
+    expire_on_commit=False,  # Не сбрасывать кэш после коммита (важно для async)
     autoflush=True,         # Автоматически сбрасывать изменения в БД
     autocommit=False        # Явный контроль транзакций
 )
