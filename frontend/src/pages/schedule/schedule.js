@@ -74,6 +74,14 @@ function initializeScheduleData(loadedData) {
  * Настройка обработчиков событий
  */
 function setupEventListeners() {
+    // Кнопка "Назад" в Telegram
+    if (window.Telegram?.WebApp?.BackButton) {
+        window.Telegram.WebApp.BackButton.show();
+        window.Telegram.WebApp.BackButton.onClick(() => {
+            window.history.back();
+        });
+    }
+
     // Навигация по месяцам
     document.getElementById('prev-month').addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
