@@ -1,11 +1,12 @@
 /**
  * Schedule Page Logic
  * Управление графиком работы
+ * @version 1.0.3
  */
 
-import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js';
-import pageLoader from '../../shared/ui/loader/loader.js';
-import { showNotification } from '../../shared/lib/telegram.js';
+import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js?v=1.0.3';
+import pageLoader from '../../shared/ui/loader/loader.js?v=1.0.3';
+import { showNotification } from '../../shared/lib/telegram.js?v=1.0.3';
 
 // Названия дней недели
 const DAYS_OF_WEEK = [

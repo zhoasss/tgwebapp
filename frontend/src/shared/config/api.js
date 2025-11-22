@@ -1,11 +1,11 @@
 /**
  * Конфигурация API
  * Слой Shared - переиспользуемый код
- * @version 1.0.1
+ * @version 1.0.3
  */
 
 // Version for cache busting
-const API_CONFIG_VERSION = '1.0.1';
+const API_CONFIG_VERSION = '1.0.3';
 
 /**
  * Определяет URL API сервера
