@@ -1,101 +1,103 @@
-/**
- * Стили для страницы графика работы
- */
-
-/* Контейнер графика */
+/* Container */
 .schedule-container {
-    padding: 0;
-}
-
-/* Заголовок с кнопкой сохранения */
-.schedule-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    gap: 12px;
-}
-
-.schedule-header h1 {
-    margin: 0;
-    font-size: 24px;
-}
-
-.save-schedule-btn {
-    background: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-
-.save-schedule-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-}
-
-.save-schedule-btn:active {
-    transform: translateY(0);
-}
-
-.save-schedule-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Список дней недели */
-.schedule-days {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    padding-bottom: 80px;
+    /* Space for footer */
 }
 
-/* Карточка дня */
-.day-card {
+/* Date Selector Card */
+.date-selector-card {
     background: var(--bg-secondary);
     border-radius: 16px;
     padding: 16px;
-    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.day-card.disabled {
-    opacity: 0.6;
+.input-label {
+    display: block;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
 }
 
-/* Заголовок дня */
+.date-picker-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--separator-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.date-picker-input:focus {
+    border-color: var(--accent-color);
+}
+
+.selected-day-info {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--accent-color);
+    font-weight: 500;
+    text-align: center;
+}
+
+/* Day Editor Card */
+.day-editor-card {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .day-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--separator-color);
 }
 
-.day-name {
-    font-size: 16px;
+.day-title {
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
 }
 
-/* Переключатель рабочего дня */
-.day-toggle {
+/* Toggle Switch */
+.toggle-switch {
     position: relative;
     display: inline-block;
-    width: 48px;
-    height: 26px;
+    width: 50px;
+    height: 28px;
 }
 
-.day-toggle input {
+.toggle-switch input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.toggle-slider {
+.slider {
     position: absolute;
     cursor: pointer;
     top: 0;
@@ -103,205 +105,149 @@
     right: 0;
     bottom: 0;
     background-color: var(--bg-tertiary);
-    transition: 0.3s;
-    border-radius: 26px;
+    transition: .4s;
+    border-radius: 34px;
 }
 
-.toggle-slider:before {
+.slider:before {
     position: absolute;
     content: "";
     height: 20px;
     width: 20px;
-    left: 3px;
-    bottom: 3px;
+    left: 4px;
+    bottom: 4px;
     background-color: white;
-    transition: 0.3s;
+    transition: .4s;
     border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-input:checked+.toggle-slider {
+input:checked+.slider {
     background-color: var(--accent-color);
 }
 
-input:checked+.toggle-slider:before {
+input:checked+.slider:before {
     transform: translateX(22px);
 }
 
-/* Настройки времени */
-.day-settings {
-    display: grid;
-    gap: 12px;
-}
-
-.time-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.time-input-group {
+/* Time Inputs Grid */
+.time-settings {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 20px;
 }
 
-.time-input-group label {
-    font-size: 13px;
+.time-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.time-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.time-inputs-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.time-input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--separator-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 16px;
+    text-align: center;
+}
+
+.time-separator {
     color: var(--text-secondary);
     font-weight: 500;
 }
 
-.time-input-group input[type="time"] {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-size: 15px;
-    color: var(--text-primary);
-    font-family: inherit;
-    transition: all 0.2s ease;
-}
-
-.time-input-group input[type="time"]:focus {
-    outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.1);
-}
-
-.time-input-group input[type="time"]:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Секция перерыва */
+/* Break Section */
 .break-section {
-    margin-top: 8px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-color);
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--separator-color);
 }
 
-.break-toggle {
+.break-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 8px;
     margin-bottom: 12px;
-    cursor: pointer;
-    user-select: none;
 }
 
-.break-toggle input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: var(--accent-color);
+.break-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
-.break-toggle label {
-    font-size: 14px;
-    color: var(--text-secondary);
-    cursor: pointer;
+/* Save Button */
+.actions-container {
+    margin-top: 10px;
 }
 
-.break-times {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-/* Пустое состояние */
-.no-schedule {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-secondary);
-}
-
-.no-schedule-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-}
-
-/* Сообщение об ошибке */
-.error-message {
-    background: rgba(244, 67, 54, 0.1);
-    border: 1px solid rgba(244, 67, 54, 0.3);
-    border-radius: 12px;
+.save-btn {
+    width: 100%;
     padding: 16px;
-    margin: 20px 0;
-    text-align: center;
-}
-
-.error-message p {
-    color: #f44336;
-    margin: 0 0 12px 0;
-}
-
-.retry-btn {
-    background: #f44336;
-    color: white;
     border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 14px;
+    border-radius: 14px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.1s, opacity 0.2s;
+    box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3);
 }
 
-.retry-btn:hover {
-    opacity: 0.9;
+.save-btn:active {
+    transform: scale(0.98);
 }
 
-/* Подсказка */
-.schedule-hint {
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    font-size: 14px;
+.save-btn:disabled {
+    background: var(--bg-tertiary);
     color: var(--text-secondary);
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
-.schedule-hint-icon {
-    font-size: 18px;
-    flex-shrink: 0;
+/* Status Message */
+.status-message {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 14px;
+    animation: slideIn 0.3s ease-out;
 }
 
-/* Адаптивность */
-@media (max-width: 480px) {
-    .schedule-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .save-schedule-btn {
-        width: 100%;
-    }
-
-    .time-row {
-        grid-template-columns: 1fr;
-    }
-
-    .break-times {
-        grid-template-columns: 1fr;
-    }
+.status-success {
+    background: rgba(52, 199, 89, 0.1);
+    color: #34C759;
 }
 
-/* Анимация сохранения */
-@keyframes pulse {
+.status-error {
+    background: rgba(255, 59, 48, 0.1);
+    color: #FF3B30;
+}
 
-    0%,
-    100% {
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
         opacity: 1;
+        transform: translateY(0);
     }
-
-    50% {
-        opacity: 0.7;
-    }
-}
-
-.save-schedule-btn.saving {
-    animation: pulse 1s infinite;
-    pointer-events: none;
 }

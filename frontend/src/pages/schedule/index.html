@@ -2,9 +2,9 @@
 <html lang="ru">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>График работы - Личный кабинет</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>График работы</title>
 
   <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="../../shared/ui/loader/loader.css?v=1.0.0">
 
   <!-- Page Styles -->
-  <link rel="stylesheet" href="schedule.css?v=1.0.3">
+  <link rel="stylesheet" href="schedule.css?v=1.0.5">
 
   <!-- Widget Styles -->
   <link rel="stylesheet" href="../../widgets/footer-navigation/ui/footer.css?v=1.0.5">
@@ -30,14 +30,27 @@
     <div class="view-content">
       <div class="schedule-header">
         <h1>⏰ График работы</h1>
-        <button id="save-schedule-btn" class="save-schedule-btn" disabled>
-          💾 Сохранить
-        </button>
       </div>
 
       <!-- Schedule Container -->
-      <div id="schedule-container" class="schedule-container">
-        <!-- Schedule will be loaded here -->
+      <div class="schedule-container" id="schedule-container">
+        <div class="date-selector-card">
+          <label class="input-label">Выберите дату для настройки</label>
+          <input type="date" id="date-picker" class="date-picker-input">
+          <div class="selected-day-info" id="selected-day-info">
+            <!-- Будет заполнено JS: "Понедельник" -->
+          </div>
+        </div>
+
+        <div id="day-editor-container" class="day-editor-container">
+          <!-- Сюда будет рендериться форма настройки для выбранного дня -->
+        </div>
+
+        <div class="actions-container">
+          <button id="save-schedule-btn" class="save-btn" disabled>
+            💾 Сохранить график
+          </button>
+        </div>
       </div>
     </div>
   </main>
@@ -52,6 +65,13 @@
         </svg>
         <span>Записи</span>
       </button>
+      <button class="footer-btn" data-tab="services" data-href="../services/index.html">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <span>Услуги</span>
+      </button>
       <button class="footer-btn active" data-tab="settings" data-href="../settings/index.html">
         <svg viewBox="0 0 24 24">
           <path
@@ -59,6 +79,12 @@
           <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
         <span>Настройки</span>
+      </button>
+      <button class="footer-btn" data-tab="profile" data-href="../profile/index.html">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span>Профиль</span>
       </button>
     </div>
   </footer>
@@ -74,7 +100,7 @@
   <script type="module" src="../../shared/lib/navigation.js?v=1.0.3"></script>
 
   <!-- Page Script -->
-  <script type="module" src="schedule.js?v=1.0.4"></script>
+  <script type="module" src="schedule.js?v=1.0.5"></script>
 </body>
 
 </html>
