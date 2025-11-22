@@ -19,6 +19,11 @@ class ApiClient {
         }
 
         try {
+            // Validate endpoint parameter
+            if (!endpoint || typeof endpoint !== 'string') {
+                throw new Error(`Invalid endpoint: ${endpoint}. Expected a non-empty string.`);
+            }
+
             const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
             // Add auth header
