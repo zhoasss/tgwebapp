@@ -5,7 +5,8 @@ API endpoints для управления графиком работы
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import time, datetime, timedelta, date
+from datetime import time, datetime, timedelta
+import datetime as dt
 from sqlalchemy import select, func
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -189,7 +190,7 @@ async def update_working_hours_bulk(
 
 class WorkingDayUpdate(BaseModel):
     """Схема обновления конкретного дня"""
-    date: date = Field(..., description="Дата")
+    date: dt.date = Field(..., description="Дата")
     start_time: Optional[time] = Field(None, description="Время начала")
     end_time: Optional[time] = Field(None, description="Время окончания")
     is_working_day: bool = Field(True, description="Рабочий ли день")
