@@ -1,10 +1,10 @@
 /**
  * Schedule Page Logic
  * Управление графиком работы
- * @version 1.0.3
+ * @version 1.0.4
  */
 
-import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js?v=1.0.3';
+import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js?v=1.0.4';
 import pageLoader from '../../shared/ui/loader/loader.js?v=1.0.3';
 import { showNotification } from '../../shared/lib/telegram.js?v=1.0.3';
 

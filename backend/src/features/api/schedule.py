@@ -30,7 +30,7 @@ class WorkingHoursBulkUpdate(BaseModel):
     """Схема массового обновления рабочего графика"""
     working_hours: List[WorkingHoursUpdate] = Field(..., description="Список рабочих дней")
 
-@router.get("/")
+@router.get("")
 async def get_working_hours(
     current_user: dict = Depends(get_current_user),
     session: AsyncSession = Depends(get_session)
@@ -82,7 +82,7 @@ async def get_working_hours(
         "working_hours": [wh.to_dict() for wh in working_hours]
     }
 
-@router.put("/")
+@router.put("")
 async def update_working_hours_bulk(
     schedule_data: WorkingHoursBulkUpdate,
     current_user: dict = Depends(get_current_user),

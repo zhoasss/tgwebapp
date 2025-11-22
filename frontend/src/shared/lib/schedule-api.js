@@ -1,7 +1,7 @@
 /**
  * API клиент для работы с графиком работы
  * Слой Shared - переиспользуемый код
- * @version 1.0.3
+ * @version 1.0.4
  */
 
 import apiClient from './api-client.js?v=1.0.3';
@@ -27,7 +27,7 @@ export async function getWorkingHours() {
  */
 export async function updateWorkingHoursBulk(workingHours) {
     try {
-        const response = await apiClient.put('/api/schedule/bulk', {
+        const response = await apiClient.put('/api/schedule', {
             working_hours: workingHours
         });
         return response;
