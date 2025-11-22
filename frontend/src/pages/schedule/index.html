@@ -10,26 +10,35 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- App Styles -->
-  <link rel="stylesheet" href="../../app/styles/variables.css">
-  <link rel="stylesheet" href="../../app/styles/global.css">
-  <link rel="stylesheet" href="../../app/styles/index.css">
+  <link rel="stylesheet" href="../../app/styles/variables.css?v=1.0.5">
+  <link rel="stylesheet" href="../../app/styles/global.css?v=1.0.5">
+  <link rel="stylesheet" href="../../app/styles/index.css?v=1.0.5">
 
   <!-- Loader Styles -->
   <link rel="stylesheet" href="../../shared/ui/loader/loader.css?v=1.0.0">
 
+  <!-- Page Styles -->
+  <link rel="stylesheet" href="schedule.css?v=1.0.0">
+
   <!-- Widget Styles -->
-  <link rel="stylesheet" href="../../widgets/footer-navigation/ui/footer.css">
+  <link rel="stylesheet" href="../../widgets/footer-navigation/ui/footer.css?v=1.0.5">
 </head>
 
 <body>
   <!-- Main Content -->
   <main id="app">
     <div class="view-content">
-      <h1>⏰ График работы</h1>
-      <p style="text-align: center; color: var(--text-secondary); margin-top: 40px;">
-        Здесь вы сможете настроить график работы.<br>
-        Функционал будет добавлен в следующих обновлениях.
-      </p>
+      <div class="schedule-header">
+        <h1>⏰ График работы</h1>
+        <button id="save-schedule-btn" class="save-schedule-btn" disabled>
+          💾 Сохранить
+        </button>
+      </div>
+
+      <!-- Schedule Container -->
+      <div id="schedule-container" class="schedule-container">
+        <!-- Schedule will be loaded here -->
+      </div>
     </div>
   </main>
 
@@ -55,14 +64,17 @@
   </footer>
 
   <!-- App Scripts -->
-  <script type="module" src="../../app/providers/telegram/init.js"></script>
-  <script type="module" src="../../app/config/theme.js"></script>
+  <script type="module" src="../../app/providers/telegram/init.js?v=1.0.3"></script>
+  <script type="module" src="../../app/config/theme.js?v=1.0.3"></script>
 
   <!-- Loader Script -->
   <script type="module" src="../../shared/ui/loader/loader.js?v=1.0.0"></script>
 
   <!-- Navigation Script -->
   <script type="module" src="../../shared/lib/navigation.js?v=1.0.0"></script>
+
+  <!-- Page Script -->
+  <script type="module" src="schedule.js?v=1.0.0"></script>
 </body>
 
 </html>
