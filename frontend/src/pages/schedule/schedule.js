@@ -1,6 +1,6 @@
 /**
  * Schedule Page Logic (Calendar View + Multi-select)
- * @version 1.0.9
+ * @version 1.1.0
  */
 
 import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js?v=1.0.4';
@@ -304,6 +304,15 @@ async function handleSaveDays() {
                 break_end: breakEnd
             };
         });
+
+        // Отладка: считаем рабочие дни
+        const workingDaysCount = scheduleData.filter(d => d.is_working_day).length;
+        const workingDaysIndices = scheduleData
+            .filter(d => d.is_working_day)
+            .map(d => DAYS_OF_WEEK_FULL[d.day_of_week])
+            .join(', ');
+
+        // alert(`Сохранение...\nВсего дней: 7\nРабочих: ${workingDaysCount}\n(${workingDaysIndices})`);
 
         // Отправляем на сервер
         await updateWorkingHoursBulk(scheduleData);
