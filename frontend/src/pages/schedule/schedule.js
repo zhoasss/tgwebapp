@@ -1,27 +1,26 @@
 /**
- * Schedule Page Logic
- * Управление графиком работы (Date Picker UI)
- * @version 1.0.5
+ * Schedule Page Logic (Calendar View)
+ * @version 1.0.6
  */
 
 import { getWorkingHours, updateWorkingHoursBulk } from '../../shared/lib/schedule-api.js?v=1.0.4';
 import pageLoader from '../../shared/ui/loader/loader.js?v=1.0.3';
 import { showNotification } from '../../shared/lib/telegram.js?v=1.0.3';
 
-// Названия дней недели (0 = Понедельник, 6 = Воскресенье)
-const DAYS_OF_WEEK = [
-    'Понедельник',
-    'Вторник',
-    'Среда',
-    'Четверг',
-    'Пятница',
-    'Суббота',
-    'Воскресенье'
+// Константы
+const MONTH_NAMES = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+];
+
+const DAYS_OF_WEEK_FULL = [
+    'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'
 ];
 
 // Состояние
-let scheduleData = [];
-let currentDayIndex = 0; // 0-6 (Mon-Sun)
+let currentDate = new Date(); // Текущий отображаемый месяц
+let selectedDate = null;      // Выбранная дата
+let scheduleData = [];        // Данные графика (7 дней)
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', initSchedulePage);
@@ -32,24 +31,13 @@ async function initSchedulePage() {
 
         // 1. Загрузка данных
         const response = await getWorkingHours();
-
-        // Инициализируем массив из 7 дней, если данных нет или они неполные
         scheduleData = initializeScheduleData(response.working_hours || []);
 
-        // 2. Настройка Date Picker
-        const datePicker = document.getElementById('date-picker');
-        const today = new Date();
-        datePicker.valueAsDate = today;
-
-        // Определяем текущий день недели
-        updateSelectedDay(today);
+        // 2. Рендер календаря
+        renderCalendar(currentDate);
 
         // 3. Обработчики событий
-        datePicker.addEventListener('change', handleDateChange);
-        document.getElementById('save-schedule-btn').addEventListener('click', handleSave);
-
-        // 4. Рендер редактора
-        renderDayEditor();
+        setupEventListeners();
 
         pageLoader.hide();
     } catch (error) {
@@ -60,17 +48,15 @@ async function initSchedulePage() {
 }
 
 /**
- * Создает полный массив из 7 дней, заполняя пропуски дефолтными значениями
+ * Инициализация данных графика (заполнение пропусков)
  */
 function initializeScheduleData(loadedData) {
     const fullSchedule = [];
-
     for (let i = 0; i < 7; i++) {
         const existingDay = loadedData.find(d => d.day_of_week === i);
         if (existingDay) {
             fullSchedule.push({ ...existingDay });
         } else {
-            // Дефолтные настройки для нового дня
             fullSchedule.push({
                 day_of_week: i,
                 is_working_day: true,
@@ -85,216 +71,225 @@ function initializeScheduleData(loadedData) {
 }
 
 /**
- * Обработка изменения даты
+ * Настройка обработчиков событий
  */
-function handleDateChange(event) {
-    const date = new Date(event.target.value);
-    if (isNaN(date.getTime())) return; // Invalid date
+function setupEventListeners() {
+    // Навигация по месяцам
+    document.getElementById('prev-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar(currentDate);
+    });
 
-    updateSelectedDay(date);
-    renderDayEditor();
-}
+    document.getElementById('next-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar(currentDate);
+    });
 
-/**
- * Обновляет текущий индекс дня недели на основе даты
- */
-function updateSelectedDay(date) {
-    // JS: 0=Sun, 1=Mon...
-    // DB: 0=Mon, 6=Sun
-    const jsDay = date.getDay();
-    currentDayIndex = (jsDay + 6) % 7;
+    // Закрытие Bottom Sheet
+    document.getElementById('close-sheet-btn').addEventListener('click', closeBottomSheet);
+    document.getElementById('bottom-sheet-overlay').addEventListener('click', closeBottomSheet);
 
-    const dayName = DAYS_OF_WEEK[currentDayIndex];
-    document.getElementById('selected-day-info').textContent = dayName;
-}
+    // Сохранение
+    document.getElementById('save-day-btn').addEventListener('click', handleSaveDay);
 
-/**
- * Рендерит форму редактора для текущего дня
- */
-function renderDayEditor() {
-    const container = document.getElementById('day-editor-container');
-    const dayData = scheduleData[currentDayIndex];
-
-    container.innerHTML = `
-        <div class="day-editor-card">
-            <div class="day-header">
-                <span class="day-title">${DAYS_OF_WEEK[currentDayIndex]}</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="is-working-day" ${dayData.is_working_day ? 'checked' : ''}>
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="time-settings ${!dayData.is_working_day ? 'disabled' : ''}" id="time-settings">
-                <div class="time-group">
-                    <span class="time-label">Рабочее время</span>
-                    <div class="time-inputs-row">
-                        <input type="time" class="time-input" id="start-time" value="${formatTime(dayData.start_time)}">
-                        <span class="time-separator">—</span>
-                        <input type="time" class="time-input" id="end-time" value="${formatTime(dayData.end_time)}">
-                    </div>
-                </div>
-
-                <div class="break-section">
-                    <div class="break-header">
-                        <span class="break-title">Перерыв</span>
-                        <label class="toggle-switch" style="transform: scale(0.8);">
-                            <input type="checkbox" id="has-break" ${dayData.break_start ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="time-group ${!dayData.break_start ? 'disabled' : ''}" id="break-inputs">
-                        <div class="time-inputs-row">
-                            <input type="time" class="time-input" id="break-start" value="${formatTime(dayData.break_start) || '13:00'}">
-                            <span class="time-separator">—</span>
-                            <input type="time" class="time-input" id="break-end" value="${formatTime(dayData.break_end) || '14:00'}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Привязываем обработчики к новым элементам
-    attachEditorListeners();
-
-    // Активируем кнопку сохранения
-    document.getElementById('save-schedule-btn').disabled = false;
-}
-
-/**
- * Привязывает обработчики событий к элементам формы
- */
-function attachEditorListeners() {
-    const isWorkingDayParams = document.getElementById('is-working-day');
-    const hasBreakParams = document.getElementById('has-break');
-
-    // Toggle Working Day
-    isWorkingDayParams.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        const timeSettings = document.getElementById('time-settings');
-
-        if (isChecked) {
-            timeSettings.classList.remove('disabled');
+    // Тогглы в Bottom Sheet
+    document.getElementById('is-working-day').addEventListener('change', (e) => {
+        const timeGroup = document.getElementById('time-settings-group');
+        if (e.target.checked) {
+            timeGroup.classList.remove('disabled');
         } else {
-            timeSettings.classList.add('disabled');
+            timeGroup.classList.add('disabled');
         }
-
-        updateDayData('is_working_day', isChecked);
     });
 
-    // Toggle Break
-    hasBreakParams.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        const breakInputs = document.getElementById('break-inputs');
-
-        if (isChecked) {
-            breakInputs.classList.remove('disabled');
-            // Устанавливаем дефолтное время перерыва, если его нет
-            if (!scheduleData[currentDayIndex].break_start) {
-                updateDayData('break_start', '13:00:00');
-                updateDayData('break_end', '14:00:00');
-                document.getElementById('break-start').value = '13:00';
-                document.getElementById('break-end').value = '14:00';
-            }
+    document.getElementById('has-break').addEventListener('change', (e) => {
+        const breakGroup = document.getElementById('break-inputs-group');
+        if (e.target.checked) {
+            breakGroup.classList.remove('disabled');
         } else {
-            breakInputs.classList.add('disabled');
-            updateDayData('break_start', null);
-            updateDayData('break_end', null);
-        }
-    });
-
-    // Time Inputs
-    ['start-time', 'end-time', 'break-start', 'break-end'].forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener('change', (e) => {
-                const field = id.replace('-', '_'); // start-time -> start_time
-                updateDayData(field, e.target.value);
-            });
+            breakGroup.classList.add('disabled');
         }
     });
 }
 
 /**
- * Обновляет данные в массиве scheduleData
+ * Рендер календаря
  */
-function updateDayData(field, value) {
-    // Если это время, добавляем секунды если их нет
-    if (typeof value === 'string' && value.match(/^\d{2}:\d{2}$/)) {
-        value = value + ':00';
+function renderCalendar(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    // Обновляем заголовок
+    document.getElementById('current-month-label').textContent = `${MONTH_NAMES[month]} ${year}`;
+
+    const grid = document.getElementById('calendar-grid');
+    grid.innerHTML = '';
+
+    // Первый день месяца
+    const firstDayOfMonth = new Date(year, month, 1);
+    // Количество дней в месяце
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // День недели первого дня (0-Sun, 1-Mon). Нам нужно 0-Mon, 6-Sun
+    const startDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+
+    // Пустые ячейки до начала месяца
+    for (let i = 0; i < startDayOfWeek; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day other-month';
+        grid.appendChild(emptyCell);
     }
 
-    scheduleData[currentDayIndex][field] = value;
+    // Дни месяца
+    const today = new Date();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const cellDate = new Date(year, month, day);
+        const dayOfWeek = (cellDate.getDay() + 6) % 7; // 0-Mon ... 6-Sun
+        const dayConfig = scheduleData[dayOfWeek];
+
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day';
+        cell.textContent = day;
+
+        // Проверка на сегодня
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            cell.classList.add('today');
+        }
+
+        // Индикатор рабочего дня
+        if (dayConfig && dayConfig.is_working_day) {
+            const indicator = document.createElement('div');
+            indicator.className = 'work-indicator';
+            cell.appendChild(indicator);
+        }
+
+        // Обработчик клика
+        cell.addEventListener('click', () => openBottomSheet(cellDate));
+
+        grid.appendChild(cell);
+    }
 }
 
 /**
- * Сохранение графика
+ * Открытие Bottom Sheet для выбранной даты
  */
-async function handleSave() {
-    const btn = document.getElementById('save-schedule-btn');
+function openBottomSheet(date) {
+    selectedDate = date;
+    const dayOfWeek = (date.getDay() + 6) % 7; // 0-Mon ... 6-Sun
+    const dayConfig = scheduleData[dayOfWeek];
+
+    // Заполняем заголовок
+    document.getElementById('sheet-day-title').textContent = DAYS_OF_WEEK_FULL[dayOfWeek];
+    document.getElementById('sheet-date-subtitle').textContent = date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long'
+    });
+
+    // Заполняем форму данными
+    const isWorking = document.getElementById('is-working-day');
+    isWorking.checked = dayConfig.is_working_day;
+
+    // Триггерим событие change для обновления UI
+    isWorking.dispatchEvent(new Event('change'));
+
+    document.getElementById('start-time').value = formatTime(dayConfig.start_time);
+    document.getElementById('end-time').value = formatTime(dayConfig.end_time);
+
+    const hasBreak = document.getElementById('has-break');
+    hasBreak.checked = !!dayConfig.break_start;
+    hasBreak.dispatchEvent(new Event('change'));
+
+    if (dayConfig.break_start) {
+        document.getElementById('break-start').value = formatTime(dayConfig.break_start);
+        document.getElementById('break-end').value = formatTime(dayConfig.break_end);
+    } else {
+        // Дефолтные значения
+        document.getElementById('break-start').value = '13:00';
+        document.getElementById('break-end').value = '14:00';
+    }
+
+    // Показываем Sheet
+    document.getElementById('bottom-sheet-overlay').classList.add('active');
+    document.getElementById('day-settings-sheet').classList.add('active');
+}
+
+/**
+ * Закрытие Bottom Sheet
+ */
+function closeBottomSheet() {
+    document.getElementById('bottom-sheet-overlay').classList.remove('active');
+    document.getElementById('day-settings-sheet').classList.remove('active');
+    selectedDate = null;
+}
+
+/**
+ * Сохранение настроек дня
+ */
+async function handleSaveDay() {
+    if (!selectedDate) return;
+
+    const btn = document.getElementById('save-day-btn');
+    btn.textContent = 'Сохранение...';
+    btn.disabled = true;
 
     try {
-        btn.disabled = true;
-        btn.textContent = '⏳ Сохранение...';
+        const dayOfWeek = (selectedDate.getDay() + 6) % 7;
 
-        // Валидация перед отправкой
-        if (!validateSchedule(scheduleData)) {
-            btn.disabled = false;
-            btn.textContent = '💾 Сохранить график';
-            return;
+        // Собираем данные из формы
+        const isWorking = document.getElementById('is-working-day').checked;
+        const hasBreak = document.getElementById('has-break').checked;
+
+        const newData = {
+            ...scheduleData[dayOfWeek],
+            is_working_day: isWorking,
+            start_time: formatTimeFull(document.getElementById('start-time').value),
+            end_time: formatTimeFull(document.getElementById('end-time').value),
+            break_start: hasBreak ? formatTimeFull(document.getElementById('break-start').value) : null,
+            break_end: hasBreak ? formatTimeFull(document.getElementById('break-end').value) : null
+        };
+
+        // Валидация
+        if (isWorking) {
+            if (newData.start_time >= newData.end_time) {
+                throw new Error('Начало работы должно быть раньше конца');
+            }
+            if (hasBreak && newData.break_start >= newData.break_end) {
+                throw new Error('Начало перерыва должно быть раньше конца');
+            }
         }
 
+        // Обновляем локальный стейт
+        scheduleData[dayOfWeek] = newData;
+
+        // Отправляем на сервер (весь массив)
         await updateWorkingHoursBulk(scheduleData);
 
-        showNotification('График успешно сохранен', 'success');
-        btn.textContent = '✅ Сохранено';
+        // Обновляем календарь (чтобы обновились индикаторы)
+        renderCalendar(currentDate);
 
-        setTimeout(() => {
-            btn.textContent = '💾 Сохранить график';
-            btn.disabled = false;
-        }, 2000);
+        closeBottomSheet();
+        showNotification('График обновлен', 'success');
 
     } catch (error) {
         console.error('Save failed:', error);
-        showNotification('Ошибка сохранения', 'error');
-        btn.textContent = '💾 Сохранить график';
+        showNotification(error.message || 'Ошибка сохранения', 'error');
+    } finally {
+        btn.textContent = 'Сохранить';
         btn.disabled = false;
     }
 }
 
 /**
- * Валидация данных
- */
-function validateSchedule(data) {
-    for (const day of data) {
-        if (day.is_working_day) {
-            if (day.start_time >= day.end_time) {
-                showNotification(`Ошибка в ${DAYS_OF_WEEK[day.day_of_week]}: начало работы должно быть раньше конца`, 'error');
-                return false;
-            }
-
-            if (day.break_start && day.break_end) {
-                if (day.break_start >= day.break_end) {
-                    showNotification(`Ошибка в ${DAYS_OF_WEEK[day.day_of_week]}: начало перерыва должно быть раньше конца`, 'error');
-                    return false;
-                }
-                // Проверка вхождения перерыва в рабочее время (упрощенно)
-                if (day.break_start < day.start_time || day.break_end > day.end_time) {
-                    showNotification(`Ошибка в ${DAYS_OF_WEEK[day.day_of_week]}: перерыв должен быть в рабочее время`, 'error');
-                    return false;
-                }
-            }
-        }
-    }
-    return true;
-}
-
-/**
- * Форматирование времени (HH:MM:SS -> HH:MM)
+ * Утилиты форматирования времени
  */
 function formatTime(timeStr) {
     if (!timeStr) return '';
     return timeStr.substring(0, 5);
+}
+
+function formatTimeFull(timeStr) {
+    if (!timeStr) return null;
+    if (timeStr.length === 5) return timeStr + ':00';
+    return timeStr;
 }
