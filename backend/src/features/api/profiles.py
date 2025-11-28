@@ -301,6 +301,111 @@ async def get_current_user_info(
         logging.error(f"❌ Ошибка получения информации о пользователе: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Ошибка получения информации о пользователе")
 
+@router.post("/generate-booking-link")
+async def generate_booking_link(
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Генерировать уникальную ссылку для публичного бронирования
+    
+    Returns:
+        Данные профиля с новым booking_slug
+    """
+    import secrets
+    import string
+    
+    user_id = current_user['id']
+    logging.info(f"🔗 POST /profiles/generate-booking-link - генерация ссылки для пользователя {user_id}")
+    
+    try:
+        # Находим пользователя
+        result = await session.execute(
+            select(User).where(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+        
+        # Генерируем уникальный slug
+        max_attempts = 10
+        for attempt in range(max_attempts):
+            # Генерируем случайный slug (8 символов)
+            chars = string.ascii_lowercase + string.digits
+            new_slug = ''.join(secrets.choice(chars) for _ in range(8))
+            
+            # Проверяем уникальность
+            result = await session.execute(
+                select(User).where(User.booking_slug == new_slug)
+            )
+            existing = result.scalar_one_or_none()
+            
+            if not existing:
+                # Slug уникален, используем его
+                user.booking_slug = new_slug
+                await session.commit()
+                await session.refresh(user)
+                
+                logging.info(f"✅ Сгенерирован booking_slug: {new_slug}")
+                
+                return {
+                    "message": "Ссылка для бронирования создана",
+                    "booking_slug": new_slug,
+                    "booking_url": f"https://booking-cab.ru/booking/{new_slug}",
+                    "profile": user.to_dict()
+                }
+        
+        # Не удалось сгенерировать уникальный slug за 10 попыток
+        raise HTTPException(status_code=500, detail="Не удалось сгенерировать уникальную ссылку")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"❌ Ошибка генерации booking_slug: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ошибка генерации ссылки")
+
+@router.delete("/booking-link")
+async def delete_booking_link(
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Удалить ссылку для публичного бронирования
+    
+    Returns:
+        Подтверждение удаления
+    """
+    user_id = current_user['id']
+    logging.info(f"🗑️ DELETE /profiles/booking-link - удаление ссылки для пользователя {user_id}")
+    
+    try:
+        # Находим пользователя
+        result = await session.execute(
+            select(User).where(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="Пользователь не найден")
+        
+        # Удаляем booking_slug
+        user.booking_slug = None
+        await session.commit()
+        
+        logging.info(f"✅ Booking_slug удален для пользователя {user_id}")
+        
+        return {
+            "message": "Ссылка для бронирования удалена",
+            "booking_slug": None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"❌ Ошибка удаления booking_slug: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ошибка удаления ссылки")
+
 @router.get("/debug")
 async def debug_profile():
     """

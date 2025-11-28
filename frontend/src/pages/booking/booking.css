@@ -1,0 +1,518 @@
+/**
+ * Public Booking Page Styles
+ * Современный дизайн для публичной страницы бронирования
+ */
+
+/* Профиль мастера */
+.master-profile {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-dark, #2563eb) 100%);
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    color: white;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.master-avatar {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1rem;
+    position: relative;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.master-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.master-avatar img.loaded {
+    display: block;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.master-profile h1 {
+    font-size: 1.8rem;
+    margin: 0.5rem 0;
+    font-weight: 700;
+}
+
+.business-name {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+.master-contacts {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.95;
+}
+
+.contact-item .icon {
+    font-size: 1.2rem;
+}
+
+/* Секции */
+.section {
+    margin-bottom: 2rem;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+/* Список услуг */
+.services-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.service-card {
+    padding: 1.5rem;
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent-color);
+    transform: scaleY(0);
+    transition: transform 0.3s;
+}
+
+.service-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.service-card:hover::before {
+    transform: scaleY(1);
+}
+
+.service-card.selected {
+    border-color: var(--accent-color);
+    background: linear-gradient(135deg, var(--accent-color-alpha, rgba(59, 130, 246, 0.1)) 0%, transparent 100%);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+
+.service-card.selected::before {
+    transform: scaleY(1);
+}
+
+.service-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+}
+
+.service-card p {
+    color: var(--text-secondary);
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.service-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.service-info span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.service-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+/* Выбор даты */
+.date-picker {
+    margin-bottom: 1.5rem;
+}
+
+.date-picker input[type="date"] {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.date-picker input[type="date"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color-alpha, rgba(59, 130, 246, 0.1));
+}
+
+/* Временные слоты */
+.time-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+}
+
+.time-slot {
+    padding: 1rem 0.5rem;
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.time-slot:hover:not(.disabled) {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.time-slot.selected {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.time-slot.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--bg-secondary);
+}
+
+.time-slots-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+/* Форма бронирования */
+.booking-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--card-bg);
+    color: var(--text-color);
+    transition: all 0.3s;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color-alpha, rgba(59, 130, 246, 0.1));
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Кнопки */
+.btn-primary {
+    width: 100%;
+    padding: 1.125rem 2rem;
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color-dark, #2563eb) 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Сообщение об успехе */
+.success-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.success-icon {
+    font-size: 80px;
+    margin-bottom: 1.5rem;
+    animation: bounce 0.6s;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+.success-message h2 {
+    color: var(--success-color, #10b981);
+    margin-bottom: 1rem;
+    font-size: 2rem;
+}
+
+.success-message p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.booking-details {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: var(--card-bg);
+    border-radius: 16px;
+    text-align: left;
+    border: 2px solid var(--border-color);
+}
+
+.booking-details p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 0;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1rem;
+}
+
+.booking-details p:last-child {
+    border-bottom: none;
+}
+
+.booking-details strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.booking-details span {
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+/* Loader */
+.page-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Утилиты */
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-2 {
+    margin-top: 2rem;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+    .master-profile {
+        padding: 1.5rem 1rem;
+    }
+
+    .master-profile h1 {
+        font-size: 1.5rem;
+    }
+
+    .time-slots {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
+
+    .time-slot {
+        padding: 0.75rem 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    .section h2 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+    .master-profile {
+        background: linear-gradient(135deg, var(--accent-color) 0%, #1e40af 100%);
+    }
+
+    .service-card {
+        background: var(--card-bg, #1f2937);
+    }
+
+    .booking-details {
+        background: var(--card-bg, #1f2937);
+    }
+}

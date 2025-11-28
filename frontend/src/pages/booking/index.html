@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Онлайн запись</title>
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="../app/styles/variables.css?v=1.0.4">
+    <link rel="stylesheet" href="../app/styles/global.css?v=1.0.4">
+    <link rel="stylesheet" href="booking.css?v=1.0.0">
+</head>
+
+<body>
+    <!-- Main Content -->
+    <main id="app">
+        <div class="view-content">
+            <!-- Профиль мастера -->
+            <div id="master-profile" class="master-profile">
+                <div class="master-avatar">
+                    <img id="master-avatar-img" src="" alt="Фото мастера" />
+                    <div class="avatar-placeholder">👤</div>
+                </div>
+                <h1 id="master-name">Загрузка...</h1>
+                <p id="master-business" class="business-name"></p>
+                <div class="master-contacts">
+                    <p id="master-phone" class="contact-item">
+                        <span class="icon">📞</span>
+                        <span class="text"></span>
+                    </p>
+                    <p id="master-address" class="contact-item">
+                        <span class="icon">📍</span>
+                        <span class="text"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Выбор услуги -->
+            <section id="services-section" class="section">
+                <h2>Выберите услугу</h2>
+                <div id="services-list" class="services-list">
+                    <!-- Услуги будут загружены через JS -->
+                </div>
+            </section>
+
+            <!-- Выбор даты и времени -->
+            <section id="datetime-section" class="section hidden">
+                <h2>Выберите дату и время</h2>
+
+                <div class="date-picker">
+                    <input type="date" id="date-input" />
+                </div>
+
+                <div id="time-slots" class="time-slots">
+                    <!-- Временные слоты будут загружены через JS -->
+                </div>
+            </section>
+
+            <!-- Форма контактов -->
+            <section id="contact-section" class="section hidden">
+                <h2>Ваши контакты</h2>
+
+                <form id="booking-form" class="booking-form">
+                    <div class="form-group">
+                        <label for="client-name">Имя *</label>
+                        <input type="text" id="client-name" required placeholder="Ваше имя" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="client-lastname">Фамилия</label>
+                        <input type="text" id="client-lastname" placeholder="Ваша фамилия" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="client-phone">Телефон *</label>
+                        <input type="tel" id="client-phone" required placeholder="+7 (___) ___-__-__" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="client-email">Email</label>
+                        <input type="email" id="client-email" placeholder="your@email.com" />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="client-notes">Комментарий</label>
+                        <textarea id="client-notes" rows="3" placeholder="Дополнительная информация"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Записаться</button>
+                </form>
+            </section>
+
+            <!-- Подтверждение -->
+            <section id="success-section" class="section hidden">
+                <div class="success-message">
+                    <div class="success-icon">✅</div>
+                    <h2>Запись создана!</h2>
+                    <p>Ожидайте подтверждения от мастера</p>
+
+                    <div id="booking-details" class="booking-details">
+                        <!-- Детали записи -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Loader -->
+    <div id="page-loader" class="page-loader">
+        <div class="loader-spinner"></div>
+    </div>
+
+    <!-- Page Scripts -->
+    <script type="module" src="booking.js?v=1.0.0"></script>
+</body>
+
+</html>

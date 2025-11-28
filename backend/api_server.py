@@ -18,6 +18,7 @@ from src.features.api.clients import router as clients_router
 from src.features.api.appointments import router as appointments_router
 from src.features.api.schedule import router as schedule_router
 from src.features.api.auth import router as auth_router
+from src.features.api.public_booking import router as public_booking_router
 
 # Настройка логирования с ротацией
 setup_logging(
@@ -76,6 +77,7 @@ app.include_router(services_router, prefix="/api", tags=["services"])
 app.include_router(clients_router, prefix="/api", tags=["clients"])
 app.include_router(appointments_router, prefix="/api", tags=["appointments"])
 app.include_router(schedule_router, prefix="/api", tags=["schedule"])
+app.include_router(public_booking_router, prefix="/api", tags=["public-booking"])  # Публичное бронирование
 
 @app.get("/")
 async def root():

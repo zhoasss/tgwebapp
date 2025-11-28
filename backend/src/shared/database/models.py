@@ -27,6 +27,10 @@ class User(Base):
     phone = Column(String(50), nullable=True)
     business_name = Column(String(255), nullable=True)
     address = Column(Text, nullable=True)
+    avatar_url = Column(String(500), nullable=True)  # URL фото профиля
+    
+    # Публичная страница бронирования
+    booking_slug = Column(String(100), nullable=True, unique=True, index=True)  # Уникальная ссылка
 
     # Настройки бизнеса
     timezone = Column(String(50), default='Europe/Moscow', nullable=False)
@@ -58,6 +62,8 @@ class User(Base):
             'phone': self.phone,
             'business_name': self.business_name,
             'address': self.address,
+            'avatar_url': self.avatar_url,
+            'booking_slug': self.booking_slug,
             'timezone': self.timezone,
             'currency': self.currency,
             'is_active': self.is_active,
