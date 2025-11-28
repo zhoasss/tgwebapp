@@ -15,26 +15,43 @@ const SETTINGS_ROUTES = {
   'Управление': '../management/index.html',
 };
 
+// Элементы карточки ссылки
+let linkLoading, linkContent, linkEmpty, linkInput;
+
 function initSettingsPage() {
+  // Инициализация элементов карточки
+  linkLoading = document.getElementById('link-loading');
+  linkContent = document.getElementById('link-content');
+  linkEmpty = document.getElementById('link-empty');
+  linkInput = document.getElementById('booking-link-input');
+
+  // Загружаем данные ссылки
+  loadBookingLink();
+
+  // Обработчики кнопок карточки
+  document.getElementById('copy-link-btn')?.addEventListener('click', () => {
+    copyBookingLink(linkInput.value);
+  });
+
+  document.getElementById('share-link-btn')?.addEventListener('click', () => {
+    shareBookingLink(linkInput.value);
+  });
+
+  document.getElementById('generate-link-btn')?.addEventListener('click', generateBookingLink);
+
+  // Обработчики остальных пунктов меню
   const settingsItems = document.querySelectorAll('.settings-item');
 
   settingsItems.forEach(item => {
-    item.addEventListener('click', async () => {
+    item.addEventListener('click', () => {
       const title = item.querySelector('h3').textContent.trim();
       // Убираем эмодзи для поиска в маршрутах
       const cleanTitle = title.replace(/^[^\w\s]+\s*/, '');
 
       console.log(`Клик на настройку: ${cleanTitle}`);
 
-      // Специальная обработка для "Ссылка для записи"
-      if (cleanTitle === 'Ссылка для записи') {
-        await handleBookingLink();
-        return;
-      }
-
       // Проверяем, есть ли маршрут для этой настройки
       const route = SETTINGS_ROUTES[cleanTitle];
-
 
       // Переход на страницу настройки
       if (route) {
@@ -50,119 +67,91 @@ function initSettingsPage() {
 
   console.log('✅ Страница настроек инициализирована');
 
-  // Скрываем лоадер, так как страница загружена
-  // Используем forceHide, чтобы гарантированно скрыть лоадер, даже если счетчик сбился
+  // Скрываем глобальный лоадер страницы
   console.log('⚙️ Force hiding loader on settings page');
   pageLoader.forceHide();
 }
 
 /**
- * Обработка клика на "Ссылка для записи"
+ * Загрузка информации о ссылке бронирования
  */
-async function handleBookingLink() {
+async function loadBookingLink() {
   try {
-    pageLoader.show();
+    showLinkLoading(true);
 
     // Получаем текущий профиль
     const profile = await apiClient.get('/api/profiles/');
 
-    let bookingUrl;
-
-    // Если ссылка уже есть, используем её
     if (profile.booking_slug) {
-      bookingUrl = `https://booking-cab.ru/booking/${profile.booking_slug}`;
-      console.log('✅ Existing booking link:', bookingUrl);
+      const bookingUrl = `https://booking-cab.ru/booking/${profile.booking_slug}`;
+      showLinkContent(bookingUrl);
     } else {
-      // Генерируем новую ссылку
-      console.log('🔗 Generating new booking link...');
-      const response = await apiClient.post('/api/profiles/generate-booking-link');
-      bookingUrl = response.booking_url;
-      console.log('✅ New booking link generated:', bookingUrl);
+      showLinkEmpty();
     }
 
-    pageLoader.hide();
-
-    // Показываем диалог с ссылкой
-    await showBookingLinkDialog(bookingUrl);
-
   } catch (error) {
-    console.error('❌ Error handling booking link:', error);
-    pageLoader.hide();
-    showNotification('Ошибка при создании ссылки', 'error');
+    console.error('❌ Error loading booking link:', error);
+    showNotification('Не удалось загрузить ссылку', 'error');
+    // Показываем кнопку создания как fallback
+    showLinkEmpty();
+  } finally {
+    showLinkLoading(false);
   }
 }
 
 /**
- * Показать диалог с ссылкой для бронирования
+ * Генерация новой ссылки
  */
-async function showBookingLinkDialog(bookingUrl) {
-  // Проверяем поддержку Web Share API
-  const canShare = navigator.share !== undefined;
+async function generateBookingLink() {
+  try {
+    showLinkLoading(true);
 
-  const message = `Ваша ссылка для записи:\n\n${bookingUrl}\n\nКлиенты смогут записаться к вам онлайн по этой ссылке.`;
+    const response = await apiClient.post('/api/profiles/generate-booking-link');
+    const bookingUrl = response.booking_url;
 
-  // Используем Telegram WebApp для показа диалога
-  if (window.Telegram?.WebApp) {
-    const buttons = canShare
-      ? [
-        { text: '📤 Поделиться', action: () => shareBookingLink(bookingUrl) },
-        { text: '📋 Копировать', action: () => copyBookingLink(bookingUrl) }
-      ]
-      : [
-        { text: '📋 Копировать', action: () => copyBookingLink(bookingUrl) }
-      ];
+    showLinkContent(bookingUrl);
+    showNotification('Ссылка успешно создана', 'success');
 
-    // Показываем popup с кнопками
-    if (canShare) {
-      window.Telegram.WebApp.showPopup({
-        title: '🔗 Ссылка для записи',
-        message: message,
-        buttons: [
-          { id: 'share', type: 'default', text: '📤 Поделиться' },
-          { id: 'copy', type: 'default', text: '📋 Копировать' },
-          { id: 'close', type: 'cancel', text: 'Закрыть' }
-        ]
-      }, async (buttonId) => {
-        if (buttonId === 'share') {
-          await shareBookingLink(bookingUrl);
-        } else if (buttonId === 'copy') {
-          await copyBookingLink(bookingUrl);
-        }
-      });
-    } else {
-      window.Telegram.WebApp.showPopup({
-        title: '🔗 Ссылка для записи',
-        message: message,
-        buttons: [
-          { id: 'copy', type: 'default', text: '📋 Копировать' },
-          { id: 'close', type: 'cancel', text: 'Закрыть' }
-        ]
-      }, async (buttonId) => {
-        if (buttonId === 'copy') {
-          await copyBookingLink(bookingUrl);
-        }
-      });
-    }
-  } else {
-    // Fallback для обычного браузера
-    if (canShare) {
-      const shouldShare = confirm(message + '\n\nПоделиться ссылкой?');
-      if (shouldShare) {
-        await shareBookingLink(bookingUrl);
-      } else {
-        await copyBookingLink(bookingUrl);
-      }
-    } else {
-      alert(message);
-      await copyBookingLink(bookingUrl);
-    }
+  } catch (error) {
+    console.error('❌ Error generating booking link:', error);
+    showNotification('Ошибка при создании ссылки', 'error');
+    showLinkEmpty();
+  } finally {
+    showLinkLoading(false);
   }
 }
+
+// --- UI Helpers ---
+
+function showLinkLoading(isLoading) {
+  if (isLoading) {
+    linkLoading.style.display = 'flex';
+    linkContent.style.display = 'none';
+    linkEmpty.style.display = 'none';
+  } else {
+    linkLoading.style.display = 'none';
+  }
+}
+
+function showLinkContent(url) {
+  linkInput.value = url;
+  linkContent.style.display = 'block';
+  linkEmpty.style.display = 'none';
+}
+
+function showLinkEmpty() {
+  linkContent.style.display = 'none';
+  linkEmpty.style.display = 'block';
+}
+
+// --- Actions ---
 
 /**
  * Поделиться ссылкой через Web Share API
  */
 async function shareBookingLink(bookingUrl) {
+  if (!bookingUrl) return;
+
   try {
     if (navigator.share) {
       await navigator.share({
@@ -171,16 +160,15 @@ async function shareBookingLink(bookingUrl) {
         url: bookingUrl
       });
       console.log('✅ Link shared successfully');
-      showNotification('Ссылка отправлена', 'success');
     } else {
       // Fallback - копируем в буфер обмена
       await copyBookingLink(bookingUrl);
+      showNotification('Ссылка скопирована (шеринг не поддерживается)', 'success');
     }
   } catch (error) {
     // Пользователь отменил или ошибка
     if (error.name !== 'AbortError') {
       console.error('Share error:', error);
-      await copyBookingLink(bookingUrl);
     }
   }
 }
@@ -189,11 +177,13 @@ async function shareBookingLink(bookingUrl) {
  * Копировать ссылку в буфер обмена
  */
 async function copyBookingLink(bookingUrl) {
+  if (!bookingUrl) return;
+
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       await navigator.clipboard.writeText(bookingUrl);
       console.log('✅ Link copied to clipboard');
-      showNotification('Ссылка скопирована в буфер обмена', 'success');
+      showNotification('Ссылка скопирована', 'success');
     } else {
       // Fallback для старых браузеров
       const textArea = document.createElement('textarea');

@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../../app/styles/variables.css?v=1.0.4">
   <link rel="stylesheet" href="../../app/styles/global.css?v=1.0.4">
   <link rel="stylesheet" href="../../app/styles/index.css?v=1.0.4">
+  <link rel="stylesheet" href="settings.css?v=1.0.0">
 
   <!-- Loader Styles -->
   <link rel="stylesheet" href="../../shared/ui/loader/loader.css?v=1.0.0">
@@ -52,16 +53,42 @@
             </svg>
           </div>
         </div>
-        <div class="settings-item" id="booking-link-item">
-          <div class="settings-item-content">
-            <div class="settings-item-text">
-              <h3>🔗 Ссылка для записи</h3>
-              <p>Поделиться ссылкой с клиентами</p>
+        <!-- Карточка ссылки для записи -->
+        <div class="booking-link-card" id="booking-link-card">
+          <div class="card-header">
+            <h3>🔗 Ссылка для записи</h3>
+            <p>Отправляйте клиентам для онлайн записи</p>
+          </div>
+
+          <!-- Состояние загрузки -->
+          <div class="link-loading" id="link-loading">
+            <div class="spinner"></div>
+          </div>
+
+          <!-- Состояние: Ссылка есть -->
+          <div class="link-content" id="link-content" style="display: none;">
+            <div class="input-group">
+              <input type="text" id="booking-link-input" readonly value="" />
+              <button id="copy-link-btn" class="icon-btn" title="Копировать">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                  <path
+                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                    stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
             </div>
-            <svg class="settings-item-arrow" viewBox="0 0 24 24" width="20" height="20">
-              <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"
-                stroke-linejoin="round" />
-            </svg>
+            <div class="card-actions">
+              <button id="share-link-btn" class="action-btn primary">
+                <span class="btn-icon">📤</span> Поделиться
+              </button>
+            </div>
+          </div>
+
+          <!-- Состояние: Ссылки нет -->
+          <div class="link-empty" id="link-empty" style="display: none;">
+            <button id="generate-link-btn" class="action-btn primary full-width">
+              ✨ Создать ссылку
+            </button>
           </div>
         </div>
         <div class="settings-item">

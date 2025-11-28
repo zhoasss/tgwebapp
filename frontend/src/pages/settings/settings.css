@@ -1,0 +1,149 @@
+/* Стили для страницы настроек */
+
+/* Карточка ссылки для записи */
+.booking-link-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border-color);
+}
+
+.card-header {
+    margin-bottom: 1rem;
+}
+
+.card-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text-color);
+}
+
+.card-header p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Поле ввода и кнопка копирования */
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    background: var(--bg-secondary);
+    padding: 0.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.input-group input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    width: 100%;
+    outline: none;
+    font-family: monospace;
+}
+
+.icon-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: all 0.2s;
+}
+
+.icon-btn:active {
+    transform: scale(0.95);
+    background: var(--bg-secondary);
+}
+
+/* Кнопки действий */
+.card-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.action-btn.primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.action-btn.primary:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+}
+
+.action-btn.full-width {
+    width: 100%;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+/* Лоадер */
+.link-loading {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Адаптивность */
+@media (prefers-color-scheme: dark) {
+    .booking-link-card {
+        background: var(--card-bg, #1f2937);
+        border-color: var(--border-color, #374151);
+    }
+
+    .input-group {
+        background: rgba(0, 0, 0, 0.2);
+        border-color: var(--border-color, #374151);
+    }
+
+    .icon-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+}
