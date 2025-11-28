@@ -75,7 +75,7 @@ services:
       - ./backend/database.db:/app/database.db
     networks:
       - app-network
-    command: sh -c "touch /app/database.db && chmod 666 /app/database.db && tail -f /dev/null"
+    command: sh -c "touch /app/database.db && chmod 660 /app/database.db && tail -f /dev/null"
 
 networks:
   app-network:

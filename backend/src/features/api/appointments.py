@@ -14,6 +14,7 @@ import logging
 from ...shared.database.models import Appointment, User, Service, Client, AppointmentStatus
 from ...shared.database.connection import get_session
 from ...shared.auth.jwt_auth import get_current_user
+from ...shared.utils.appointment_utils import validate_appointment_time, check_appointment_overlap
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
@@ -195,12 +196,23 @@ async def create_appointment(
     if not client:
         raise HTTPException(status_code=404, detail="Клиент не найден")
 
-    # Проверяем доступность времени (упрощенная проверка)
-    # TODO: Добавить более сложную логику проверки пересечений
-
-    # Создаем запись
+    # Определяем продолжительность и цену
     duration = appointment_data.duration_minutes or service.duration_minutes
     price = appointment_data.price or service.price
+
+    # Проверяем доступность времени и пересечения
+    is_valid, error_message = await validate_appointment_time(
+        session=session,
+        user_id=user.id,
+        appointment_date=appointment_data.appointment_date,
+        duration_minutes=duration
+    )
+    
+    if not is_valid:
+        logging.warning(f"⚠️ Ошибка валидации времени: {error_message}")
+        raise HTTPException(status_code=400, detail=error_message)
+
+    # Создаем запись
 
     appointment = Appointment(
         user_id=user.id,
@@ -366,6 +378,23 @@ async def update_appointment(
         client = result.scalar_one_or_none()
         if not client:
             raise HTTPException(status_code=404, detail="Клиент не найден")
+
+    # Проверяем пересечения, если изменяется время или продолжительность
+    if 'appointment_date' in update_data or 'duration_minutes' in update_data:
+        new_date = update_data.get('appointment_date', appointment.appointment_date)
+        new_duration = update_data.get('duration_minutes', appointment.duration_minutes)
+        
+        is_valid, error_message = await validate_appointment_time(
+            session=session,
+            user_id=user.id,
+            appointment_date=new_date,
+            duration_minutes=new_duration,
+            exclude_appointment_id=appointment_id
+        )
+        
+        if not is_valid:
+            logging.warning(f"⚠️ Ошибка валидации времени при обновлении: {error_message}")
+            raise HTTPException(status_code=400, detail=error_message)
 
     for field, value in update_data.items():
         setattr(appointment, field, value)
