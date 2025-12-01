@@ -83,7 +83,8 @@ async function loadBookingLink() {
     const profile = await apiClient.get('/api/profiles/');
 
     if (profile.booking_slug) {
-      const bookingUrl = `https://booking-cab.ru/booking/${profile.booking_slug}`;
+      // Используем booking_url (Telegram ссылка) как основную
+      const bookingUrl = profile.booking_url || `https://t.me/your_bot?start=booking_${profile.booking_slug}`;
       showLinkContent(bookingUrl);
     } else {
       showLinkEmpty();

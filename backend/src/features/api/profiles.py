@@ -349,10 +349,19 @@ async def generate_booking_link(
                 
                 logging.info(f"✅ Сгенерирован booking_slug: {new_slug}")
                 
+                # Импортируем конфигурацию для получения bot_username
+                from ...shared.config.env_loader import config
+                
+                # Формируем ссылки
+                web_url = f"https://booking-cab.ru/booking/{new_slug}"
+                # Telegram Web App URL - открывается внутри Telegram
+                telegram_url = f"https://t.me/{config.bot_username}?start=booking_{new_slug}"
+                
                 return {
                     "message": "Ссылка для бронирования создана",
                     "booking_slug": new_slug,
-                    "booking_url": f"https://booking-cab.ru/booking/{new_slug}",
+                    "booking_url": telegram_url,  # Telegram ссылка (основная)
+                    "web_url": web_url,  # Обычная веб-ссылка (запасная)
                     "profile": user.to_dict()
                 }
         

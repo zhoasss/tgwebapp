@@ -4,8 +4,15 @@
  */
 
 // Получаем booking_slug из URL
+// Поддерживаем два формата:
+// 1. /booking/{slug} - из пути
+// 2. ?slug={slug} - из параметра URL (для Telegram Web App)
+const urlParams = new URLSearchParams(window.location.search);
+const slugFromParam = urlParams.get('slug');
 const pathParts = window.location.pathname.split('/');
-const bookingSlug = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+const slugFromPath = pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+
+const bookingSlug = slugFromParam || slugFromPath;
 
 // API базовый URL
 const API_URL = window.location.hostname === 'localhost'

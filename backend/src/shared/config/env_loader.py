@@ -32,6 +32,7 @@ class Config:
 
         # Настройки Telegram
         self.bot_token: str = self._get_required_env("BOT_TOKEN")
+        self.bot_username: str = self._get_env("BOT_USERNAME", "your_bot")  # Username бота без @
         self.web_app_url: str = self._get_required_env("WEB_APP_URL")
 
         # Настройки базы данных
