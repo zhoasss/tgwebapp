@@ -16,6 +16,7 @@ import string
 from ...shared.database.models import User, Service, Client, Appointment, WorkingHours, WorkingDay, AppointmentStatus
 from ...shared.database.connection import get_session
 from ...shared.utils.appointment_utils import validate_appointment_time
+from ...shared.notifications.telegram_notifier import TelegramNotifier
 
 router = APIRouter(prefix="/booking", tags=["public-booking"])
 
@@ -326,6 +327,34 @@ async def create_public_booking(
     await session.refresh(appointment)
     
     logging.info(f"✅ Публичная запись создана: {appointment.id}")
+    
+    # Отправляем уведомление мастеру
+    try:
+        notifier = TelegramNotifier()
+        
+        # Формируем данные для уведомления
+        notification_data = {
+            "id": appointment.id,
+            "client_name": f"{client.first_name} {client.last_name or ''}".strip(),
+            "client_phone": client.phone,
+            "client_email": client.email,
+            "service_name": service.name,
+            "appointment_date": appointment.appointment_date.isoformat(),
+            "duration_minutes": appointment.duration_minutes,
+            "price": appointment.price,
+            "notes": appointment.client_notes
+        }
+        
+        # Отправляем уведомление
+        await notifier.send_new_appointment_notification(
+            telegram_id=user.telegram_id,
+            appointment_data=notification_data
+        )
+        logging.info(f"📬 Уведомление отправлено мастеру {user.telegram_id}")
+        
+    except Exception as e:
+        # Не прерываем процесс, если уведомление не отправилось
+        logging.error(f"❌ Ошибка отправки уведомления: {e}")
     
     return {
         "message": "Запись успешно создана! Ожидайте подтверждения от мастера.",
