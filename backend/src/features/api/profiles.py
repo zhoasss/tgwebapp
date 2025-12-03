@@ -356,10 +356,12 @@ async def generate_booking_link(
                 # Импортируем конфигурацию для получения bot_username
                 from ...shared.config.env_loader import config
                 
-                # Формируем ссылки
-                web_url = f"https://booking-cab.ru/booking/{new_slug}"
+                logging.info(f"🔍 Config check: client_bot_username='{config.client_bot_username}', bot_username='{config.bot_username}'")
+                
                 # Используем username клиентского бота, если он настроен, иначе основного
                 bot_username = config.client_bot_username or config.bot_username
+                
+                logging.info(f"🔗 Using bot_username: '{bot_username}'")
                 
                 # Telegram Web App URL - открывается внутри Telegram
                 telegram_url = f"https://t.me/{bot_username}?start=booking_{new_slug}"

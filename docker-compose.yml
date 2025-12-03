@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     environment:
       - BOT_TOKEN=${BOT_TOKEN:-demo_token}
+      - BOT_USERNAME=${BOT_USERNAME}
       - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
       - CLIENT_BOT_TOKEN=${CLIENT_BOT_TOKEN}
       - CLIENT_BOT_USERNAME=${CLIENT_BOT_USERNAME}
