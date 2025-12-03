@@ -34,6 +34,10 @@ class Config:
         self.bot_token: str = self._get_required_env("BOT_TOKEN")
         self.bot_username: str = self._get_env("BOT_USERNAME", "your_bot")  # Username бота без @
         self.web_app_url: str = self._get_required_env("WEB_APP_URL")
+        
+        # Настройки Client Bot (опционально)
+        self.client_bot_token: Optional[str] = self._get_env("CLIENT_BOT_TOKEN")
+        self.client_bot_username: Optional[str] = self._get_env("CLIENT_BOT_USERNAME")
 
         # Настройки базы данных
         self.database_url: str = self._get_env("DATABASE_URL", self._get_default_database_url())

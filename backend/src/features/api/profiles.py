@@ -148,7 +148,11 @@ async def validate_token_only(
         from ...shared.auth.telegram_auth import validate_telegram_init_data
         from ...shared.config.env_loader import config
 
-        user_data = validate_telegram_init_data(x_init_data, config.bot_token)
+        tokens = [config.bot_token]
+        if config.client_bot_token:
+            tokens.append(config.client_bot_token)
+
+        user_data = validate_telegram_init_data(x_init_data, tokens)
 
         return {
             "status": "valid",
@@ -354,8 +358,11 @@ async def generate_booking_link(
                 
                 # Формируем ссылки
                 web_url = f"https://booking-cab.ru/booking/{new_slug}"
+                # Используем username клиентского бота, если он настроен, иначе основного
+                bot_username = config.client_bot_username or config.bot_username
+                
                 # Telegram Web App URL - открывается внутри Telegram
-                telegram_url = f"https://t.me/{config.bot_username}?start=booking_{new_slug}"
+                telegram_url = f"https://t.me/{bot_username}?start=booking_{new_slug}"
                 
                 return {
                     "message": "Ссылка для бронирования создана",

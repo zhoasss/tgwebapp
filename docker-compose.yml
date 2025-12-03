@@ -20,7 +20,7 @@ services:
       - db
     user: root
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()"]
+      test: [ "CMD", "python", "-c", "import socket; s=socket.socket(); s.connect(('localhost', 8000)); s.close()" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -41,12 +41,12 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
+      test: [ "CMD", "curl", "-f", "http://localhost/" ]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Telegram Bot
+  # Telegram Bot (Admin)
   bot:
     build:
       context: ./backend
@@ -64,7 +64,30 @@ services:
     depends_on:
       - backend
     user: root
-    command: ["python", "main.py"]
+    command: [ "python", "main.py" ]
+
+  # Telegram Client Bot (для записи клиентов)
+  client-bot:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: telegram-mini-app-client-bot
+    restart: unless-stopped
+    environment:
+      - CLIENT_BOT_TOKEN=${CLIENT_BOT_TOKEN}
+      - CLIENT_BOT_USERNAME=${CLIENT_BOT_USERNAME}
+      - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
+    volumes:
+      - backend_data:/app/data
+      - ./.env:/app/.env
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    user: root
+    command: [ "python", "client_bot.py" ]
+    profiles:
+      - client-bot # Опционально, запускается только если указан CLIENT_BOT_TOKEN
 
   # Database (SQLite file-based, but could be replaced with PostgreSQL)
   db:

@@ -42,8 +42,12 @@ async def signin(
     logging.info(f"{platform} 🔐 Запрос аутентификации")
 
     try:
-        # Валидируем initData с помощью bot token
-        user_data = validate_telegram_init_data(x_init_data, config.bot_token)
+        # Валидируем initData с помощью токенов (основного или клиентского)
+        tokens = [config.bot_token]
+        if config.client_bot_token:
+            tokens.append(config.client_bot_token)
+            
+        user_data = validate_telegram_init_data(x_init_data, tokens)
         logging.info(f"{platform} ✅ initData валидирован: @{user_data.get('username', 'unknown')} (ID: {user_data.get('id', 'unknown')})")
 
         # Аутентифицируем/создаем пользователя в БД

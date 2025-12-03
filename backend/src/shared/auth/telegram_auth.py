@@ -15,13 +15,14 @@ from typing import Optional
 
 from ..database.models import User
 
-def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
+def validate_telegram_init_data(init_data: str, bot_token: str | list[str]) -> dict:
     """
     Проверяет подлинность initData от Telegram WebApp
+    Поддерживает проверку через несколько токенов (для основного и клиентского бота)
 
     Args:
         init_data: Строка initData от Telegram WebApp
-        bot_token: Токен бота
+        bot_token: Токен бота (строка) или список токенов
 
     Returns:
         dict: Распарсенные данные пользователя
@@ -30,9 +31,12 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
         HTTPException: Если данные невалидны
     """
     logging.info(f"🔐 Начинаем валидацию init_data (длина: {len(init_data) if init_data else 0})")
-    logging.info(f"🤖 Bot token: {bot_token[:10] if bot_token else 'None'}...")
-
-    if not bot_token:
+    
+    tokens = [bot_token] if isinstance(bot_token, str) else bot_token
+    # Фильтруем пустые токены
+    tokens = [t for t in tokens if t]
+    
+    if not tokens:
         logging.error("❌ Bot token не задан")
         raise HTTPException(status_code=500, detail="Серверная ошибка: токен бота не настроен")
 
@@ -43,23 +47,16 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
     try:
         # URL-decode init_data перед парсингом
         decoded_init_data = unquote(init_data)
-        logging.info(f"🔍 Decoded init_data (первые 100 символов): {decoded_init_data[:100]}...")
-
+        
         # Парсим init_data
         parsed_data = parse_qs(decoded_init_data)
-        logging.info(f"📋 Распарсенные параметры: {list(parsed_data.keys())}")
-        logging.debug(f"📋 Все параметры: {parsed_data}")
-
+        
         # Извлекаем hash
         received_hash = parsed_data.get('hash', [None])[0]
         if not received_hash:
             logging.error("❌ Hash отсутствует в init_data")
-            logging.error(f"❌ Доступные поля: {list(parsed_data.keys())}")
-            logging.error(f"❌ Raw decoded data: {decoded_init_data}")
             raise HTTPException(status_code=401, detail="Hash отсутствует в init_data")
 
-        logging.info(f"🔒 Получен hash: {received_hash[:10]}...")
-        
         # Удаляем hash из данных для проверки
         data_check_string_parts = []
         for key in sorted(parsed_data.keys()):
@@ -69,28 +66,35 @@ def validate_telegram_init_data(init_data: str, bot_token: str) -> dict:
         
         data_check_string = '\n'.join(data_check_string_parts)
         
-        # Создаем secret key из токена бота
-        secret_key = hmac.new(
-            "WebAppData".encode(),
-            bot_token.encode(),
-            hashlib.sha256
-        ).digest()
+        # Пробуем валидировать с каждым токеном
+        validation_success = False
+        
+        for token in tokens:
+            try:
+                # Создаем secret key из токена бота
+                secret_key = hmac.new(
+                    "WebAppData".encode(),
+                    token.encode(),
+                    hashlib.sha256
+                ).digest()
 
-        logging.info(f"🔑 Secret key создан из токена (длина: {len(bot_token)})")
+                # Вычисляем hash
+                calculated_hash = hmac.new(
+                    secret_key,
+                    data_check_string.encode(),
+                    hashlib.sha256
+                ).hexdigest()
 
-        # Вычисляем hash
-        calculated_hash = hmac.new(
-            secret_key,
-            data_check_string.encode(),
-            hashlib.sha256
-        ).hexdigest()
-
-        logging.info(f"🔢 Вычислен hash: {calculated_hash[:10]}...")
-        logging.info(f"🔍 Сравнение: received={received_hash[:10]}... vs calculated={calculated_hash[:10]}...")
-
-        # Сравниваем хеши
-        if calculated_hash != received_hash:
-            logging.error("❌ Hash не совпадает - init data невалидны")
+                if calculated_hash == received_hash:
+                    validation_success = True
+                    logging.info(f"✅ Валидация успешна с токеном ...{token[-5:]}")
+                    break
+            except Exception as e:
+                logging.warning(f"⚠️ Ошибка при проверке токена: {e}")
+                continue
+                
+        if not validation_success:
+            logging.error("❌ Hash не совпадает ни с одним токеном")
             raise HTTPException(status_code=401, detail="Init data невалидны")
         
         # Парсим данные пользователя
