@@ -38,6 +38,11 @@ class Config:
         # Настройки Client Bot (опционально)
         self.client_bot_token: Optional[str] = self._get_env("CLIENT_BOT_TOKEN")
         self.client_bot_username: Optional[str] = self._get_env("CLIENT_BOT_USERNAME")
+        
+        if self.client_bot_username:
+            logger.info(f"✅ Client bot настроен: @{self.client_bot_username}")
+        else:
+            logger.info("ℹ️ Client bot не настроен, будет использоваться основной бот")
 
         # Настройки базы данных
         self.database_url: str = self._get_env("DATABASE_URL", self._get_default_database_url())
@@ -113,6 +118,8 @@ class Config:
     def _get_env(self, key: str, default: Any = None) -> Any:
         """Получает переменную окружения с значением по умолчанию"""
         value = os.getenv(key, default)
+        if value is None:
+            return None
         return value.strip() if isinstance(value, str) else value
 
     def _get_env_bool(self, key: str, default: bool = False) -> bool:
