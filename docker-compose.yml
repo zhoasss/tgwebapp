@@ -11,6 +11,8 @@ services:
     environment:
       - BOT_TOKEN=${BOT_TOKEN:-demo_token}
       - WEB_APP_URL=${WEB_APP_URL:-http://localhost}
+      - CLIENT_BOT_TOKEN=${CLIENT_BOT_TOKEN}
+      - CLIENT_BOT_USERNAME=${CLIENT_BOT_USERNAME}
     volumes:
       - backend_data:/app/data
       - ./.env:/app/.env
