@@ -1,12 +1,10 @@
 /**
  * Public Booking Page Logic
- * @version 1.0.0
+ * Enhanced with validation, error handling, and better UX
+ * @version 2.0.0
  */
 
 // Получаем booking_slug из URL
-// Поддерживаем два формата:
-// 1. /booking/{slug} - из пути
-// 2. ?slug={slug} - из параметра URL (для Telegram Web App)
 const urlParams = new URLSearchParams(window.location.search);
 const slugFromParam = urlParams.get('slug');
 const pathParts = window.location.pathname.split('/');
@@ -29,6 +27,26 @@ const state = {
     availability: null
 };
 
+// Валидация
+const validation = {
+    name: {
+        required: true,
+        minLength: 2,
+        pattern: /^[а-яА-ЯёЁa-zA-Z\s-]+$/,
+        message: 'Введите корректное имя (минимум 2 символа)'
+    },
+    phone: {
+        required: true,
+        pattern: /^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$/,
+        message: 'Введите корректный номер телефона'
+    },
+    email: {
+        required: false,
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        message: 'Введите корректный email'
+    }
+};
+
 // Инициализация
 document.addEventListener('DOMContentLoaded', init);
 
@@ -36,7 +54,7 @@ async function init() {
     console.log('🚀 Initializing booking page for slug:', bookingSlug);
 
     if (!bookingSlug || bookingSlug === 'booking' || bookingSlug === 'index.html') {
-        showError('Неверная ссылка для бронирования');
+        showToast('Неверная ссылка для бронирования', 'error');
         return;
     }
 
@@ -48,7 +66,7 @@ async function init() {
         setupEventListeners();
     } catch (error) {
         console.error('Initialization error:', error);
-        showError('Не удалось загрузить данные. Проверьте ссылку.');
+        showToast('Не удалось загрузить данные. Проверьте ссылку.', 'error');
     } finally {
         hideLoader();
     }
@@ -199,11 +217,75 @@ function setupEventListeners() {
     });
 
     // Отправка формы
-    document.getElementById('booking-form').addEventListener('submit', handleBooking);
+    const form = document.getElementById('booking-form');
+    form.addEventListener('submit', handleBooking);
 
-    // Маска для телефона
+    // Валидация в реальном времени
+    const nameInput = document.getElementById('client-name');
     const phoneInput = document.getElementById('client-phone');
+    const emailInput = document.getElementById('client-email');
+
+    nameInput.addEventListener('blur', () => validateField(nameInput, validation.name));
+    nameInput.addEventListener('input', () => clearFieldError(nameInput));
+
     phoneInput.addEventListener('input', formatPhoneNumber);
+    phoneInput.addEventListener('blur', () => validateField(phoneInput, validation.phone));
+
+    emailInput.addEventListener('blur', () => {
+        if (emailInput.value.trim()) {
+            validateField(emailInput, validation.email);
+        }
+    });
+    emailInput.addEventListener('input', () => clearFieldError(emailInput));
+}
+
+// Валидация поля
+function validateField(input, rules) {
+    const value = input.value.trim();
+    const formGroup = input.closest('.form-group');
+
+    // Удаляем предыдущие ошибки
+    clearFieldError(input);
+
+    // Проверка обязательности
+    if (rules.required && !value) {
+        showFieldError(input, 'Это поле обязательно для заполнения');
+        return false;
+    }
+
+    // Проверка минимальной длины
+    if (rules.minLength && value.length < rules.minLength) {
+        showFieldError(input, rules.message);
+        return false;
+    }
+
+    // Проверка паттерна
+    if (rules.pattern && value && !rules.pattern.test(value)) {
+        showFieldError(input, rules.message);
+        return false;
+    }
+
+    return true;
+}
+
+function showFieldError(input, message) {
+    const formGroup = input.closest('.form-group');
+    formGroup.classList.add('has-error');
+    input.classList.add('error');
+
+    let errorMsg = formGroup.querySelector('.error-message');
+    if (!errorMsg) {
+        errorMsg = document.createElement('div');
+        errorMsg.className = 'error-message';
+        formGroup.appendChild(errorMsg);
+    }
+    errorMsg.textContent = message;
+}
+
+function clearFieldError(input) {
+    const formGroup = input.closest('.form-group');
+    formGroup.classList.remove('has-error');
+    input.classList.remove('error');
 }
 
 // Загрузка временных слотов
@@ -229,7 +311,7 @@ async function loadTimeSlots() {
 
     } catch (error) {
         console.error('Error loading time slots:', error);
-        showError('Не удалось загрузить доступное время');
+        showToast('Не удалось загрузить доступное время', 'error');
     } finally {
         hideLoader();
     }
@@ -268,7 +350,7 @@ function renderTimeSlots() {
             button.classList.add('disabled');
             button.disabled = true;
         } else {
-            button.addEventListener('click', () => selectTime(slot.time));
+            button.addEventListener('click', () => selectTime(slot.time, button));
         }
 
         container.appendChild(button);
@@ -335,7 +417,7 @@ function generateTimeSlots(startTime, endTime, breakTime, bookedSlots, serviceDu
 }
 
 // Выбор времени
-function selectTime(time) {
+function selectTime(time, button) {
     console.log('✅ Time selected:', time);
 
     state.selectedTime = time;
@@ -344,7 +426,7 @@ function selectTime(time) {
     document.querySelectorAll('.time-slot').forEach(slot => {
         slot.classList.remove('selected');
     });
-    event.target.classList.add('selected');
+    button.classList.add('selected');
 
     // Показываем форму контактов
     document.getElementById('contact-section').classList.remove('hidden');
@@ -355,16 +437,32 @@ function selectTime(time) {
 async function handleBooking(e) {
     e.preventDefault();
 
+    console.log('📝 Validating form...');
+
+    // Валидация всех полей
+    const nameInput = document.getElementById('client-name');
+    const phoneInput = document.getElementById('client-phone');
+    const emailInput = document.getElementById('client-email');
+
+    const isNameValid = validateField(nameInput, validation.name);
+    const isPhoneValid = validateField(phoneInput, validation.phone);
+    const isEmailValid = emailInput.value.trim() ? validateField(emailInput, validation.email) : true;
+
+    if (!isNameValid || !isPhoneValid || !isEmailValid) {
+        showToast('Пожалуйста, исправьте ошибки в форме', 'error');
+        return;
+    }
+
     console.log('📝 Submitting booking...');
     showLoader();
 
     try {
         const formData = {
             service_id: state.selectedService.id,
-            client_first_name: document.getElementById('client-name').value.trim(),
+            client_first_name: nameInput.value.trim(),
             client_last_name: document.getElementById('client-lastname').value.trim() || null,
-            client_phone: document.getElementById('client-phone').value.replace(/\D/g, ''),
-            client_email: document.getElementById('client-email').value.trim() || null,
+            client_phone: phoneInput.value.replace(/\D/g, ''),
+            client_email: emailInput.value.trim() || null,
             appointment_date: `${state.selectedDate}T${state.selectedTime}:00`,
             client_notes: document.getElementById('client-notes').value.trim() || null
         };
@@ -388,10 +486,11 @@ async function handleBooking(e) {
         console.log('✅ Booking created:', result);
 
         showSuccess(result);
+        showToast('Запись успешно создана!', 'success');
 
     } catch (error) {
         console.error('❌ Booking error:', error);
-        showError(error.message);
+        showToast(error.message, 'error');
     } finally {
         hideLoader();
     }
@@ -477,6 +576,38 @@ function formatPhoneNumber(e) {
     e.target.value = formatted;
 }
 
+// Toast уведомления
+function showToast(message, type = 'info') {
+    // Удаляем предыдущие toast
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+
+    toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-message">${escapeHtml(message)}</div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Автоматически удаляем через 4 секунды
+    setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
 // Утилиты
 function showLoader() {
     document.getElementById('page-loader').style.display = 'flex';
@@ -486,15 +617,10 @@ function hideLoader() {
     document.getElementById('page-loader').style.display = 'none';
 }
 
-function showError(message) {
-    hideLoader();
-    alert('❌ ' + message);
-}
-
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-console.log('📄 Booking page script loaded');
+console.log('📄 Booking page script loaded (v2.0.0)');
