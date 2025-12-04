@@ -82,7 +82,7 @@ async function loadBookingLink() {
 
     if (profile.booking_slug) {
       // Используем booking_url (Telegram ссылка) как основную
-      const bookingUrl = profile.booking_url || `https://t.me/your_bot?start=booking_${profile.booking_slug}`;
+      const bookingUrl = profile.booking_url || `https://t.me/booking_cab_bot?start=booking_${profile.booking_slug}`;
       showLinkContent(bookingUrl);
     } else {
       showLinkEmpty();
