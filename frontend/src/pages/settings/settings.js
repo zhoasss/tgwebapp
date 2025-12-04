@@ -33,9 +33,7 @@ function initSettingsPage() {
     copyBookingLink(linkInput.value);
   });
 
-  document.getElementById('share-link-btn')?.addEventListener('click', () => {
-    shareBookingLink(linkInput.value);
-  });
+
 
   document.getElementById('generate-link-btn')?.addEventListener('click', generateBookingLink);
 

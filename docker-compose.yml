@@ -98,10 +98,10 @@ services:
     container_name: telegram-mini-app-db
     restart: unless-stopped
     volumes:
-      - ./backend/database.db:/app/database.db
+      - backend_data:/app/data
     networks:
       - app-network
-    command: sh -c "touch /app/database.db && chmod 660 /app/database.db && tail -f /dev/null"
+    command: sh -c "mkdir -p /app/data && touch /app/data/database.db && chmod 660 /app/data/database.db && tail -f /dev/null"
 
 networks:
   app-network:

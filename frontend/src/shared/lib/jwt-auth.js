@@ -98,8 +98,8 @@ class JWTAutManager {
    * Проверка наличия токенов в cookies
    */
   _hasValidTokens() {
-    // Простая проверка наличия cookies (детальная валидация будет на сервере)
-    return document.cookie.includes('access_token=');
+    // Проверяем наличие токена в localStorage, так как cookies могут быть HttpOnly
+    return !!localStorage.getItem('access_token');
   }
 
   /**

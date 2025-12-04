@@ -366,6 +366,9 @@ async def generate_booking_link(
                 # Telegram Web App URL - открывается внутри Telegram
                 telegram_url = f"https://t.me/{bot_username}?start=booking_{new_slug}"
                 
+                # Web URL for direct access
+                web_url = f"{config.web_app_url}/booking/{new_slug}"
+                
                 return {
                     "message": "Ссылка для бронирования создана",
                     "booking_slug": new_slug,
