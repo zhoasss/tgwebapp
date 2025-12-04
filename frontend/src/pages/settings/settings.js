@@ -137,12 +137,14 @@ function showLinkLoading(isLoading) {
 }
 
 function showLinkContent(url) {
+  linkLoading.style.display = 'none';
   linkInput.value = url;
   linkContent.style.display = 'block';
   linkEmpty.style.display = 'none';
 }
 
 function showLinkEmpty() {
+  linkLoading.style.display = 'none';
   linkContent.style.display = 'none';
   linkEmpty.style.display = 'block';
 }
