@@ -42,7 +42,12 @@ async def check_appointment_overlap(
     # 3. Новая запись полностью охватывает существующую
     # 4. Существующая запись полностью охватывает новую
     
-    query = select(Appointment).where(
+    # Добавляем eager loading для client
+    from sqlalchemy.orm import joinedload
+    
+    query = select(Appointment).options(
+        joinedload(Appointment.client)
+    ).where(
         Appointment.user_id == user_id,
         # Учитываем только активные записи (не отмененные и не завершенные)
         Appointment.status.in_([AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED]),
