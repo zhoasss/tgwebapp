@@ -74,21 +74,30 @@ function initSettingsPage() {
  * Загрузка информации о ссылке бронирования
  */
 async function loadBookingLink() {
+  console.log('🔗 loadBookingLink: Начало загрузки');
   try {
     showLinkLoading(true);
+    console.log('🔗 loadBookingLink: Лоадер показан');
 
     // Получаем текущий профиль
+    console.log('🔗 loadBookingLink: Запрос профиля...');
     const profile = await apiClient.get('/api/profiles/');
+    console.log('🔗 loadBookingLink: Профиль получен:', profile);
 
     if (profile.booking_slug) {
+      console.log('🔗 loadBookingLink: booking_slug найден:', profile.booking_slug);
       // Используем booking_url из API (всегда booking_cab_bot)
       if (profile.booking_url) {
+        console.log('🔗 loadBookingLink: booking_url найден:', profile.booking_url);
         showLinkContent(profile.booking_url);
+        console.log('🔗 loadBookingLink: Ссылка отображена');
       } else {
+        console.log('🔗 loadBookingLink: booking_url отсутствует, показываем кнопку генерации');
         // Если booking_url отсутствует, показываем кнопку генерации
         showLinkEmpty();
       }
     } else {
+      console.log('🔗 loadBookingLink: booking_slug отсутствует, показываем кнопку генерации');
       showLinkEmpty();
     }
 
@@ -99,6 +108,7 @@ async function loadBookingLink() {
     showLinkEmpty();
   } finally {
     showLinkLoading(false);
+    console.log('🔗 loadBookingLink: Завершено');
   }
 }
 
@@ -127,6 +137,7 @@ async function generateBookingLink() {
 // --- UI Helpers ---
 
 function showLinkLoading(isLoading) {
+  console.log('🔄 showLinkLoading:', isLoading);
   if (isLoading) {
     linkLoading.style.display = 'flex';
     linkContent.style.display = 'none';
@@ -137,6 +148,7 @@ function showLinkLoading(isLoading) {
 }
 
 function showLinkContent(url) {
+  console.log('✅ showLinkContent:', url);
   linkLoading.style.display = 'none';
   linkInput.value = url;
   linkContent.style.display = 'block';
@@ -144,6 +156,7 @@ function showLinkContent(url) {
 }
 
 function showLinkEmpty() {
+  console.log('🆕 showLinkEmpty');
   linkLoading.style.display = 'none';
   linkContent.style.display = 'none';
   linkEmpty.style.display = 'block';
