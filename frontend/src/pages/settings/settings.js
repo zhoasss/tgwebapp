@@ -19,13 +19,34 @@ const SETTINGS_ROUTES = {
 let linkLoading, linkContent, linkEmpty, linkInput;
 
 function initSettingsPage() {
+  console.log('⚙️ initSettingsPage: Начало инициализации');
+
   // Инициализация элементов карточки
   linkLoading = document.getElementById('link-loading');
   linkContent = document.getElementById('link-content');
   linkEmpty = document.getElementById('link-empty');
   linkInput = document.getElementById('booking-link-input');
 
+  console.log('⚙️ Элементы найдены:', {
+    linkLoading: !!linkLoading,
+    linkContent: !!linkContent,
+    linkEmpty: !!linkEmpty,
+    linkInput: !!linkInput
+  });
+
+  // Проверяем, что все элементы найдены
+  if (!linkLoading || !linkContent || !linkEmpty || !linkInput) {
+    console.error('❌ Не все элементы найдены!', {
+      linkLoading,
+      linkContent,
+      linkEmpty,
+      linkInput
+    });
+    return;
+  }
+
   // Загружаем данные ссылки
+  console.log('⚙️ Вызов loadBookingLink...');
   loadBookingLink();
 
   // Обработчики кнопок карточки

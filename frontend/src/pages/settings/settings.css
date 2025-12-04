@@ -110,7 +110,8 @@
 
 /* Лоадер */
 .link-loading {
-    display: flex;
+    display: none;
+    /* Скрыт по умолчанию, показывается через JS */
     justify-content: center;
     padding: 1rem;
 }
