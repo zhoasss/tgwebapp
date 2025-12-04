@@ -89,8 +89,13 @@ async def get_appointments(
         await session.refresh(user)
         logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
-    # Строим запрос
-    query = select(Appointment).where(Appointment.user_id == user.id)
+    # Строим запрос с eager loading для связанных объектов
+    from sqlalchemy.orm import joinedload
+    
+    query = select(Appointment).options(
+        joinedload(Appointment.service),
+        joinedload(Appointment.client)
+    ).where(Appointment.user_id == user.id)
 
     # Добавляем фильтры
     if status:
@@ -109,7 +114,7 @@ async def get_appointments(
     query = query.order_by(Appointment.appointment_date.desc()).limit(limit).offset(offset)
 
     result = await session.execute(query)
-    appointments = result.scalars().all()
+    appointments = result.scalars().unique().all()
 
     # Получаем общее количество
     count_query = select(func.count(Appointment.id)).where(Appointment.user_id == user.id)
@@ -274,9 +279,14 @@ async def get_appointment(
         await session.refresh(user)
         logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
-    # Находим запись
+    # Находим запись с eager loading
+    from sqlalchemy.orm import joinedload
+    
     result = await session.execute(
-        select(Appointment).where(
+        select(Appointment).options(
+            joinedload(Appointment.service),
+            joinedload(Appointment.client)
+        ).where(
             Appointment.id == appointment_id,
             Appointment.user_id == user.id
         )
@@ -334,9 +344,14 @@ async def update_appointment(
         await session.refresh(user)
         logging.info(f"✅ Новый пользователь создан (ID: {user.id})")
 
-    # Находим запись
+    # Находим запись с eager loading
+    from sqlalchemy.orm import joinedload
+    
     result = await session.execute(
-        select(Appointment).where(
+        select(Appointment).options(
+            joinedload(Appointment.service),
+            joinedload(Appointment.client)
+        ).where(
             Appointment.id == appointment_id,
             Appointment.user_id == user.id
         )
