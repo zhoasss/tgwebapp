@@ -53,6 +53,11 @@ class User(Base):
 
     def to_dict(self):
         """Преобразование модели в словарь"""
+        # Генерируем booking_url если есть booking_slug
+        booking_url = None
+        if self.booking_slug:
+            booking_url = f"https://t.me/booking_cab_bot?start=booking_{self.booking_slug}"
+        
         return {
             'id': self.id,
             'telegram_id': self.telegram_id,
@@ -64,6 +69,7 @@ class User(Base):
             'address': self.address,
             'avatar_url': self.avatar_url,
             'booking_slug': self.booking_slug,
+            'booking_url': booking_url,  # Готовая ссылка для клиентов
             'timezone': self.timezone,
             'currency': self.currency,
             'is_active': self.is_active,
