@@ -52,7 +52,8 @@ class ApiClient {
 
             const config = {
                 ...options,
-                headers
+                headers,
+                credentials: 'include'  // Include cookies in all requests
             };
 
             const response = await fetch(url, config);
