@@ -148,9 +148,24 @@ function renderRecords() {
  */
 async function loadRecords() {
   console.log('📡 Загрузка записей из API...');
+  console.log('🔍 Debug Info:');
+  console.log('  - window.location.href:', window.location.href);
+  console.log('  - window.location.hostname:', window.location.hostname);
 
   // Проверяем наличие токена авторизации
   const hasToken = localStorage.getItem('access_token');
+  console.log('  - Has access_token:', !!hasToken);
+  if (hasToken) {
+    console.log('  - Token preview:', hasToken.substring(0, 20) + '...');
+  }
+
+  // Проверяем Telegram WebApp
+  console.log('  - window.Telegram:', !!window.Telegram);
+  console.log('  - window.Telegram.WebApp:', !!window.Telegram?.WebApp);
+  console.log('  - initData:', !!window.Telegram?.WebApp?.initData);
+  if (window.Telegram?.WebApp?.initData) {
+    console.log('  - initData length:', window.Telegram.WebApp.initData.length);
+  }
 
   // Если нет токена и нет initData - показываем ошибку
   if (!hasToken && !window.Telegram?.WebApp?.initData) {
@@ -165,7 +180,9 @@ async function loadRecords() {
   pageLoader.show();
 
   try {
+    console.log('📞 Вызов getAppointments...');
     const response = await getAppointments(currentStatus, null, null, 50, 0);
+    console.log('📦 Ответ от API:', response);
 
     if (response && response.appointments) {
       records = response.appointments;

@@ -15,7 +15,16 @@ const API_CONFIG_VERSION = '1.0.3';
 export function getApiBaseUrl() {
   // Определяем текущий hostname
   const hostname = window.location.hostname;
-  console.log('🌐 Current hostname:', hostname);
+  const protocol = window.location.protocol;
+  const fullUrl = window.location.href;
+
+  console.log('🌐 URL Detection:');
+  console.log('  - Full URL:', fullUrl);
+  console.log('  - Hostname:', hostname);
+  console.log('  - Protocol:', protocol);
+  console.log('  - User Agent:', navigator.userAgent);
+  console.log('  - Is Telegram WebApp:', !!window.Telegram?.WebApp);
+  console.log('  - Has initData:', !!window.Telegram?.WebApp?.initData);
 
   // Проверяем, находимся ли мы на production домене
   const isProduction = hostname === 'booking-cab.ru' ||
