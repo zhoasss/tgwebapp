@@ -189,6 +189,7 @@ class JWTAutManager {
       }
 
       console.log('📡 Выполнение входа через initData...');
+      console.log('🔗 Login URL:', `${API_BASE_URL}/api/auth/signin`);
 
       const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
         method: 'POST',

@@ -1,11 +1,12 @@
 /**
  * Конфигурация API
  * Слой Shared - переиспользуемый код
- * @version 1.0.3
+ * @version 3.0.0
  */
 
 // Version for cache busting
-const API_CONFIG_VERSION = '1.0.3';
+const API_CONFIG_VERSION = '3.0.0';
+console.log(`📡 API Config Loaded: v${API_CONFIG_VERSION}`);
 
 /**
  * Определяет URL API сервера
@@ -70,4 +71,3 @@ export const API_ENDPOINTS = {
   DEBUG: '/api/debug',
   TEST: '/api/test',
 };
-

@@ -1,11 +1,11 @@
 /**
  * API Client Wrapper
  * Centralizes API requests, auth headers, and loader management.
- * @version 1.0.3
+ * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=1.0.3';
-import pageLoader from '../ui/loader/loader.js?v=1.0.3';
+import { API_BASE_URL } from '../config/api.js';
+import pageLoader from '../ui/loader/loader.js';
 
 class ApiClient {
     /**

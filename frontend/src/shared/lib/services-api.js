@@ -10,6 +10,10 @@ import { API_ENDPOINTS } from '../config/api.js';
  * Get all services
  */
 export async function getServices() {
+    console.log('🔍 services-api: getServices called. API_ENDPOINTS:', API_ENDPOINTS);
+    if (!API_ENDPOINTS || !API_ENDPOINTS.SERVICES) {
+        console.error('❌ CRITICAL: API_ENDPOINTS.SERVICES is undefined!', API_ENDPOINTS);
+    }
     return await apiClient.get(API_ENDPOINTS.SERVICES);
 }
 
