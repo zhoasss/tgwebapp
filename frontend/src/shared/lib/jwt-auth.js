@@ -120,6 +120,7 @@ class JWTAutManager {
       const response = await fetch(`${API_BASE_URL}/api/auth/protected`, {
         method: 'GET',
         headers: headers,
+        credentials: 'include'
       });
 
       if (response.ok) {
@@ -164,6 +165,7 @@ class JWTAutManager {
       const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
         method: 'GET',
         headers: headers,
+        credentials: 'include'
       });
 
       if (response.ok) {
@@ -199,6 +201,7 @@ class JWTAutManager {
           'X-Init-Data': initData,
           'User-Agent': navigator.userAgent,
         },
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -288,10 +291,10 @@ class JWTAutManager {
 
       const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: body
       });
 

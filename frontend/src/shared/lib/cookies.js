@@ -16,12 +16,14 @@ export function setCookie(name, value, days = 30) {
         date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
         expires = "; expires=" + date.toUTCString();
     }
-    // Using SameSite=Lax by default, or None; Secure if needed for iframes
-    // For Telegram WebApps, strictly speaking, they are in an iframe.
-    // If the backend is on the same domain (booking-cab.ru) as the frontend, Lax is fine.
-    // But if we are in an iframe, Safari/iOS might need None; Secure.
-    // We will use SameSite=None; Secure which is the most compatible for WebApps.
-    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=None; Secure";
+    // Определяем SameSite в зависимости от протокола и контекста
+    // Для Telegram WebApps (https iframe) используем SameSite=None; Secure
+    // Для локальной разработки используем SameSite=Lax
+    const isSecureContext = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    const sameSite = window.location.protocol === 'https:' ? 'SameSite=None; Secure' : 'SameSite=Lax';
+    
+    console.log(`🍪 setCookie: ${name} (protocol: ${window.location.protocol}, sameSite: ${sameSite})`);
+    document.cookie = name + "=" + (value || "") + expires + "; path=/" + (sameSite ? "; " + sameSite : "");
 }
 
 /**

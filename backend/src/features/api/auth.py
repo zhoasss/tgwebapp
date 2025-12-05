@@ -200,6 +200,8 @@ async def refresh_token(
 
         return {
             "message": "Токены обновлены",
+            "access_token": token_response["access_token"],
+            "refresh_token": token_response["refresh_token"],
             "user": user
         }
 
