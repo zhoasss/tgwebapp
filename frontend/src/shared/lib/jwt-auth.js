@@ -4,8 +4,8 @@
  */
 
 import { getInitData } from './telegram.js';
-import { API_BASE_URL } from '../config/api.js?v=3.0.5';
-import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.5';
+import { API_BASE_URL } from '../config/api.js?v=3.0.6';
+import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.6';
 
 /**
  * Класс для управления JWT аутентификации
@@ -235,6 +235,14 @@ class JWTAutManager {
       }
 
       this.isAuthenticated = true;
+
+      // Проверяем, что cookies действительно сохранились
+      console.log('🔍 Проверка сохраненных cookies:');
+      const savedAccessToken = getCookie('access_token');
+      const savedRefreshToken = getCookie('refresh_token');
+      console.log('   - access_token in cookies:', savedAccessToken ? '✅ YES' : '❌ NO');
+      console.log('   - refresh_token in cookies:', savedRefreshToken ? '✅ YES' : '❌ NO');
+      console.log('   - All cookies:', document.cookie);
 
       // После успешного входа нужно получить данные пользователя
       await this._loadCurrentUser();

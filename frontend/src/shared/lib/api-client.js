@@ -4,9 +4,9 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=3.0.5';
-import pageLoader from '../ui/loader/loader.js?v=3.0.5';
-import { getCookie, setCookie } from './cookies.js?v=3.0.5';
+import { API_BASE_URL } from '../config/api.js?v=3.0.6';
+import pageLoader from '../ui/loader/loader.js?v=3.0.6';
+import { getCookie, setCookie } from './cookies.js?v=3.0.6';
 
 class ApiClient {
     /**
@@ -66,8 +66,8 @@ class ApiClient {
                 url: url,
                 method: config.method || 'GET',
                 credentials: config.credentials,
-                headers: Object.keys(config.headers),
-                cookies: document.cookie
+                hasAuthHeader: !!headers['Authorization'],
+                allCookies: document.cookie || '(none)'
             });
 
             const response = await fetch(url, config);
