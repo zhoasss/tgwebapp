@@ -34,10 +34,12 @@ class JWTAutManager {
    */
   async _initAuth() {
     try {
-      console.log('🔐 Инициализация JWT аутентификации (Cookies)...');
+      console.log('🔐 === INIT AUTH START ===');
+      console.log('   - API_BASE_URL:', API_BASE_URL);
 
       // Проверяем, есть ли уже токены в cookies
       const hasTokens = this._hasValidTokens();
+      console.log('   - hasTokens in cookies:', hasTokens);
 
       if (hasTokens) {
         console.log('✅ Найдены токены в cookies, проверяем валидность...');
@@ -63,6 +65,7 @@ class JWTAutManager {
 
       try {
         // Выполняем вход через initData
+        console.log('📞 Вызов login()...');
         const loginSuccess = await this.login();
 
         if (loginSuccess) {
