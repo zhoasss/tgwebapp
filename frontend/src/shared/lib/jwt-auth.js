@@ -21,10 +21,13 @@ class JWTAutManager {
    * Инициализация аутентификации
    */
   async init() {
+    console.log('🚀 JWT Manager init() called');
     if (this.initPromise) {
+      console.log('   - Returning cached initPromise');
       return this.initPromise;
     }
 
+    console.log('   - Starting new _initAuth()');
     this.initPromise = this._initAuth();
     return this.initPromise;
   }
