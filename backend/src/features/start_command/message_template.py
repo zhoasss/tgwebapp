@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, KeyboardButton, ReplyKeyboardMarkup
 import logging
+import time
 
 def create_welcome_message(user) -> str:
     """Создает текст приветственного сообщения"""
@@ -17,25 +18,30 @@ def create_welcome_message(user) -> str:
 
 def create_keyboard(web_app_url: str) -> InlineKeyboardMarkup:
     """Создает клавиатуру с кнопкой открытия кабинета"""
+    # Добавляем timestamp для обхода кеша Telegram WebView
+    separator = '&' if '?' in web_app_url else '?'
+    cache_buster = f"{separator}t={int(time.time())}"
+    url_with_cache_buster = f"{web_app_url}{cache_buster}"
+    
     # Проверяем протокол URL
     if web_app_url.startswith('https://'):
         # HTTPS - используем Web App кнопку для открытия в Telegram
         keyboard = [
             [InlineKeyboardButton(
                 "Открыть кабинет 🚀",
-                web_app=WebAppInfo(url=web_app_url)
+                web_app=WebAppInfo(url=url_with_cache_buster)
             )]
         ]
-        logging.info(f"✅ Используем Web App кнопку для HTTPS URL: {web_app_url}")
+        logging.info(f"✅ Используем Web App кнопку для HTTPS URL: {url_with_cache_buster}")
     else:
         # HTTP - используем обычную ссылку (Telegram не позволяет Web App для HTTP)
         keyboard = [
             [InlineKeyboardButton(
                 "Открыть кабинет 🌐",
-                url=web_app_url
+                url=url_with_cache_buster
             )]
         ]
-        logging.warning(f"⚠️ Используем обычную ссылку для HTTP URL: {web_app_url}")
+        logging.warning(f"⚠️ Используем обычную ссылку для HTTP URL: {url_with_cache_buster}")
         logging.warning("💡 Для Web App в Telegram настройте HTTPS!")
     return InlineKeyboardMarkup(keyboard)
 
