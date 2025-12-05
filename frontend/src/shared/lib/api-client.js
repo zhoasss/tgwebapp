@@ -4,9 +4,9 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=3.0.6';
-import pageLoader from '../ui/loader/loader.js?v=3.0.6';
-import { getCookie, setCookie } from './cookies.js?v=3.0.6';
+import { API_BASE_URL } from '../config/api.js?v=3.0.7';
+import pageLoader from '../ui/loader/loader.js?v=3.0.7';
+import { getCookie, setCookie } from './cookies.js?v=3.0.7';
 
 class ApiClient {
     /**
@@ -97,6 +97,19 @@ class ApiClient {
             if (!response.ok) {
                 const errorText = await response.text();
                 let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                
+                console.error('❌ === API ERROR ===');
+                console.error('   Status:', response.status);
+                console.error('   Endpoint:', endpoint);
+                console.error('   Raw response:', errorText);
+                console.log('🔍 DIAGNOSTICS:');
+                console.log('   - Has auth token:', !!getCookie('access_token'));
+                console.log('   - All cookies:', document.cookie || 'EMPTY');
+                console.log('   - Request headers had:', {
+                    hasAuthHeader: !!headers['Authorization'],
+                    credentials: 'include'
+                  });
+                
                 try {
                     const errorJson = JSON.parse(errorText);
                     errorMessage = errorJson.detail || errorMessage;

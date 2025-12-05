@@ -4,8 +4,8 @@
  */
 
 import { getInitData } from './telegram.js';
-import { API_BASE_URL } from '../config/api.js?v=3.0.6';
-import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.6';
+import { API_BASE_URL } from '../config/api.js?v=3.0.7';
+import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.7';
 
 /**
  * Класс для управления JWT аутентификации
@@ -108,13 +108,23 @@ class JWTAutManager {
    */
   async _checkAuthStatus() {
     try {
+      console.log('🔍 === CHECK AUTH STATUS ===');
       const token = getCookie('access_token');
       const headers = {
         'Content-Type': 'application/json',
       };
 
+      console.log('📋 Status check details:', {
+        hasToken: !!token,
+        tokenLength: token ? token.length : 0,
+        endpoint: `${API_BASE_URL}/api/auth/protected`
+      });
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+        console.log('✅ Added Authorization header');
+      } else {
+        console.warn('⚠️ No token found in cookies for Authorization header');
       }
 
       const response = await fetch(`${API_BASE_URL}/api/auth/protected`, {
@@ -122,6 +132,8 @@ class JWTAutManager {
         headers: headers,
         credentials: 'include'
       });
+
+      console.log('📡 Response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
@@ -144,6 +156,7 @@ class JWTAutManager {
       }
     } catch (error) {
       console.error('❌ Ошибка проверки статуса аутентификации:', error);
+      console.log('🔍 Will proceed without cached tokens');
       return { is_authenticated: false };
     }
   }
@@ -153,13 +166,23 @@ class JWTAutManager {
    */
   async _loadCurrentUser() {
     try {
+      console.log('👥 === LOAD CURRENT USER ===');
       const token = getCookie('access_token');
       const headers = {
         'Content-Type': 'application/json',
       };
 
+      console.log('📋 Load user details:', {
+        hasToken: !!token,
+        tokenLength: token ? token.length : 0,
+        endpoint: `${API_BASE_URL}/api/auth/me`
+      });
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+        console.log('✅ Added Authorization header');
+      } else {
+        console.warn('⚠️ No token in cookies for /me endpoint');
       }
 
       const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -168,12 +191,14 @@ class JWTAutManager {
         credentials: 'include'
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
         this.user = data.user;
-        console.log('👤 Данные пользователя загружены:', this.user);
+        console.log('✅ Данные пользователя загружены:', this.user);
       } else {
-        console.warn('⚠️ Не удалось загрузить данные пользователя');
+        console.warn('⚠️ Не удалось загрузить данные пользователя (status:', response.status + ')');
       }
     } catch (error) {
       console.error('❌ Ошибка загрузки данных пользователя:', error);
@@ -185,12 +210,25 @@ class JWTAutManager {
    */
   async login() {
     try {
+      console.log('🚀 === LOGIN ATTEMPT START ===');
       const initData = getInitData();
+      
+      console.log('📋 LOGIN DIAGNOSTICS:', {
+        hasInitData: !!initData,
+        initDataLength: initData ? initData.length : 0,
+        apiBaseUrl: API_BASE_URL,
+        timestamp: new Date().toISOString()
+      });
 
       if (!initData) {
-        throw new Error('initData отсутствует');
+        console.error('❌ FATAL: initData is null or undefined');
+        console.error('   This means app is NOT running inside Telegram WebApp');
+        console.log('   Expected: Running in https://t.me/botusername/appname');
+        console.log('   Actual: Running in regular browser or without Telegram context');
+        throw new Error('initData отсутствует - приложение должно запускаться из Telegram');
       }
 
+      console.log('✅ initData found, proceeding with login');
       console.log('📡 Выполнение входа через initData...');
       console.log('🔐 initData preview:', initData.substring(0, 50) + '...');
       console.log('🔗 Login URL:', `${API_BASE_URL}/api/auth/signin`);
@@ -250,7 +288,21 @@ class JWTAutManager {
       return true;
 
     } catch (error) {
-      console.error('❌ Ошибка входа:', error);
+      console.error('❌ === LOGIN FAILED ===');
+      console.error('Error message:', error.message);
+      console.error('Full error:', error);
+      console.log('🔍 DEBUGGING INFO:');
+      console.log('   - Environment:', {
+        location: window.location.href,
+        protocol: window.location.protocol,
+        host: window.location.host
+      });
+      console.log('   - Telegram availability:', {
+        hasTelegramObject: !!window.Telegram,
+        hasWebApp: !!window.Telegram?.WebApp,
+        hasInitData: !!window.Telegram?.WebApp?.initData
+      });
+      
       this.isAuthenticated = false;
       this.user = null;
       return false;
