@@ -123,8 +123,7 @@ export function validateInitData() {
  */
 export async function logout() {
   console.log('👋 Выход из приложения');
-  // Импортируем JWT менеджер для выполнения выхода
-  const jwtAuthManager = (await import('./jwt-auth.js?v=3.0.4')).default;
+  // Dynamic import to avoid circular dependency
+  const jwtAuthManager = (await import('./jwt-auth.js?v=3.1.0')).default;
   await jwtAuthManager.logout();
 }
-

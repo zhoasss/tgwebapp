@@ -4,8 +4,8 @@
  */
 
 import { getInitData } from './telegram.js';
-import { API_BASE_URL } from '../config/api.js?v=3.0.7';
-import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.7';
+import { API_BASE_URL } from '../config/api.js?v=3.1.0';
+import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.1.0';
 
 /**
  * Класс для управления JWT аутентификации
@@ -218,7 +218,7 @@ class JWTAutManager {
     try {
       console.log('🚀 === LOGIN ATTEMPT START ===');
       const initData = getInitData();
-      
+
       console.log('📋 LOGIN DIAGNOSTICS:', {
         hasInitData: !!initData,
         initDataLength: initData ? initData.length : 0,
@@ -308,7 +308,7 @@ class JWTAutManager {
         hasWebApp: !!window.Telegram?.WebApp,
         hasInitData: !!window.Telegram?.WebApp?.initData
       });
-      
+
       this.isAuthenticated = false;
       this.user = null;
       return false;

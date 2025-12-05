@@ -4,9 +4,9 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=3.0.7';
-import pageLoader from '../ui/loader/loader.js?v=3.0.7';
-import { getCookie, setCookie } from './cookies.js?v=3.0.7';
+import { API_BASE_URL } from '../config/api.js?v=3.1.0';
+import pageLoader from '../ui/loader/loader.js?v=3.1.0';
+import { getCookie, setCookie } from './cookies.js?v=3.1.0';
 
 class ApiClient {
     /**
@@ -23,9 +23,9 @@ class ApiClient {
         try {
             // Debug logging
             const accessToken = getCookie('access_token');
-            console.log('🔍 API Request:', { 
-                endpoint, 
-                type: typeof endpoint, 
+            console.log('🔍 API Request:', {
+                endpoint,
+                type: typeof endpoint,
                 hasToken: !!accessToken,
                 cookies: document.cookie
             });
@@ -97,7 +97,7 @@ class ApiClient {
             if (!response.ok) {
                 const errorText = await response.text();
                 let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                
+
                 console.error('❌ === API ERROR ===');
                 console.error('   Status:', response.status);
                 console.error('   Endpoint:', endpoint);
@@ -108,8 +108,8 @@ class ApiClient {
                 console.log('   - Request headers had:', {
                     hasAuthHeader: !!headers['Authorization'],
                     credentials: 'include'
-                  });
-                
+                });
+
                 try {
                     const errorJson = JSON.parse(errorText);
                     errorMessage = errorJson.detail || errorMessage;

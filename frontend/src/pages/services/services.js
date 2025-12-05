@@ -2,9 +2,9 @@
  * Services Page Logic
  */
 
-import { getServices, deleteService } from '../../shared/lib/services-api.js?v=3.0.4';
-import pageLoader from '../../shared/ui/loader/loader.js?v=3.0.4';
-import { showNotification, showConfirmation } from '../../shared/lib/telegram.js?v=3.0.4';
+import { getServices, deleteService } from '../../shared/lib/services-api.js?v=3.1.0';
+import pageLoader from '../../shared/ui/loader/loader.js?v=3.1.0';
+import { showNotification, showConfirmation } from '../../shared/lib/telegram.js?v=3.1.0';
 
 // DOM Elements
 const servicesList = document.getElementById('services-list');

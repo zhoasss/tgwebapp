@@ -3,9 +3,9 @@
  * @version 1.2.0
  */
 
-import { getWorkingHours, updateWorkingDaysBulk } from '../../shared/lib/schedule-api.js?v=1.0.4';
-import pageLoader from '../../shared/ui/loader/loader.js?v=1.0.7';
-import { showNotification } from '../../shared/lib/telegram.js?v=1.0.3';
+import { getWorkingHours, updateWorkingDaysBulk } from '../../shared/lib/schedule-api.js?v=3.1.0';
+import pageLoader from '../../shared/ui/loader/loader.js?v=3.1.0';
+import { showNotification } from '../../shared/lib/telegram.js?v=3.1.0';
 
 // Константы
 const MONTH_NAMES = [

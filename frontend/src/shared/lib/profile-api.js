@@ -1,5 +1,5 @@
-import apiClient from './api-client.js?v=3.0.4';
-import { API_ENDPOINTS } from '../config/api.js?v=3.0.4';
+import apiClient from './api-client.js?v=3.1.0';
+import { API_ENDPOINTS } from '../config/api.js?v=3.1.0';
 
 /**
  * Get user profile
