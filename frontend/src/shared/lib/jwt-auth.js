@@ -4,8 +4,8 @@
  */
 
 import { getInitData } from './telegram.js';
-import { API_BASE_URL } from '../config/api.js?v=3.0.4';
-import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.4';
+import { API_BASE_URL } from '../config/api.js?v=3.0.5';
+import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.5';
 
 /**
  * Класс для управления JWT аутентификации

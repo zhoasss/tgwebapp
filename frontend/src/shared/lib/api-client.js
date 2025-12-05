@@ -4,9 +4,9 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=3.0.4';
-import pageLoader from '../ui/loader/loader.js?v=3.0.4';
-import { getCookie, setCookie } from './cookies.js?v=3.0.4';
+import { API_BASE_URL } from '../config/api.js?v=3.0.5';
+import pageLoader from '../ui/loader/loader.js?v=3.0.5';
+import { getCookie, setCookie } from './cookies.js?v=3.0.5';
 
 class ApiClient {
     /**
@@ -22,7 +22,13 @@ class ApiClient {
 
         try {
             // Debug logging
-            console.log('🔍 API Request:', { endpoint, type: typeof endpoint, options });
+            const accessToken = getCookie('access_token');
+            console.log('🔍 API Request:', { 
+                endpoint, 
+                type: typeof endpoint, 
+                hasToken: !!accessToken,
+                cookies: document.cookie
+            });
 
             // Validate endpoint parameter
             if (!endpoint || typeof endpoint !== 'string') {
@@ -55,6 +61,14 @@ class ApiClient {
                 headers,
                 credentials: 'include'  // Include cookies in all requests
             };
+
+            console.log('📤 Fetch config:', {
+                url: url,
+                method: config.method || 'GET',
+                credentials: config.credentials,
+                headers: Object.keys(config.headers),
+                cookies: document.cookie
+            });
 
             const response = await fetch(url, config);
 

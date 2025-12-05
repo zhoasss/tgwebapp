@@ -22,8 +22,17 @@ export function setCookie(name, value, days = 30) {
     const isSecureContext = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
     const sameSite = window.location.protocol === 'https:' ? 'SameSite=None; Secure' : 'SameSite=Lax';
     
-    console.log(`🍪 setCookie: ${name} (protocol: ${window.location.protocol}, sameSite: ${sameSite})`);
-    document.cookie = name + "=" + (value || "") + expires + "; path=/" + (sameSite ? "; " + sameSite : "");
+    const cookieString = name + "=" + (value || "") + expires + "; path=/" + (sameSite ? "; " + sameSite : "");
+    console.log(`🍪 setCookie: ${name}`);
+    console.log(`   - protocol: ${window.location.protocol}`);
+    console.log(`   - sameSite: ${sameSite}`);
+    console.log(`   - value: ${value ? value.substring(0, 30) + '...' : 'empty'}`);
+    console.log(`   - cookie string: ${cookieString}`);
+    document.cookie = cookieString;
+    
+    // Проверяем, что cookie установлена
+    const checkCookie = getCookie(name);
+    console.log(`   - verification: ${checkCookie ? '✅ установлена' : '❌ НЕ установлена'}`);
 }
 
 /**
@@ -37,8 +46,13 @@ export function getCookie(name) {
     for (let i = 0; i < ca.length; i++) {
         let c = ca[i];
         while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        if (c.indexOf(nameEQ) === 0) {
+            const value = c.substring(nameEQ.length, c.length);
+            console.log(`🔍 getCookie: ${name} = ${value ? value.substring(0, 30) + '...' : 'empty'}`);
+            return value;
+        }
     }
+    console.log(`🔍 getCookie: ${name} = NOT FOUND (available: ${document.cookie})`);
     return null;
 }
 

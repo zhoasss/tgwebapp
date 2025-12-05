@@ -71,9 +71,12 @@ async def get_current_user(
     2. Authorization header (для отладки)
     """
     # Логирование для отладки
-    logging.info(f"🔍 get_current_user: access_token from cookie: {access_token[:20] if access_token else 'None'}...")
-    logging.info(f"🔍 get_current_user: refresh_token from cookie: {refresh_token[:20] if refresh_token else 'None'}...")
-    logging.info(f"🔍 get_current_user: credentials from header: {credentials.credentials[:20] if credentials and credentials.credentials else 'None'}...")
+    logging.info("="*60)
+    logging.info("🔍 get_current_user() called")
+    logging.info(f"   access_token from cookie: {access_token[:20] if access_token else 'None'}...")
+    logging.info(f"   refresh_token from cookie: {refresh_token[:20] if refresh_token else 'None'}...")
+    logging.info(f"   credentials from header: {credentials.credentials[:20] if credentials and credentials.credentials else 'None'}...")
+    logging.info("="*60)
     
     token = None
 
