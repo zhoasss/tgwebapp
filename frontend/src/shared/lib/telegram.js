@@ -199,7 +199,14 @@ export function showConfirmation(message, callback) {
  */
 export function getInitData() {
   const tg = getTelegramWebApp();
-  return tg?.initData || null;
+  const initData = tg?.initData || null;
+  console.log('🔍 getInitData():', {
+    hasTelegramApp: !!tg,
+    hasInitData: !!initData,
+    initDataLength: initData ? initData.length : 0,
+    initDataPreview: initData ? initData.substring(0, 50) + '...' : 'NONE'
+  });
+  return initData;
 }
 
 /**

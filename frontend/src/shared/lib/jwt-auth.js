@@ -192,6 +192,7 @@ class JWTAutManager {
       }
 
       console.log('📡 Выполнение входа через initData...');
+      console.log('🔐 initData preview:', initData.substring(0, 50) + '...');
       console.log('🔗 Login URL:', `${API_BASE_URL}/api/auth/signin`);
 
       const response = await fetch(`${API_BASE_URL}/api/auth/signin`, {
@@ -206,21 +207,31 @@ class JWTAutManager {
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ Server response:', response.status, errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
       console.log('✅ Вход выполнен успешно, получены токены');
+      console.log('📦 Response data:', {
+        access_token: data.access_token ? data.access_token.substring(0, 30) + '...' : 'MISSING',
+        refresh_token: data.refresh_token ? data.refresh_token.substring(0, 30) + '...' : 'MISSING',
+        token_type: data.token_type
+      });
 
       // Сохраняем токены в cookies
       if (data.access_token) {
         setCookie('access_token', data.access_token);
         console.log('💾 access_token сохранён в Cookies');
+      } else {
+        console.error('❌ access_token отсутствует в ответе!');
       }
 
       if (data.refresh_token) {
         setCookie('refresh_token', data.refresh_token);
         console.log('💾 refresh_token сохранён в Cookies');
+      } else {
+        console.error('❌ refresh_token отсутствует в ответе!');
       }
 
       this.isAuthenticated = true;
