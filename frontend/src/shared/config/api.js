@@ -38,6 +38,11 @@ export function getApiBaseUrl() {
     const apiUrl = 'https://booking-cab.ru';
     console.log('🎯 Production API URL:', apiUrl);
     return apiUrl;
+  } else if (hostname.includes('github.io') || hostname.includes('railway.app')) {
+    // Для GitHub Pages и Railway используем production Railway backend
+    const apiUrl = 'https://zhoasssgithubio-production.up.railway.app';
+    console.log('🚀 Cloud API URL (Railway):', apiUrl);
+    return apiUrl;
   } else {
     // Для разработки используем текущий протокол и hostname
     const apiUrl = `${window.location.protocol}//${hostname}`;

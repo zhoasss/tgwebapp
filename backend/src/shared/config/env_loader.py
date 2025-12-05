@@ -155,7 +155,8 @@ class Config:
                 "https://web.telegram.org",
                 "https://telegram.me",
                 "https://t.me",
-                "https://telegram.org"
+                "https://telegram.org",
+                "https://zhoasssgithubio-production.up.railway.app"
             ]
 
     def _get_default_database_url(self) -> str:
