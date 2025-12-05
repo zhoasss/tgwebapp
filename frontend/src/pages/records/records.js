@@ -149,11 +149,17 @@ function renderRecords() {
 async function loadRecords() {
   console.log('📡 Загрузка записей из API...');
 
-  // Проверяем авторизацию
-  if (!window.Telegram?.WebApp?.initData) {
+  // Проверяем наличие токена авторизации
+  const hasToken = localStorage.getItem('access_token');
+
+  // Если нет токена и нет initData - показываем ошибку
+  if (!hasToken && !window.Telegram?.WebApp?.initData) {
+    console.error('❌ Нет токена и нет initData для авторизации');
     showError('Не удалось получить данные авторизации. Пожалуйста, перезапустите приложение.');
     return;
   }
+
+  console.log('✅ Авторизация доступна:', hasToken ? 'через токен' : 'через initData');
 
   // Показываем глобальный лоадер
   pageLoader.show();
@@ -220,23 +226,31 @@ function filterRecords(status) {
 function initRecordsPage() {
   console.log('🚀 Инициализация страницы записей...');
 
-  // Проверяем авторизацию
-  if (!window.Telegram?.WebApp) {
+  // Проверяем наличие токена
+  const hasToken = localStorage.getItem('access_token');
+
+  // Если есть токен, сразу загружаем записи
+  if (hasToken) {
+    console.log('✅ Найден токен авторизации, загружаем записи...');
+    loadRecords();
+  }
+  // Если нет токена, проверяем Telegram WebApp
+  else if (!window.Telegram?.WebApp) {
+    console.error('❌ Telegram WebApp недоступен и нет токена');
     showError('Это приложение работает только в Telegram. Пожалуйста, запустите его через бота.');
     return;
   }
-
-  // Ждем загрузки Telegram WebApp
-  if (!window.Telegram.WebApp.initData) {
+  // Если Telegram WebApp есть, но initData еще не готов - ждем
+  else if (!window.Telegram.WebApp.initData) {
     console.log('⏳ Ожидание инициализации Telegram WebApp...');
     setTimeout(initRecordsPage, 100);
     return;
   }
-
-  console.log('✅ Telegram WebApp готов, загружаем записи...');
-
-  // Загружаем записи
-  loadRecords();
+  // Если initData готов - загружаем записи
+  else {
+    console.log('✅ Telegram WebApp готов, загружаем записи...');
+    loadRecords();
+  }
 
   // Настраиваем фильтры (если есть)
   const filterButtons = document.querySelectorAll('.filter-btn');

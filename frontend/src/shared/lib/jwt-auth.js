@@ -107,23 +107,35 @@ class JWTAutManager {
    */
   async _checkAuthStatus() {
     try {
+      const token = localStorage.getItem('access_token');
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/auth/protected`, {
         method: 'GET',
-        credentials: 'include', // Важно для отправки cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: headers,
       });
 
       if (response.ok) {
-        const isAuthenticated = await response.json();
-        if (isAuthenticated) {
-          // Если авторизован, загружаем данные пользователя
+        const data = await response.json();
+        console.log('✅ Ответ от /api/auth/protected:', data);
+
+        // API возвращает true если авторизован
+        if (data === true || data.is_authenticated === true) {
+          // Загружаем данные пользователя
           await this._loadCurrentUser();
-          return { is_authenticated: true };
+          return { is_authenticated: true, user: this.user };
+        } else {
+          console.log('⚠️ Пользователь не авторизован');
+          return { is_authenticated: false };
         }
       } else if (response.status === 401) {
-        console.log('⚠️ Токены истекли или невалидны');
+        console.log('⚠️ Токены истекли или невалидны (401)');
         return { is_authenticated: false };
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
