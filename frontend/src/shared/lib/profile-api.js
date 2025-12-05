@@ -1,10 +1,5 @@
-/**
- * API Client for Profile and Business Logic
- * Uses the centralized ApiClient for requests.
- */
-
-import apiClient from './api-client.js';
-import { API_ENDPOINTS } from '../config/api.js';
+import apiClient from './api-client.js?v=3.0.2';
+import { API_ENDPOINTS } from '../config/api.js?v=3.0.2';
 
 /**
  * Get user profile
@@ -24,6 +19,16 @@ export async function updateProfile(data) {
  * Get user appointments
  */
 export async function getAppointments(status = null, dateFrom = null, dateTo = null, limit = 50, offset = 0) {
+  console.log('🔍 profile-api: getAppointments called. API_ENDPOINTS:', API_ENDPOINTS);
+
+  const endpoints = API_ENDPOINTS || {};
+  const appointmentsEndpoint = endpoints.APPOINTMENTS;
+
+  if (!appointmentsEndpoint) {
+    console.error('❌ CRITICAL: API_ENDPOINTS.APPOINTMENTS is undefined!', API_ENDPOINTS);
+    throw new Error('Internal Error: Appointments endpoint not defined');
+  }
+
   const params = new URLSearchParams();
   if (status) params.append('status', status);
   if (dateFrom) params.append('date_from', dateFrom);
@@ -32,7 +37,7 @@ export async function getAppointments(status = null, dateFrom = null, dateTo = n
   if (offset !== 0) params.append('offset', offset.toString());
 
   const queryString = params.toString();
-  const endpoint = `${API_ENDPOINTS.APPOINTMENTS}${queryString ? '?' + queryString : ''}`;
+  const endpoint = `${appointmentsEndpoint}${queryString ? '?' + queryString : ''}`;
 
   return await apiClient.get(endpoint);
 }

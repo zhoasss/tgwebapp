@@ -4,9 +4,9 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=3.0.2';
-import pageLoader from '../ui/loader/loader.js?v=3.0.2';
-import { getCookie, setCookie } from './cookies.js?v=3.0.2';
+import { API_BASE_URL } from '../config/api.js?v=3.0.3';
+import pageLoader from '../ui/loader/loader.js?v=3.0.3';
+import { getCookie, setCookie } from './cookies.js?v=3.0.3';
 
 class ApiClient {
     /**
