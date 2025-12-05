@@ -26,42 +26,37 @@
   </script>
 
   <!-- App Styles -->
-  <link rel="stylesheet" href="src/app/styles/variables.css?v=1.0.9">
-  <link rel="stylesheet" href="src/app/styles/global.css?v=1.0.9">
-  <link rel="stylesheet" href="src/app/styles/index.css?v=1.0.9">
+  <link rel="stylesheet" href="src/app/styles/variables.css?v=2.0.0">
+  <link rel="stylesheet" href="src/app/styles/global.css?v=2.0.0">
+  <link rel="stylesheet" href="src/app/styles/index.css?v=2.0.0">
 
   <!-- Loader Styles -->
-  <link rel="stylesheet" href="src/shared/ui/loader/loader.css?v=1.0.9">
+  <link rel="stylesheet" href="src/shared/ui/loader/loader.css?v=2.0.0">
 
   <!-- Widget Styles -->
-  <link rel="stylesheet" href="src/widgets/footer-navigation/ui/footer.css?v=1.0.9">
+  <link rel="stylesheet" href="src/widgets/footer-navigation/ui/footer.css?v=2.0.0">
 
   <!-- Entity Styles -->
-  <link rel="stylesheet" href="src/entities/record/ui/record-card.css?v=1.0.9">
+  <link rel="stylesheet" href="src/entities/record/ui/record-card.css?v=2.0.0">
 </head>
 
 <body>
   <!-- Main Content -->
   <main id="app">
-    <div class="view-content">
-      <h1>📅 Записи</h1>
-
-      <!-- Фильтры записей -->
-      <div class="records-filters">
-        <button class="filter-btn active" data-status="">Все</button>
+    <!-- Records List -->
+    <div class="records-container">
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-status="all">Все</button>
         <button class="filter-btn" data-status="pending">Ожидают</button>
         <button class="filter-btn" data-status="confirmed">Подтверждены</button>
         <button class="filter-btn" data-status="completed">Завершены</button>
       </div>
 
-      <!-- Список записей -->
       <div id="records-list" class="records-list">
-        <!-- Записи будут загружены через JS -->
+        <!-- Records will be loaded here -->
       </div>
     </div>
   </main>
-
-  <!-- Индикатор загрузки removed (using global loader) -->
 
   <!-- Footer Navigation Widget -->
   <footer class="footer">
@@ -73,7 +68,7 @@
         </svg>
         <span>Записи</span>
       </button>
-      <button class="footer-btn" data-tab="settings" data-href="src/pages/settings/index.html?v=1.0.9">
+      <button class="footer-btn" data-tab="settings" data-href="src/pages/settings/index.html?v=2.0.0">
         <svg viewBox="0 0 24 24">
           <path
             d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -85,24 +80,24 @@
   </footer>
 
   <!-- App Scripts -->
-  <script type="module" src="src/app/providers/telegram/init.js?v=1.0.9"></script>
-  <script type="module" src="src/app/config/theme.js?v=1.0.9"></script>
+  <script type="module" src="src/app/providers/telegram/init.js?v=2.0.0"></script>
+  <script type="module" src="src/app/config/theme.js?v=2.0.0"></script>
 
   <!-- Shared Libraries (with cache busting) -->
-  <script type="module" src="src/shared/config/api.js?v=1.0.9"></script>
-  <script type="module" src="src/shared/lib/jwt-auth.js?v=1.0.9"></script>
-  <script type="module" src="src/shared/lib/api-client.js?v=1.0.9"></script>
-  <script type="module" src="src/shared/lib/profile-api.js?v=1.0.9"></script>
-  <script type="module" src="src/shared/lib/telegram.js?v=1.0.9"></script>
+  <script type="module" src="src/shared/config/api.js?v=2.0.0"></script>
+  <script type="module" src="src/shared/lib/jwt-auth.js?v=2.0.0"></script>
+  <script type="module" src="src/shared/lib/api-client.js?v=2.0.0"></script>
+  <script type="module" src="src/shared/lib/profile-api.js?v=2.0.0"></script>
+  <script type="module" src="src/shared/lib/telegram.js?v=2.0.0"></script>
 
   <!-- Loader Script -->
-  <script type="module" src="src/shared/ui/loader/loader.js?v=1.0.9"></script>
+  <script type="module" src="src/shared/ui/loader/loader.js?v=2.0.0"></script>
 
   <!-- Navigation Script -->
-  <script type="module" src="src/shared/lib/navigation.js?v=1.0.9"></script>
+  <script type="module" src="src/shared/lib/navigation.js?v=2.0.0"></script>
 
   <!-- Page Scripts -->
-  <script type="module" src="src/pages/records/records.js?v=1.0.9"></script>
+  <script type="module" src="src/pages/records/records.js?v=2.0.0"></script>
 </body>
 
 </html>
