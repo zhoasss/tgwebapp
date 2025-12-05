@@ -283,12 +283,16 @@ class JWTAutManager {
     try {
       console.log('🔄 Обновление токенов через API...');
 
+      const refreshToken = localStorage.getItem('refresh_token');
+      const body = refreshToken ? JSON.stringify({ refresh_token: refreshToken }) : null;
+
       const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: body
       });
 
       if (!response.ok) {
@@ -296,7 +300,7 @@ class JWTAutManager {
       }
 
       const data = await response.json();
-      console.log('✅ Токены обновлены через API');
+      console.log('✅ Токены обновлены через API', refreshToken ? '(использован localStorage)' : '(использованы cookies)');
 
       return true;
 

@@ -4,7 +4,9 @@ API endpoints для аутентификации
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, Header, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, Header, Response, Cookie, Body
+from pydantic import BaseModel
+from typing import Optional
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -109,12 +111,27 @@ async def signin(
         logging.error(f"{platform} ❌ Критическая ошибка аутентификации: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Ошибка сервера при аутентификации")
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: Optional[str] = None
+
 @router.post("/refresh")
 async def refresh_token(
     response: Response,
-    refresh_token: str = Cookie(None, alias="refresh_token"),
+    request: RefreshTokenRequest = Body(None),
+    cookie_refresh_token: str = Cookie(None, alias="refresh_token"),
     session: AsyncSession = Depends(get_session)
 ):
+    """
+    Обновление access токена с помощью refresh токена
+    
+    Поддерживает передачу токена через:
+    1. Body (JSON): { "refresh_token": "..." } - приоритет
+    2. Cookie: refresh_token=...
+    """
+    token_to_use = request.refresh_token if request and request.refresh_token else cookie_refresh_token
+    
+    if not token_to_use:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
     """
     Обновление access токена с помощью refresh токена
 
@@ -130,7 +147,7 @@ async def refresh_token(
         from ...shared.auth.jwt_auth import jwt_auth
 
         # Валидируем refresh токен
-        payload = jwt_auth.decode_token(refresh_token)
+        payload = jwt_auth.decode_token(token_to_use)
 
         if not jwt_auth.verify_token_type(payload, "refresh"):
             raise HTTPException(status_code=401, detail="Неверный тип токена")
