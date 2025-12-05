@@ -4,8 +4,8 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js';
-import pageLoader from '../ui/loader/loader.js';
+import { API_BASE_URL } from '../config/api.js?v=3.0.1';
+import pageLoader from '../ui/loader/loader.js?v=3.0.1';
 
 class ApiClient {
     /**
