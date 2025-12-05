@@ -3,10 +3,12 @@
  * Слой Pages - страницы приложения
  */
 
-import { showNotification } from '../../shared/lib/telegram.js';
-import { getAppointments } from '../../shared/lib/profile-api.js';
-import pageLoader from '../../shared/ui/loader/loader.js';
-import { API_BASE_URL } from '../../shared/config/api.js';
+import { showNotification } from '../../shared/lib/telegram.js?v=3.0.2';
+import { getAppointments } from '../../shared/lib/profile-api.js?v=3.0.2';
+import pageLoader from '../../shared/ui/loader/loader.js?v=3.0.2';
+import { API_BASE_URL } from '../../shared/config/api.js?v=3.0.2';
+// We need to check cookie, not localStorage
+import { getCookie } from '../../shared/lib/cookies.js?v=3.0.2';
 
 // Состояние страницы
 let records = [];
@@ -154,7 +156,7 @@ async function loadRecords() {
   console.log('  - window.location.hostname:', window.location.hostname);
 
   // Проверяем наличие токена авторизации
-  const hasToken = localStorage.getItem('access_token');
+  const hasToken = getCookie('access_token');
   console.log('  - Has access_token:', !!hasToken);
   if (hasToken) {
     console.log('  - Token preview:', hasToken.substring(0, 20) + '...');
@@ -245,7 +247,7 @@ function initRecordsPage() {
   console.log('🚀 Инициализация страницы записей...');
 
   // Проверяем наличие токена
-  const hasToken = localStorage.getItem('access_token');
+  const hasToken = getCookie('access_token');
 
   // Если есть токен, сразу загружаем записи
   if (hasToken) {

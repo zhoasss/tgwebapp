@@ -4,10 +4,11 @@
  */
 
 import { getInitData } from './telegram.js';
-import { API_BASE_URL } from '../config/api.js';
+import { API_BASE_URL } from '../config/api.js?v=3.0.2';
+import { setCookie, getCookie, eraseCookie } from './cookies.js?v=3.0.2';
 
 /**
- * Класс для управления JWT аутентификацией
+ * Класс для управления JWT аутентификации
  */
 class JWTAutManager {
   constructor() {
@@ -33,7 +34,7 @@ class JWTAutManager {
    */
   async _initAuth() {
     try {
-      console.log('🔐 Инициализация JWT аутентификации...');
+      console.log('🔐 Инициализация JWT аутентификации (Cookies)...');
 
       // Проверяем, есть ли уже токены в cookies
       const hasTokens = this._hasValidTokens();
@@ -90,16 +91,16 @@ class JWTAutManager {
    * Очистка cookies с токенами
    */
   _clearAuthCookies() {
-    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;';
-    document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;';
+    eraseCookie('access_token');
+    eraseCookie('refresh_token');
+    console.log('🗑️ Cookies очищены');
   }
 
   /**
    * Проверка наличия токенов в cookies
    */
   _hasValidTokens() {
-    // Проверяем наличие токена в localStorage, так как cookies могут быть HttpOnly
-    return !!localStorage.getItem('access_token');
+    return !!getCookie('access_token');
   }
 
   /**
@@ -107,7 +108,7 @@ class JWTAutManager {
    */
   async _checkAuthStatus() {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getCookie('access_token');
       const headers = {
         'Content-Type': 'application/json',
       };
@@ -151,7 +152,7 @@ class JWTAutManager {
    */
   async _loadCurrentUser() {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = getCookie('access_token');
       const headers = {
         'Content-Type': 'application/json',
       };
@@ -208,15 +209,15 @@ class JWTAutManager {
       const data = await response.json();
       console.log('✅ Вход выполнен успешно, получены токены');
 
-      // Сохраняем токены в localStorage (работает на всех устройствах, включая Safari в iframe)
+      // Сохраняем токены в cookies
       if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
-        console.log('💾 access_token сохранён в localStorage');
+        setCookie('access_token', data.access_token);
+        console.log('💾 access_token сохранён в Cookies');
       }
 
       if (data.refresh_token) {
-        localStorage.setItem('refresh_token', data.refresh_token);
-        console.log('💾 refresh_token сохранён в localStorage');
+        setCookie('refresh_token', data.refresh_token);
+        console.log('💾 refresh_token сохранён в Cookies');
       }
 
       this.isAuthenticated = true;
@@ -241,10 +242,8 @@ class JWTAutManager {
     try {
       console.log('🚪 Выход из системы...');
 
-      // Очищаем токены из localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      console.log('🗑️ Токены удалены из localStorage');
+      // Очищаем токены из cookies
+      this._clearAuthCookies();
 
       this.isAuthenticated = false;
       this.user = null;
@@ -284,7 +283,7 @@ class JWTAutManager {
     try {
       console.log('🔄 Обновление токенов через API...');
 
-      const refreshToken = localStorage.getItem('refresh_token');
+      const refreshToken = getCookie('refresh_token');
       const body = refreshToken ? JSON.stringify({ refresh_token: refreshToken }) : null;
 
       const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
@@ -301,18 +300,17 @@ class JWTAutManager {
       }
 
       const data = await response.json();
-      console.log('✅ Токены обновлены через API', refreshToken ? '(использован localStorage)' : '(использованы cookies)');
+      console.log('✅ Токены обновлены через API');
 
-      // Обновляем токены в localStorage, если они пришли в ответе (для поддержки JSON ответа)
+      // Обновляем токены в cookies
       if (data.user && data.user.access_token) {
-        localStorage.setItem('access_token', data.user.access_token);
+        setCookie('access_token', data.user.access_token);
       }
-      // Если сервер возвращает новые токены в другом формате, нужно адаптировать этот блок
       if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
+        setCookie('access_token', data.access_token);
       }
       if (data.refresh_token) {
-        localStorage.setItem('refresh_token', data.refresh_token);
+        setCookie('refresh_token', data.refresh_token);
       }
 
       return true;

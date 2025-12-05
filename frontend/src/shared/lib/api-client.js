@@ -4,8 +4,9 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=3.0.1';
-import pageLoader from '../ui/loader/loader.js?v=3.0.1';
+import { API_BASE_URL } from '../config/api.js?v=3.0.2';
+import pageLoader from '../ui/loader/loader.js?v=3.0.2';
+import { getCookie, setCookie } from './cookies.js?v=3.0.2';
 
 class ApiClient {
     /**
@@ -33,7 +34,7 @@ class ApiClient {
             const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
             // Add auth header
-            const token = localStorage.getItem('access_token');
+            const token = getCookie('access_token');
             const headers = {
                 'Content-Type': 'application/json',
                 ...options.headers
@@ -89,9 +90,9 @@ class ApiClient {
             // Check for server-side token refresh
             if (responseData.token_refreshed && responseData.new_access_token) {
                 console.log('🔄 Server refreshed tokens');
-                localStorage.setItem('access_token', responseData.new_access_token);
+                setCookie('access_token', responseData.new_access_token);
                 if (responseData.new_refresh_token) {
-                    localStorage.setItem('refresh_token', responseData.new_refresh_token);
+                    setCookie('refresh_token', responseData.new_refresh_token);
                 }
             }
 
