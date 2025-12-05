@@ -6,6 +6,7 @@
 import { showNotification } from '../../shared/lib/telegram.js';
 import { getAppointments } from '../../shared/lib/profile-api.js';
 import pageLoader from '../../shared/ui/loader/loader.js';
+import { API_BASE_URL } from '../../shared/config/api.js';
 
 // Состояние страницы
 let records = [];

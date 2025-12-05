@@ -302,6 +302,18 @@ class JWTAutManager {
       const data = await response.json();
       console.log('✅ Токены обновлены через API', refreshToken ? '(использован localStorage)' : '(использованы cookies)');
 
+      // Обновляем токены в localStorage, если они пришли в ответе (для поддержки JSON ответа)
+      if (data.user && data.user.access_token) {
+        localStorage.setItem('access_token', data.user.access_token);
+      }
+      // Если сервер возвращает новые токены в другом формате, нужно адаптировать этот блок
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+      }
+      if (data.refresh_token) {
+        localStorage.setItem('refresh_token', data.refresh_token);
+      }
+
       return true;
 
     } catch (error) {
