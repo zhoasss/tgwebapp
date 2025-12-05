@@ -1,5 +1,5 @@
-import apiClient from './api-client.js?v=3.0.2';
-import { API_ENDPOINTS } from '../config/api.js?v=3.0.2';
+import apiClient from './api-client.js?v=3.0.4';
+import { API_ENDPOINTS } from '../config/api.js?v=3.0.4';
 
 /**
  * Get user profile
@@ -45,22 +45,32 @@ export async function getAppointments(status = null, dateFrom = null, dateTo = n
 /**
  * Create new appointment
  */
+function getAppointmentsEndpoint() {
+  if (!API_ENDPOINTS?.APPOINTMENTS) {
+    throw new Error('API_ENDPOINTS.APPOINTMENTS is undefined');
+  }
+  return API_ENDPOINTS.APPOINTMENTS;
+}
+
+/**
+ * Create new appointment
+ */
 export async function createAppointment(appointmentData) {
-  return await apiClient.post(API_ENDPOINTS.APPOINTMENTS, appointmentData);
+  return await apiClient.post(getAppointmentsEndpoint(), appointmentData);
 }
 
 /**
  * Update appointment
  */
 export async function updateAppointment(appointmentId, appointmentData) {
-  return await apiClient.put(`${API_ENDPOINTS.APPOINTMENTS}${appointmentId}`, appointmentData);
+  return await apiClient.put(`${getAppointmentsEndpoint()}${appointmentId}`, appointmentData);
 }
 
 /**
  * Delete appointment
  */
 export async function deleteAppointment(appointmentId) {
-  return await apiClient.delete(`${API_ENDPOINTS.APPOINTMENTS}${appointmentId}`);
+  return await apiClient.delete(`${getAppointmentsEndpoint()}${appointmentId}`);
 }
 
 /**

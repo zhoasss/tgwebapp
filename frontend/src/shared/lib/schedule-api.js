@@ -4,7 +4,7 @@
  * @version 1.0.4
  */
 
-import apiClient from './api-client.js?v=1.0.3';
+import apiClient from './api-client.js?v=3.0.4';
 
 /**
  * Получить график работы пользователя

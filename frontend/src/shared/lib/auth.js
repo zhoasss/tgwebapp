@@ -11,26 +11,26 @@ import { getTelegramWebApp, getTelegramUser, getInitData, showNotification } fro
  */
 export function isAuthenticated() {
   const tg = getTelegramWebApp();
-  
+
   if (!tg) {
     console.error('❌ Telegram WebApp недоступен');
     return false;
   }
-  
+
   // Проверяем наличие initData
   const initData = getInitData();
   if (!initData || initData.length === 0) {
     console.error('❌ initData отсутствует');
     return false;
   }
-  
+
   // Проверяем наличие данных пользователя
   const user = getTelegramUser();
   if (!user || !user.id) {
     console.error('❌ Данные пользователя отсутствуют');
     return false;
   }
-  
+
   console.log('✅ Пользователь авторизован:', user.id, user.first_name);
   return true;
 }
@@ -44,11 +44,11 @@ export function isAuthenticated() {
 export function requireAuth(onUnauthorized = null) {
   if (!isAuthenticated()) {
     console.error('🔒 Доступ запрещен: требуется авторизация через Telegram');
-    
-    const errorMessage = 
+
+    const errorMessage =
       'Для использования приложения необходимо открыть его через Telegram бота.\n\n' +
       'Пожалуйста, запустите бота и нажмите кнопку "Открыть кабинет".';
-    
+
     showNotification(errorMessage, () => {
       if (onUnauthorized) {
         onUnauthorized();
@@ -60,10 +60,10 @@ export function requireAuth(onUnauthorized = null) {
         }
       }
     });
-    
+
     return false;
   }
-  
+
   return true;
 }
 
@@ -75,7 +75,7 @@ export function getAuthenticatedUser() {
   if (!isAuthenticated()) {
     return null;
   }
-  
+
   return getTelegramUser();
 }
 
@@ -124,7 +124,7 @@ export function validateInitData() {
 export async function logout() {
   console.log('👋 Выход из приложения');
   // Импортируем JWT менеджер для выполнения выхода
-  const jwtAuthManager = (await import('./jwt-auth.js')).default;
+  const jwtAuthManager = (await import('./jwt-auth.js?v=3.0.4')).default;
   await jwtAuthManager.logout();
 }
 

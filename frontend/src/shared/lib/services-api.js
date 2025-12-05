@@ -3,8 +3,8 @@
  * Uses the centralized ApiClient for requests.
  */
 
-import apiClient from './api-client.js?v=3.0.3';
-import { API_ENDPOINTS } from '../config/api.js?v=3.0.3';
+import apiClient from './api-client.js?v=3.0.4';
+import { API_ENDPOINTS } from '../config/api.js?v=3.0.4';
 
 /**
  * Get all services

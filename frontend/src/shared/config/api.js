@@ -5,7 +5,7 @@
  */
 
 // Version for cache busting
-const API_CONFIG_VERSION = '3.0.3';
+const API_CONFIG_VERSION = '3.0.4';
 console.log(`📡 API Config Loaded: v${API_CONFIG_VERSION}`);
 
 /**

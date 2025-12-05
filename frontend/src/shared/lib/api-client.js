@@ -4,9 +4,9 @@
  * @version 1.0.4
  */
 
-import { API_BASE_URL } from '../config/api.js?v=3.0.3';
-import pageLoader from '../ui/loader/loader.js?v=3.0.3';
-import { getCookie, setCookie } from './cookies.js?v=3.0.3';
+import { API_BASE_URL } from '../config/api.js?v=3.0.4';
+import pageLoader from '../ui/loader/loader.js?v=3.0.4';
+import { getCookie, setCookie } from './cookies.js?v=3.0.4';
 
 class ApiClient {
     /**
@@ -27,6 +27,12 @@ class ApiClient {
             // Validate endpoint parameter
             if (!endpoint || typeof endpoint !== 'string') {
                 const errorMsg = `Invalid endpoint: ${JSON.stringify(endpoint)}. Expected a non-empty string.`;
+                console.error('❌', errorMsg);
+                throw new Error(errorMsg);
+            }
+
+            if (endpoint.includes('undefined')) {
+                const errorMsg = `Invalid endpoint: ${endpoint} contains "undefined". Check API_ENDPOINTS or variable interpolation.`;
                 console.error('❌', errorMsg);
                 throw new Error(errorMsg);
             }
